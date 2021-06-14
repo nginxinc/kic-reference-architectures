@@ -1,0 +1,7 @@
+name: ecr
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: config
+description: Sets up ECR repository for ingress controller images
