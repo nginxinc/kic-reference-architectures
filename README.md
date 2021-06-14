@@ -1,4 +1,6 @@
 # NGINX Kubernetes Ingress Controller Reference Architectures
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnginxinc%2Fkic-reference-architectures.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnginxinc%2Fkic-reference-architectures?ref=badge_shield)
+
 
 This repository contains multiple projects that illustrate patterns for
 deploying NGINX Kubernetes Ingress Controller (KIC).
@@ -26,3 +28,5 @@ pull request.
 
 All code in this repository is licensed under the 
 [Apache License v2 license](./LICENSE).
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnginxinc%2Fkic-reference-architectures.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnginxinc%2Fkic-reference-architectures?ref=badge_large)
