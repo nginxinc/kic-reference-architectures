@@ -1,0 +1,10 @@
+wheel>=0.36.2,<1.0.0
+pulumi>=3.2.1,<4.0.0
+pulumi-kubernetes>=3.1.0,<4.0.0
+pulumi-aws>=4.3.0,<5.0.0
+pulumi-eks>=0.30.0
+pulumi-docker>=3.0.0,<4.0.0
+requests~=2.25.1
+passlib~=1.7.4
+PyYAML~=5.4.1
+setuptools~=57.0.0

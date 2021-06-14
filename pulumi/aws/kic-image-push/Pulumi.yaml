@@ -1,0 +1,7 @@
+name: kic-image-push
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: config
+description: Pushes KIC image to ECR
