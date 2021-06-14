@@ -2,10 +2,10 @@ version: 2
 cli:
   server: https://app.fossa.com
   fetcher: custom
-  project: kic-reference-architectures
+  project: git@github.com:nginxinc/kic-reference-architectures.git
 analyze:
   modules:
-  - name: github.com/nginxinc/kic-reference-architectures/pulumi/aws
+  - name: pulumi/aws
     type: pip
     path: pulumi/aws
     target: pulumi/aws
