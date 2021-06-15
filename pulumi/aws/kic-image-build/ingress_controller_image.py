@@ -48,11 +48,13 @@ class IngressControllerImageArgs:
     def __init__(self,
                  kic_src_url: Optional[pulumi.Input[str]] = None,
                  make_target: Optional[pulumi.Input[str]] = None,
-                 always_rebuild: Optional[bool] = False):
+                 always_rebuild: Optional[bool] = False,
+                 nginx_plus: Optional[bool] = False):
         self.__dict__ = dict()
         pulumi.set(self, 'kic_src_url', kic_src_url)
         pulumi.set(self, 'make_target', make_target)
         pulumi.set(self, 'always_rebuild', always_rebuild)
+        pulumi.set(self, 'nginx_plus', nginx_plus)
 
     @property
     @pulumi.getter
@@ -73,7 +75,7 @@ class URLType(Enum):
 
 
 class IngressControllerSourceArchiveUrl:
-    LAST_KNOWN_KIC_VERSION = '1.11.1'
+    LAST_KNOWN_KIC_VERSION = '1.11.3'
     DOWNLOAD_URL = f'https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/|%|VERSION|%|.tar.gz'
 
     @staticmethod
