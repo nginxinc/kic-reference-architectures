@@ -443,7 +443,7 @@ class IngressControllerImage(Resource):
         super().__init__(name=name, opts=opts, props=props, provider=IngressControllerImageProvider(self))
 
     @property
-    def image_name(self) -> pulumi.Output[str]:
+    def image_id(self) -> pulumi.Output[str]:
         return pulumi.get(self, 'image_id')
 
     @property
