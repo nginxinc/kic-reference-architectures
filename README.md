@@ -28,3 +28,5 @@ pull request.
 
 All code in this repository is licensed under the 
 [Apache License v2 license](./LICENSE).
+
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git.svg?type=large)](https://app.fossa.com/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git?ref=badge_large)
