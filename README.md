@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git?ref=badge_shield)
+
 # NGINX Kubernetes Ingress Controller Reference Architectures
 
 This repository contains multiple projects that illustrate patterns for
