@@ -12,7 +12,7 @@ ELASTIC_HELM_REPO_NAME = 'bitnami'
 ELASTIC_HELM_REPO_URL = 'https://charts.bitnami.com/bitnami'
 
 
-# Removes the status field from the Nginx Ingress Helm Chart, so that it is
+# Removes the status field from the Helm Chart, so that it is
 # compatible with the Pulumi Chart implementation.
 def remove_status_field(obj):
     if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
