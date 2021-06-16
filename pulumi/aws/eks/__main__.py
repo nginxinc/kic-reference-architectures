@@ -54,7 +54,7 @@ vpc_definition: pulumi.Output[VPCDefinition] = stack_ref.get_output('vpc').apply
 min_size = 3
 max_size = 12
 desired_capacity = 3
-instance_type = 't2.medium'
+instance_type = 't2.large'
 
 node_group_opts = eks.ClusterNodeGroupOptionsArgs(
     min_size=min_size,
