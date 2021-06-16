@@ -46,6 +46,10 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
                 'tag': image_tag
             })
 
+            values['controller']['nginxplus'] = image_tag.endswith('plus')
+            if values['controller']['nginxplus']:
+                pulumi.log.info("Enabling NGINX Plus")
+
     return values
 
 

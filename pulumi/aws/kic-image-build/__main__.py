@@ -1,5 +1,5 @@
 import pulumi
-from ingress_controller_image import IngressControllerImage, IngressControllerImageArgs
+from ingress_controller_image import IngressControllerImage, IngressControllerImageArgs, NginxPlusArgs
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -25,7 +25,14 @@ project_name = pulumi.get_project()
 #   debian-image-opentracing
 #   debian-image-opentracing-plus
 #
-image_args = IngressControllerImageArgs(make_target='debian-image')
+
+# The following will enabled NGINX Plus builds
+# image_args = IngressControllerImageArgs(make_target='debian-image-plus',
+#                                         nginx_plus_args=NginxPlusArgs(
+#                                             key_path='/etc/ssl/nginx/nginx-repo.key',
+#                                             cert_path='/etc/ssl/nginx/nginx-repo.crt'))
+
+image_args = IngressControllerImageArgs()
 
 # Download KIC source code, run `make`, and build Docker images
 ingress_image = IngressControllerImage(name='nginx-ingress-controller',
