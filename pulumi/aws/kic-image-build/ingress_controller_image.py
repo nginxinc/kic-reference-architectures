@@ -8,6 +8,7 @@ import shutil
 import tarfile
 import tempfile
 import uuid
+import pathlib
 from typing import Optional, Any, List, Dict
 from urllib import request, parse
 from enum import Enum
@@ -198,23 +199,21 @@ class IngressControllerImageProvider(ResourceProvider):
     @staticmethod
     def identify_url_type(url: str) -> (URLType, parse.ParseResult):
         result = parse.urlparse(url, allow_fragments=False)
-
-        def parse_extension(path: str) -> Optional[str]:
-            if path.endswith('.tar.gz'):
-                return 'tar.gz'
-            else:
-                return None
+        is_tarball = result.path.endswith('.tar.gz')
+        url_type = URLType.UNKNOWN
 
         if result.scheme == 'file':
-            if parse_extension(result.path) == 'tar.gz':
-                return URLType.LOCAL_TAR_GZ, result
-            else:
-                return URLType.LOCAL_PATH, result
-        else:
-            if parse_extension(result.path) == 'tar.gz':
-                return URLType.GENERAL_TAR_GZ, result
-            else:
-                return URLType.UNKNOWN, result
+            url_type = URLType.LOCAL_TAR_GZ if is_tarball else URLType.LOCAL_PATH
+        elif result.scheme == '':
+            path = pathlib.Path(url)
+            if path.is_dir():
+                url_type = URLType.LOCAL_PATH
+            elif path.is_file() and is_tarball:
+                url_type = URLType.LOCAL_TAR_GZ
+        elif is_tarball:
+            url_type = URLType.GENERAL_TAR_GZ
+
+        return url_type, result
 
     @staticmethod
     def find_kic_source_dir(url: str) -> str:
