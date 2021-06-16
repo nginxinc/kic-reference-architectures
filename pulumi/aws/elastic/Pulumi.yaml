@@ -1,0 +1,7 @@
+name: elastic
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: config
+description: Sets up an Elasticsearch Cluster
