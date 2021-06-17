@@ -141,8 +141,6 @@ class RepositoryPushProvider(ResourceProvider):
         image_tag = props['image_tag']
         image_tag_alias = props['image_tag_alias']
 
-        pulumi.log.info(f'create props: {props}')
-
         self.login_to_ecr_repo(repository_url=repository_url,
                                username=repository_username,
                                password=repository_password)

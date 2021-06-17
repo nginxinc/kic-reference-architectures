@@ -8,6 +8,7 @@ import shutil
 import tarfile
 import tempfile
 import uuid
+import pathlib
 from typing import Optional, Any, List, Dict
 from urllib import request, parse
 from enum import Enum
@@ -23,7 +24,8 @@ from kic_util import external_process
 __all__ = [
     'IngressControllerImage',
     'IngressControllerImageArgs',
-    'IngressControllerImageProvider'
+    'IngressControllerImageProvider',
+    'NginxPlusArgs'
 ]
 
 
@@ -44,15 +46,36 @@ def remove_suffix(input_string, suffix):
 
 
 @pulumi.input_type
+class NginxPlusArgs:
+    def __init__(self, key_path: pulumi.Input[str], cert_path: pulumi.Input[str]):
+        self.__dict__ = dict()
+        pulumi.set(self, 'key_path', key_path)
+        pulumi.set(self, 'cert_path', cert_path)
+
+    @property
+    @pulumi.getter
+    def key_path(self) -> Optional[pulumi.Input[str]]:
+        return pulumi.get(self, "key_path")
+
+    @property
+    @pulumi.getter
+    def cert_path(self) -> Optional[pulumi.Input[str]]:
+        return pulumi.get(self, "cert_path")
+
+
+@pulumi.input_type
 class IngressControllerImageArgs:
     def __init__(self,
                  kic_src_url: Optional[pulumi.Input[str]] = None,
                  make_target: Optional[pulumi.Input[str]] = None,
-                 always_rebuild: Optional[bool] = False):
+                 always_rebuild: Optional[bool] = False,
+                 nginx_plus_args: Optional[pulumi.InputType['NginxPlusArgs']] = None):
         self.__dict__ = dict()
         pulumi.set(self, 'kic_src_url', kic_src_url)
         pulumi.set(self, 'make_target', make_target)
         pulumi.set(self, 'always_rebuild', always_rebuild)
+        pulumi.set(self, 'nginx_plus_args', nginx_plus_args)
+
 
     @property
     @pulumi.getter
@@ -73,7 +96,7 @@ class URLType(Enum):
 
 
 class IngressControllerSourceArchiveUrl:
-    LAST_KNOWN_KIC_VERSION = '1.11.1'
+    LAST_KNOWN_KIC_VERSION = '1.11.3'
     DOWNLOAD_URL = f'https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/|%|VERSION|%|.tar.gz'
 
     @staticmethod
@@ -196,23 +219,21 @@ class IngressControllerImageProvider(ResourceProvider):
     @staticmethod
     def identify_url_type(url: str) -> (URLType, parse.ParseResult):
         result = parse.urlparse(url, allow_fragments=False)
-
-        def parse_extension(path: str) -> Optional[str]:
-            if path.endswith('.tar.gz'):
-                return 'tar.gz'
-            else:
-                return None
+        is_tarball = result.path.endswith('.tar.gz')
+        url_type = URLType.UNKNOWN
 
         if result.scheme == 'file':
-            if parse_extension(result.path) == 'tar.gz':
-                return URLType.LOCAL_TAR_GZ, result
-            else:
-                return URLType.LOCAL_PATH, result
-        else:
-            if parse_extension(result.path) == 'tar.gz':
-                return URLType.GENERAL_TAR_GZ, result
-            else:
-                return URLType.UNKNOWN, result
+            url_type = URLType.LOCAL_TAR_GZ if is_tarball else URLType.LOCAL_PATH
+        elif result.scheme == '':
+            path = pathlib.Path(url)
+            if path.is_dir():
+                url_type = URLType.LOCAL_PATH
+            elif path.is_file() and is_tarball:
+                url_type = URLType.LOCAL_TAR_GZ
+        elif is_tarball:
+            url_type = URLType.GENERAL_TAR_GZ
+
+        return url_type, result
 
     @staticmethod
     def find_kic_source_dir(url: str) -> str:
@@ -232,6 +253,8 @@ class IngressControllerImageProvider(ResourceProvider):
     @staticmethod
     def download_and_extract_kic_source(url: str):
         temp_dir = tempfile.mkdtemp(prefix='kic-src_')
+        # Limit access of directory to only the creating user
+        os.chmod(path=temp_dir, mode=0o0700)
         # Delete source directory upon exit, so that we don't have cruft lying around
         atexit.register(lambda: shutil.rmtree(temp_dir))
 
@@ -245,8 +268,35 @@ class IngressControllerImageProvider(ResourceProvider):
 
         except Exception as e:
             msg = f'Unable to download and/or extract KIC source from [{url}] to directory [{temp_dir}]'
-            raise DownloadExtractError(msg) from e
+            raise DownloadExtractError(f"{msg}\n  cause: {e}") from e
         return temp_dir
+
+    def link_nginx_plus_files_to_source_dir(self, nginx_plus_args: NginxPlusArgs, source_dir: str):
+        key_path = pathlib.Path(nginx_plus_args['key_path'])
+        key_link_path = pathlib.Path(os.path.join(source_dir, 'nginx-repo.key'))
+
+        if key_link_path.exists():
+            raise ValueError(f'File already exists at nginx repository key path: {key_link_path}')
+
+        if key_path != key_link_path:
+            pulumi.log.debug(f'Creating nginx repository key symlink {key_path} -> {key_link_path}', self.resource)
+            os.symlink(key_path, key_link_path)
+        else:
+            pulumi.log.info('Not creating nginx repository key symlink because it is already in the target path ',
+                            self.resource)
+
+        cert_path = pathlib.Path(nginx_plus_args['cert_path'])
+        cert_link_path = pathlib.Path(os.path.join(source_dir, 'nginx-repo.crt'))
+
+        if cert_link_path.exists():
+            raise ValueError(f'File already exists at nginx repository cert path: {cert_link_path}')
+
+        if cert_path != cert_link_path:
+            pulumi.log.debug(f'Creating nginx repository cert symlink {cert_path} -> {cert_link_path}', self.resource)
+            os.symlink(cert_path, cert_link_path)
+        else:
+            pulumi.log.info('Not creating nginx repository cert symlink because it is already in the target path ',
+                            self.resource)
 
     def docker_image_id_from_image_name(self, image_name: str) -> str:
         cmd = f'docker images --quiet --no-trunc "{image_name}"'
@@ -264,6 +314,10 @@ class IngressControllerImageProvider(ResourceProvider):
         if not os.path.isdir(source_dir):
             raise DownloadExtractError(f'Expected source code directory not found at path: {source_dir}')
 
+        # Link nginx repo certificates into the source directory so that they can be referenced from the build process
+        if 'nginx_plus_args' in props and props['nginx_plus_args']:
+            self.link_nginx_plus_files_to_source_dir(nginx_plus_args=props['nginx_plus_args'],
+                                                     source_dir=source_dir)
         orig_dir = os.getcwd()
         try:
             os.chdir(source_dir)
@@ -316,6 +370,29 @@ class IngressControllerImageProvider(ResourceProvider):
 
         if url_type == URLType.UNKNOWN:
             failures.append(CheckFailure(property_='kic_src_url', reason=f"unsupported URL: {news['kic_src_url']}"))
+
+        if 'nginx_plus_args' in news and news['nginx_plus_args']:
+            pulumi.log.info(f"nginx_plus_args: {news['nginx_plus_args']}")
+
+            if 'key_path' not in news['nginx_plus_args']:
+                failures.append(CheckFailure(property_='nginx_plus_args.key_path',
+                                             reason=f"no value set for: nginx_plus_args.key_path"))
+            if 'cert_path' not in news['nginx_plus_args']:
+                failures.append(CheckFailure(property_='nginx_plus_args.cert_path',
+                                             reason=f"no value set for: nginx_plus_args.cert_path"))
+
+            key_path = pathlib.Path(news['nginx_plus_args']['key_path'])
+            if not key_path.is_file():
+                failures.append(CheckFailure(property_='nginx_plus_args.key_path', reason=f"not a file: {key_path}"))
+            elif not key_path.exists():
+                failures.append(CheckFailure(property_='nginx_plus_args.key_path',
+                                             reason=f"file doesn't exist: {key_path}"))
+            cert_path = pathlib.Path(news['nginx_plus_args']['cert_path'])
+            if not cert_path.is_file():
+                failures.append(CheckFailure(property_='nginx_plus_args.cert_path', reason=f"not a file: {cert_path}"))
+            elif not cert_path.exists():
+                failures.append(CheckFailure(property_='nginx_plus_args.cert_path',
+                                             reason=f"file doesn't exist: {cert_path}"))
 
         return CheckResult(inputs=news, failures=failures)
 
@@ -430,6 +507,8 @@ class IngressControllerImage(Resource):
             props['image_tag'] = None
         if 'image_tag_alias' not in props:
             props['image_tag_alias'] = None
+        if 'nginx_plus_args' not in props:
+            props['nginx_plus_args'] = None
 
         if 'kic_src_url' not in props or not props['kic_src_url']:
             pulumi.log.warn("No source url specified for 'kic_src_url', using latest tag from github", self)
@@ -441,7 +520,7 @@ class IngressControllerImage(Resource):
         super().__init__(name=name, opts=opts, props=props, provider=IngressControllerImageProvider(self))
 
     @property
-    def image_name(self) -> pulumi.Output[str]:
+    def image_id(self) -> pulumi.Output[str]:
         return pulumi.get(self, 'image_id')
 
     @property

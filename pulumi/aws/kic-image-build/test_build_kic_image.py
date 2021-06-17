@@ -1,12 +1,17 @@
+import atexit
+import shutil
 import os
 import unittest
-import kic_image
-
+import tempfile
+import ingress_controller_image as kic_image
 
 class TestKICImage(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.kic_image_provider = kic_image.IngressControllerImageProvider()
+
+    def assertStrEqual(self, first, second, msg=None):
+        self.assertEqual(first=str(first), second=str(second), msg=msg)
 
     def test_parse_image_name_from_output(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -15,7 +20,7 @@ class TestKICImage(unittest.TestCase):
                  '-t 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_inconsistent_spacing(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -24,7 +29,7 @@ class TestKICImage(unittest.TestCase):
                  '  -t  2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_continuations(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -33,7 +38,7 @@ class TestKICImage(unittest.TestCase):
                  '-t 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_tag(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -42,7 +47,7 @@ class TestKICImage(unittest.TestCase):
                  '--tag 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_multiple_slashes(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -51,7 +56,7 @@ class TestKICImage(unittest.TestCase):
                  '-t myregistryhost:5000/fedora/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_single_quotes(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -60,7 +65,7 @@ class TestKICImage(unittest.TestCase):
                  "-t 'myregistryhost:5000/fedora/nginx-kic:1.11.1' . --build-arg BUILD_OS=debian"
         expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_double_quotes(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -69,7 +74,7 @@ class TestKICImage(unittest.TestCase):
                  '-t "myregistryhost:5000/fedora/nginx-kic:1.11.1" . --build-arg BUILD_OS=debian'
         expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
         actual = self.kic_image_provider.parse_image_name_from_output(stdout)
-        self.assertEqual(expected, actual)
+        self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_without_tag(self):
         stdout = '    Docker version 20.10.6, build 370c289' + os.linesep + \
@@ -205,19 +210,21 @@ class TestKICImage(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_identify_url_type_local_file_without_scheme(self):
-        url = '/tmp/v1.11.1.tar.gz'
+        _, local_path = tempfile.mkstemp(prefix='unit_test_file', suffix='.tar.gz', text=True)
+        atexit.register(lambda: os.unlink(local_path))
         expected = kic_image.URLType.LOCAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
+        actual, _ = self.kic_image_provider.identify_url_type(local_path)
+        self.assertEqual(expected, actual, f'path [{local_path}] was misidentified')
 
     def test_identify_url_type_local_dir_with_scheme(self):
         url = 'file:///usr/local/src/kic'
         expected = kic_image.URLType.LOCAL_PATH
         actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
+        self.assertEqual(expected, actual, f'url [{url}] was misidentified')
 
     def test_identify_url_type_local_dir_without_scheme(self):
-        url = '/usr/local/src/kic'
+        local_path = tempfile.mkdtemp(prefix='unit_test_dir')
+        atexit.register(lambda: shutil.rmtree(local_path))
         expected = kic_image.URLType.LOCAL_PATH
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
+        actual, _ = self.kic_image_provider.identify_url_type(local_path)
+        self.assertEqual(expected, actual, f'path [{local_path}] was misidentified')
