@@ -84,7 +84,9 @@ vpc - defines and installs the VPC and subnets to use with EKS
     └─kic-image-build - project that builds a new KIC image  
       └─kic-image-push - pushes KIC image built in previous step to ECR
         └─kic-helm-chart - deploys NGINX Ingress Controller to the EKS cluster 
-          └─demo-app - deploys a sample application to the cluster
+          └─logstore - deploys a logstore (elasticsearch) to the EKS cluster 
+            └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
+              └─demo-app - deploys a sample application to the cluster
 ```
 
 ### VPC
