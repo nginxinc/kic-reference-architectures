@@ -129,7 +129,7 @@ class IngressControllerImageProvider(ResourceProvider):
     MAKE_TARGET = 'debian-image'
     REQUIRED_PROPS: List[str] = ['kic_src_url', 'make_target']
 
-    def __init__(self, resource: pulumi.Resource) -> None:
+    def __init__(self, resource: Optional[pulumi.Resource] = None):
         self.resource = resource
         super().__init__()
 
