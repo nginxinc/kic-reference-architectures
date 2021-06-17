@@ -5,6 +5,7 @@ import unittest
 import tempfile
 import ingress_controller_image as kic_image
 
+
 class TestKICImage(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
