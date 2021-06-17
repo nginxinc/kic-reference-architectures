@@ -76,6 +76,14 @@ header "Deploying KIC"
 cd "${script_dir}/kic-helm-chart"
 pulumi --emoji up --yes
 
+header "Logstore"
+cd "${script_dir}/logstore"
+pulumi --emoji up --yes
+
+header "Logagent"
+cd "${script_dir}/logagent"
+pulumi --emoji up --yes
+
 header "Demo App"
 cd "${script_dir}/demo-app"
 pulumi --emoji up --yes

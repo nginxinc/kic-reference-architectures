@@ -129,6 +129,63 @@ Ingress Controller on the previously deployed EKS cluster. You may want
 to customize this project to allow for deploying different versions of
 KIC.
 
+A sample config-map is provided in the Pulumi deployment code; this 
+code will adjust the logging format to approximate the upstream 
+NGINX KIC project which will allow for easier injestion into log
+storage and processing systems. 
+
+### Log Store
+
+In the [`logstore`](./logstore) directory, you will find the Pulumi
+project reponsible for installing your log store. The current
+solution deploys 
+[Elasticsearch and Kibana](https://www.elastic.co/elastic-stack) 
+using the 
+[Bitnami Elasticsearch](https://bitnami.com/stack/elasticsearch/helm)
+chart. This solution can be swapped for other options as desired.
+This application is deployed to the `logstore` namespace. 
+
+#### Notes
+In order to access the Kibana dashboard via your web browser, you will
+need to setup port forwarding for the kibana pod. This can be accomplished
+using the `kubectl` command:
+
+```
+$ # Find the Kibana pod name
+$ kubectl get pods -n logstore
+NAME                                            READY   STATUS    RESTARTS   AGE
+elastic-coordinating-only-b76674c4c-d58rh       1/1     Running   0          61m
+elastic-coordinating-only-b76674c4c-sb6v7       1/1     Running   0          61m
+elastic-elasticsearch-data-0                    1/1     Running   0          61m
+elastic-elasticsearch-data-1                    1/1     Running   0          61m
+elastic-elasticsearch-ingest-589d4ddf4b-6djjz   1/1     Running   0          61m
+elastic-elasticsearch-ingest-589d4ddf4b-6mzmb   1/1     Running   0          61m
+elastic-elasticsearch-master-0                  1/1     Running   0          61m
+elastic-elasticsearch-master-1                  1/1     Running   0          61m
+elastic-kibana-d45db8647-ghhx2                  1/1     Running   0          61m
+$ # Setup the port forward
+$ kubectl port-forward elastic-kibana-d45db8647-ghhx2 5601:5601 -n logstore
+Forwarding from 127.0.0.1:5601 -> 5601
+Forwarding from [::1]:5601 -> 5601
+Handling connection for 5601
+````
+
+Additionally, you will need to load the saved object data for Kibana from 
+the provided [`kibana-data.ndjson`](./extras/kibana/kibana-data.ndjson) 
+which can be found in the `./extras/kibana` directory in this project. To
+accomplish this, go to "Stack Management -> Saved Objects" in the Kibana
+interface. 
+
+### Log Agent
+
+In the [`logagent`](./logagent) directory, you will find the Pulumi
+project reponsible for installing your log agent. The current solution
+deploys [`Filebeat`](https://www.elastic.co/beats/) which connects
+to the logstore deployed in the previous step. This solution can be
+swapped for other options as desired. This application is
+deployed to the `logagent` namespace.
+
+
 ### Demo Application
 
 A simple sample application is contained in the [`demo-app`](./demo-app)

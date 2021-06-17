@@ -27,9 +27,33 @@ def project_name_from_project_dir(dirname: str):
 
 def build_chart_values(repository: dict) -> helm.ChartOpts:
     values: Dict[str, Dict[str, typing.Any]] = {
-        'controller': {
-            'healthStatus': True
-        }
+      'controller': {
+          'healthStatus': True,
+          'nginxplus': False,
+          'appprotect': {
+              'enable': False
+          },
+          'config': {
+              'name': 'nginx-config',
+              'entries': {
+                  'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status \"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr $upstream_bytes_sent $upstream_response_time $upstream_status $request_id'
+              }
+          },
+          'service': {
+              'annotations': {
+                  'co.elastic.logs/module': 'nginx'
+              }
+          },
+          'pod': {
+              'annotations': {
+                  'co.elastic.logs/module': 'nginx'
+              }
+          }
+      },
+      'prometheus': {
+         'create': True,
+         'port': 9113
+       }
     }
 
     if 'repository_url' in repository and 'image_tag_alias' in repository:
