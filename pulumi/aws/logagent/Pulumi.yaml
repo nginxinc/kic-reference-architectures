@@ -1,7 +1,7 @@
-name: filebeat
+name: logagent
 runtime:
   name: python
   options:
     virtualenv: ../venv
 config: config
-description: Deploys filebeat daemonset
+description: Deploys a log agent

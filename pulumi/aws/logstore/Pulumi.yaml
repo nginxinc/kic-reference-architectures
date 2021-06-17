@@ -1,7 +1,7 @@
-name: elastic
+name: logstore
 runtime:
   name: python
   options:
     virtualenv: ../venv
 config: config
-description: Sets up an Elasticsearch Cluster
+description: Deploys a logging store
