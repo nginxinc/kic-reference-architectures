@@ -29,7 +29,6 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
     values: Dict[str, Dict[str, typing.Any]] = {
       'controller': {
           'healthStatus': True,
-          'nginxplus': False,
           'appprotect': {
               'enable': False
           },
