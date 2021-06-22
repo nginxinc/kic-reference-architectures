@@ -38,23 +38,22 @@ kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample',
                             kubeconfig=kubeconfig)
 
-#ns = k8s.core.v1.Namespace(resource_name='elastic',
-#                           metadata={'name': 'elastic'},
-#                           opts=pulumi.ResourceOptions(provider=k8s_provider))
+ns = k8s.core.v1.Namespace(resource_name='logagent',
+                           metadata={'name': 'logagent'},
+                           opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 chart_values = {
     "daemonset": {
         "enabled": True,
         "filebeatConfig": {
-            "filebeat.yml": "filebeat.autodiscover:\n  providers:\n    - type: kubernetes\n      hints.enabled: true\n      hints.default_config:\n        type: container\n        paths:\n          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n  host: '${NODE_NAME}'\n  hosts: 'elasticsearch-coordinating-only.elastic.svc.cluster.local:9200'\n"
+            "filebeat.yml": "filebeat.autodiscover:\n  providers:\n    - type: kubernetes\n      hints.enabled: true\n      hints.default_config:\n        type: container\n        paths:\n          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n  host: '${NODE_NAME}'\n  hosts: 'elastic-coordinating-only.logstore.svc.cluster.local:9200'\n"
         }
      }
   }
 
 chart_ops = helm.ChartOpts(
         chart='filebeat',
-#        namespace=ns.metadata.name,
-        namespace='elastic',
+        namespace=ns.metadata.name,
         repo=FILEBEAT_HELM_REPO_NAME,
         fetch_opts=FetchOpts(repo=FILEBEAT_HELM_REPO_URL),
         version='7.13.2',

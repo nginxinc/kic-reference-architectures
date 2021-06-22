@@ -9,6 +9,12 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "${script_dir}/demo-app"
 pulumi --emoji destroy --yes
 
+cd "${script_dir}/logagent"
+pulumi --emoji destroy --yes
+
+cd "${script_dir}/logstore"
+pulumi --emoji destroy --yes
+
 cd "${script_dir}/kic-helm-chart"
 pulumi --emoji destroy --yes
 

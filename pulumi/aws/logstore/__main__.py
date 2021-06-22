@@ -38,8 +38,8 @@ kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample',
                             kubeconfig=kubeconfig)
 
-ns = k8s.core.v1.Namespace(resource_name='elastic',
-                           metadata={'name': 'elastic'},
+ns = k8s.core.v1.Namespace(resource_name='logstore',
+                           metadata={'name': 'logstore'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 chart_values = {
