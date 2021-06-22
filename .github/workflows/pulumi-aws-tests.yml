@@ -1,0 +1,27 @@
+name: Pulumi AWS Tests
+
+on:
+  - pull_request
+  - push
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v2
+    - uses: syphar/restore-virtualenv@v1
+      id: pulumi-aws-tests-cache-virtualenv
+      with:
+        requirement_files: pulumi/aws/requirements.txt
+
+    - uses: syphar/restore-pip-download-cache@v1
+      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+
+      # the package installation will only be executed when the
+      # requirements-files have changed.
+    - run: pip install -r pulumi/aws/requirements.txt
+      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+
+    - name: Test
+      run: pulumi/aws/test.py
