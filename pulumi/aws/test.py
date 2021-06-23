@@ -48,7 +48,10 @@ def find_testable_dirs(dir_name: pathlib.Path) -> pathlib.Path:
 
 def find_kic_util_path():
     py_ver = f'{platform.python_version_tuple()[0]}.{platform.python_version_tuple()[1]}'
-    venv_start_dir = f'venv/lib/python{py_ver}/site-packages/kic_util'
+    virtual_env = os.environ.get('VIRTUAL_ENV')
+    venv_path = virtual_env if virtual_env else 'venv'
+
+    venv_start_dir = f'{venv_path}/lib/python{py_ver}/site-packages/kic_util'
     # Load in utilities module specifically from venv path
     kic_util_loader = unittest.defaultTestLoader.discover(
         start_dir=venv_start_dir,
