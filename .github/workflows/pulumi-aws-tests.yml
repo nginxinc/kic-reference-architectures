@@ -18,10 +18,15 @@ jobs:
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-      # the package installation will only be executed when the
-      # requirements-files have changed.
+    # Install wheel manually so that requirements install will happen quicker.
+    - run: pip install wheel
+
+    # The package installation will only be executed when requirements.txt is changed.
     - run: pip install -r pulumi/aws/requirements.txt
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+
+    # Install utilities module used in Pulumi projects
+    - run: pip install pulumi/aws/kic-pulumi-utils
 
     - name: Test
       run: pulumi/aws/test.py
