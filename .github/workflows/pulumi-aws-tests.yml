@@ -28,9 +28,7 @@ jobs:
     # Install utilities module used in Pulumi projects
     - run: pip install --use-feature=in-tree-build pulumi/aws/kic-pulumi-utils
     - run: rm -rf pulumi/aws/kic-pulumi-utils/.eggs pulumi/aws/kic-pulumi-utils/build pulumi/aws/kic-pulumi-utils/kic_pulumi_utils.egg-info
-    - run: ls
 
     - name: Test
       working-directory: pulumi/aws
-      run: ls
-#      run: ./test.py
+      run: ./test.py
