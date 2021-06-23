@@ -1,7 +1,7 @@
 import os
 import unittest
 import tempfile
-import pulumi_config
+from kic_util import pulumi_config
 
 
 class TestPulumiConfig(unittest.TestCase):
