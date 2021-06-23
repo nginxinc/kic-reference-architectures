@@ -39,4 +39,9 @@ config: config
             tmp_dir.cleanup()
 
     def test_get_pulumi_user_cant_find_cmd(self):
-        pulumi_config.get_pulumi_user()
+        try:
+            pulumi_config.get_pulumi_user()
+        except pulumi_config.PulumiExecError as e:
+            if e.message.startswith('PULUMI_ACCESS_TOKEN must be set for login during non-interactive CLI sessions'):
+                self.skipTest('Skipping error because we are running in an environment that does not '
+                              f'have the Pulumi CLI configured. Error: {e.message}')

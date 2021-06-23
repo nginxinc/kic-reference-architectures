@@ -1,3 +1,4 @@
+import os
 from os import path
 import yaml
 import external_process
@@ -48,7 +49,10 @@ def get_pulumi_project_name(directory: str) -> str:
 def get_pulumi_user() -> str:
     """Gets the current Pulumi user by executing the pulumi CLI tool"""
     try:
-        user, _ = external_process.run(cmd='pulumi whoami')
+        env = dict(os.environ)
+        env['PULUMI_SKIP_UPDATE_CHECK'] = 'true'
+
+        user, _ = external_process.run(cmd='pulumi --non-interactive whoami', env=env)
     except RuntimeError as e:
         raise PulumiExecError("Unable to query pulumi username") from e
     return user.strip()
