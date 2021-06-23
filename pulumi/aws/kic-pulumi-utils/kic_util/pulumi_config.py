@@ -1,6 +1,6 @@
 from os import path
 import yaml
-from kic_util import external_process
+import external_process
 
 
 class PulumiConfigError(RuntimeError):
