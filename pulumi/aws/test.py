@@ -48,7 +48,14 @@ for item in os.listdir(SCRIPT_DIR):
     loader = unittest.defaultTestLoader.discover(start_dir=start_dir, top_level_dir=start_dir)
     test_dirs.append(TestsInDir(start_dir, loader))
 
+successful = True
+
 for test_dir in test_dirs:
     runner = unittest.TextTestRunner(verbosity=2)
     print(f'## Running Tests for: {test_dir.directory}', file=sys.stderr)
     result = runner.run(test_dir.loader)
+    if not result.wasSuccessful():
+        successful = False
+
+if not successful:
+    sys.exit(1)
