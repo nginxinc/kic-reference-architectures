@@ -19,8 +19,17 @@ def find_start_dir(dir_name: pathlib.Path) -> pathlib.Path:
     sublisting = os.listdir(dir_name)
     dir_count = 0
     last_path = None
+
     for item in sublisting:
         path = pathlib.Path(dir_name, item)
+
+        # We assume we are in the starting directory for test invocation if there is a
+        # __main__.py file present.
+        if path.is_file() and path.name == '__main__.py':
+            return dir_name
+
+        # Otherwise, we are probably in a module directory and the starting directory is
+        # one level deeper.
         if path.is_dir():
             dir_count += 1
             if not last_path:
