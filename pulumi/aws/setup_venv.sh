@@ -22,4 +22,7 @@ pip3 install wheel
 # Install general package requirements
 pip3 install -r "${script_dir}/requirements.txt"
 # Install local common utilities module
-pip3 install "${script_dir}/kic-pulumi-utils"
+pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" && \
+  rm -rf "${script_dir}/kic-pulumi-utils/.eggs" \
+         "${script_dir}/kic-pulumi-utils/build" \
+         "${script_dir}/kic-pulumi-utils/kic_pulumi_utils.egg-info"
