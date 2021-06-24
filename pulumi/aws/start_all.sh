@@ -6,6 +6,21 @@ set -o pipefail  # don't hide errors within pipes
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+if ! command -v pulumi > /dev/null; then
+  >&2 echo "Pulumi must be installed to continue"
+  exit 1
+fi
+
+if ! command -v python3 > /dev/null; then
+  >&2 echo "Python 3 must be installed to continue"
+  exit 1
+fi
+
+if ! command -v node > /dev/null; then
+  >&2 echo "NodeJS must be installed to continue"
+  exit 1
+fi
+
 # Show colorful fun headers if the right utils are installed
 function header() {
   if command -v colorscript > /dev/null; then
