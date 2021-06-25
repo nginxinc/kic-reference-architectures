@@ -4,6 +4,11 @@ set -o errexit   # abort on nonzero exit status
 set -o nounset   # abort on unbound variable
 set -o pipefail  # don't hide errors within pipes
 
+# Don't pollute console output with upgrade notifications
+export PULUMI_SKIP_UPDATE_CHECK=true
+# Run Pulumi non-interactively
+export PULUMI_SKIP_CONFIRMATIONS=true
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if ! command -v pulumi > /dev/null; then
@@ -64,41 +69,43 @@ function add_kube_config() {
     fi
 }
 
+pulumi_args="--emoji"
+
 header "AWS VPC"
 cd "${script_dir}/vpc"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "AWS EKS"
 cd "${script_dir}/eks"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 # pulumi stack output cluster_name
 add_kube_config
 
 header "AWS ECR"
 cd "${script_dir}/ecr"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "KIC Image Build"
 cd "${script_dir}/kic-image-build"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "KIC Image Push"
 cd "${script_dir}/kic-image-push"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "Deploying KIC"
 cd "${script_dir}/kic-helm-chart"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "Logstore"
 cd "${script_dir}/logstore"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "Logagent"
 cd "${script_dir}/logagent"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
 
 header "Demo App"
 cd "${script_dir}/demo-app"
-pulumi --emoji up --yes
+pulumi $pulumi_args up
