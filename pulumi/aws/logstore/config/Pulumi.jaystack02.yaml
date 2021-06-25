@@ -1,3 +1,0 @@
-config:
-  aws:profile: f5
-  aws:region: us-west-2

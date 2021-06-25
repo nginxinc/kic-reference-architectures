@@ -3,5 +3,5 @@ runtime:
   name: python
   options:
     virtualenv: ../venv
-config: config
+config: ../config
 description: Creates new instance of a demo application in Kubernetes
