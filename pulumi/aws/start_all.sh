@@ -26,6 +26,19 @@ if ! command -v node > /dev/null; then
   exit 1
 fi
 
+if [ ! -f "${script_dir}/config/environment" ]; then
+  touch "${script_dir}/config/environment"
+fi
+
+if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
+  read -r -e -p "Enter the name of the Pulumi stack to use in all projects: " PULUMI_STACK
+  echo "PULUMI_STACK=${PULUMI_STACK}" >> "${script_dir}/config/environment"
+fi
+
+source "${script_dir}/config/environment"
+echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
+find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi stack select "${PULUMI_STACK}" \;
+
 # Show colorful fun headers if the right utils are installed
 function header() {
   if command -v colorscript > /dev/null; then
