@@ -4,35 +4,22 @@ from ingress_controller_image import IngressControllerImage, IngressControllerIm
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 
-# kic_src_url:
-# By default the latest version of the NGINX Kubernetes Ingress Controller
-# source code will be downloaded and built unless an alternative URL is
-# provided for the kic_src_url parameter. This URL can also point to a
-# directory on the local file system.
-#
-# make_target:
-# This parameter informs the image creation build script what type of
-# Docker image to build. You will need to check the source code to know
-# exactly what targets are available. As of 1.11.2, the following make
-# targets are available:
-#   debian-image (default)
-#   alpine-image
-#   debian-image-plus
-#   debian-image-nap-plus
-#   openshift-image
-#   openshift-image-plus
-#   openshift-image-nap-plus
-#   debian-image-opentracing
-#   debian-image-opentracing-plus
-#
+config = pulumi.Config('kic')
+make_target = config.get('make_target')
+kic_src_url = config.get('src_url')
+always_rebuild = config.get_bool('always_rebuild')
 
-# The following will enabled NGINX Plus builds
-# image_args = IngressControllerImageArgs(make_target='debian-image-plus',
-#                                         nginx_plus_args=NginxPlusArgs(
-#                                             key_path='/etc/ssl/nginx/nginx-repo.key',
-#                                             cert_path='/etc/ssl/nginx/nginx-repo.crt'))
+plus_config = config.get_object('nginx_plus')
+if plus_config:
+    nginx_plus_args = NginxPlusArgs(key_path=plus_config.get('kic:key_path'),
+                                    cert_path=plus_config.get('kic:cert_path'))
+else:
+    nginx_plus_args = None
 
-image_args = IngressControllerImageArgs()
+image_args = IngressControllerImageArgs(make_target=make_target,
+                                        kic_src_url=kic_src_url,
+                                        always_rebuild=always_rebuild,
+                                        nginx_plus_args=nginx_plus_args)
 
 # Download KIC source code, run `make`, and build Docker images
 ingress_image = IngressControllerImage(name='nginx-ingress-controller',

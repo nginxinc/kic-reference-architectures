@@ -14,7 +14,7 @@ definitions here should be reproducible in other languages.
 
 ### Python
 
-This project is intended to be compatible with Python 3.6+. To run the project,
+This project is compatible with Python 3.6+. To run the project,
 you will need to have installed Python on your system as well as the 
 [venv module](https://docs.python.org/3/library/venv.html) and
 [pip](https://pypi.org/project/pip/).
@@ -22,6 +22,12 @@ you will need to have installed Python on your system as well as the
 Within the project, you will need to install the Python required libraries into
 the `venv` directory. The easiest way to do this is to invoke the 
 [`setup_venv.sh`](./setup_venv.sh) included in the project.
+
+### NodeJS
+
+A Python dependency that this project relies on makes call outs to a NodeJS
+dependency, so unfortunately NodeJS is also a dependency to run the
+reference architecture.
 
 ### Pulumi
 
@@ -88,6 +94,16 @@ vpc - defines and installs the VPC and subnets to use with EKS
             └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
               └─demo-app - deploys a sample application to the cluster
 ```
+
+## Configuration
+
+The Pulumi configuration files are in the [config](./config) directory.
+Pulumi's configuration files use the following naming convention:
+`Pulumi.<stackname>.yaml`. To create a new configuration file for your
+Pulumi stack, create a new file with a name that include the stack name.
+Then, refer to the sample [configuration file](./config/Pulumi.stackname.yaml.example)
+for configuration entries that you want to customize and copy over the
+entries that you want to modify from their defaults.
 
 ### VPC
 
