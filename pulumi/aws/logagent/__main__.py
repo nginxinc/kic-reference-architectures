@@ -56,7 +56,7 @@ chart_ops = helm.ChartOpts(
         namespace=ns.metadata.name,
         repo=FILEBEAT_HELM_REPO_NAME,
         fetch_opts=FetchOpts(repo=FILEBEAT_HELM_REPO_URL),
-        version='7.13.2',
+        version='7.13.1',
         values=chart_values,
         transformations=[remove_status_field]
     )
