@@ -39,29 +39,36 @@ if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
   echo "PULUMI_STACK=${PULUMI_STACK}" >> "${script_dir}/config/environment"
 fi
 
-if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
-  read -r -e -p "Enter the name of the AWS Region to use in all projects: " AWS_DEFAULT_REGION
-  echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> "${script_dir}/config/environment"
-fi
-
-if ! grep --quiet '^AWS_DEFAULT_PROFILE=.*' "${script_dir}/config/environment"; then
-  read -r -e -p "Enter the name of the AWS Profile to use in all projects: " AWS_DEFAULT_PROFILE
-  echo "AWS_DEFAULT_PROFILE=${AWS_DEFAULT_PROFILE}" >> "${script_dir}/config/environment"
-fi
-
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 # Create the stack if it does not already exist
 find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
-# Set the profile for the projects
-find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_DEFAULT_PROFILE}" \;
+# Check for default region in environment; set if not found
+if [[ -z "${AWS_DEFAULT_REGION+x}" ]] ; then
+  echo "AWS_DEFAULT_REGION not set"
+  if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
+    read -r -e -p "Enter the name of the AWS Region to use in all projects: " AWS_DEFAULT_REGION
+    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> "${script_dir}/config/environment"
+    source "${script_dir}/config/environment"
+    find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+  fi
+else
+  echo "Using AWS_DEFAULT_REGION from environment: ${AWS_DEFAULT_REGION}"
+fi
 
-# Set the region for the projects
-find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
-
-
+if [[ -z "${AWS_PROFILE+x}" ]] ; then
+  echo "AWS_PROFILE not set"
+  if ! grep --quiet '^AWS_PROFILE=.*' "${script_dir}/config/environment"; then
+    read -r -e -p "Enter the name of the AWS Profile to use in all projects: " AWS_PROFILE
+    echo "AWS_PROFILE=${AWS_PROFILE}" >> "${script_dir}/config/environment"
+    source "${script_dir}/config/environment"
+    find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
+  fi
+else
+  echo "Using AWS_PROFILE from environment: ${AWS_PROFILE}"
+fi
 
 # Show colorful fun headers if the right utils are installed
 function header() {
