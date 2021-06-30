@@ -26,6 +26,10 @@ if ! command -v node > /dev/null; then
   exit 1
 fi
 
+if ! command -v aws > /dev/null; then
+  echo "AWS CLI not installed; some functionality will not be available"
+fi
+
 if [ ! -f "${script_dir}/config/environment" ]; then
   touch "${script_dir}/config/environment"
 fi
@@ -35,9 +39,29 @@ if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
   echo "PULUMI_STACK=${PULUMI_STACK}" >> "${script_dir}/config/environment"
 fi
 
+if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
+  read -r -e -p "Enter the name of the AWS Region to use in all projects: " AWS_DEFAULT_REGION
+  echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> "${script_dir}/config/environment"
+fi
+
+if ! grep --quiet '^AWS_DEFAULT_PROFILE=.*' "${script_dir}/config/environment"; then
+  read -r -e -p "Enter the name of the AWS Profile to use in all projects: " AWS_DEFAULT_PROFILE
+  echo "AWS_DEFAULT_PROFILE=${AWS_DEFAULT_PROFILE}" >> "${script_dir}/config/environment"
+fi
+
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
-find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi stack select "${PULUMI_STACK}" \;
+
+# Create the stack if it does not already exist
+find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+
+# Set the profile for the projects
+find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_DEFAULT_PROFILE}" \;
+
+# Set the region for the projects
+find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+
+
 
 # Show colorful fun headers if the right utils are installed
 function header() {
