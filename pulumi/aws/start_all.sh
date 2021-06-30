@@ -39,6 +39,16 @@ if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
   echo "PULUMI_STACK=${PULUMI_STACK}" >> "${script_dir}/config/environment"
 fi
 
+if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
+  read -r -e -p "Enter the name of the AWS Region to use in all projects: " AWS_DEFAULT_REGION
+  echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> "${script_dir}/config/environment"
+fi
+
+if ! grep --quiet '^AWS_DEFAULT_PROFILE=.*' "${script_dir}/config/environment"; then
+  read -r -e -p "Enter the name of the AWS Profile to use in all projects: " AWS_DEFAULT_PROFILE
+  echo "AWS_DEFAULT_PROFILE=${AWS_DEFAULT_PROFILE}" >> "${script_dir}/config/environment"
+fi
+
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
