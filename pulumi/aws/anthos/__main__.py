@@ -5,6 +5,7 @@ import pulumi_kubernetes as k8s
 from pulumi_kubernetes.yaml import ConfigGroup
 from pulumi import export
 from kic_util import pulumi_config
+import pydevd_pycharm
 
 
 def pulumi_eks_project_name():
@@ -19,17 +20,19 @@ def pulumi_ingress_project_name():
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 
-#function addNamespace(o: any) {
-    #if (o !== undefined) {
-        #if (o.metadata !== undefined) {
-            #o.metadata.namespace = "my-new-namespace";
-        #} else {
-            #o.metadata = {namespace: "my-new-namespace"}
-        #}
-    #}
-#}
+# function addNamespace(o: any) {
+# if (o !== undefined) {
+# if (o.metadata !== undefined) {
+# o.metadata.namespace = "my-new-namespace";
+# } else {
+# o.metadata = {namespace: "my-new-namespace"}
+# }
+# }
+# }
 
-
+def add_namespace(obj):
+##    pydevd_pycharm.settrace('localhost', port=9731, stdoutToServer=True, stderrToServer=True)
+    obj['metadata']['namespace'] = 'boa'
 
 config = pulumi.Config()
 
@@ -57,5 +60,8 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
 
 # Create resources from standard Kubernetes guestbook YAML example.
 boa = ConfigGroup(
-  "boa",
-  files=["manifests/*.yaml"])
+    'boa',
+    files=['manifests/*.yaml'],
+    transformations=[add_namespace],
+    opts=pulumi.ResourceOptions(depends_on=[ns])
+)
