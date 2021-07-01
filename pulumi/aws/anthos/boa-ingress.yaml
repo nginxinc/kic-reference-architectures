@@ -1,0 +1,72 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: demo-app
+spec:
+  host: demo.example.com
+  upstreams:
+  - name: frontend
+    service: frontend
+    port: 80
+  - name: ledgerwriter
+    service: ledgerwriter
+    port: 8080
+  - name: userservice
+    service: userservice
+    port: 8080
+  routes:
+  - path: /
+    matches:
+    - conditions:
+    #this needs to be the header that gets set by the frontend app if a session is authenticated
+      - header: <header name>
+        value: <header value>
+      action:
+        pass: frontend
+    action:
+      redirect:
+        url: $(scheme)$(host)/login
+  - path: /deposit
+    action:
+      pass: ledgerwriter
+  - path: /home
+    action:
+      pass: frontend
+  - path: /login
+    matches:
+    - conditions:
+      - variable: $request_method
+        value: post
+      action:
+        pass: userservice
+    action:
+      pass: frontend
+  - path: /logout
+    action:
+      pass: userservice
+  - path: /payment
+    action:
+      pass: ledgerwriter
+  - path: /signup
+    matches:
+    - conditions:
+      - variable: $request_method
+        value: post
+      action:
+        pass: userservice
+    action:
+      return:
+        code: 400
+        type: text/plain
+        body: "Not Found\n"
+#possibly offload the JWT auth with a policy?
+#https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#jwt
+#apiVersion: k8s.nginx.org/v1
+#kind: Policy
+#metadata:
+#  name: jwt_auth
+#spec:
+#  jwt:
+#    secret: jwk-secret
+#    realm: "My API"
+#    token: $http_token

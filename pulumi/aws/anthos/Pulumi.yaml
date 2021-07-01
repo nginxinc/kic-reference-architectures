@@ -1,0 +1,7 @@
+name: anthos
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: config
+description: Creates the Bank of Anthos App
