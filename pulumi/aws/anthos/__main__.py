@@ -19,19 +19,7 @@ def pulumi_ingress_project_name():
     ingress_project_path = os.path.join(script_dir, '..', 'kic-helm-chart')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
-
-# function addNamespace(o: any) {
-# if (o !== undefined) {
-# if (o.metadata !== undefined) {
-# o.metadata.namespace = "my-new-namespace";
-# } else {
-# o.metadata = {namespace: "my-new-namespace"}
-# }
-# }
-# }
-
 def add_namespace(obj):
-##    pydevd_pycharm.settrace('localhost', port=9731, stdoutToServer=True, stderrToServer=True)
     obj['metadata']['namespace'] = 'boa'
 
 config = pulumi.Config()
