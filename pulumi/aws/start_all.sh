@@ -162,6 +162,6 @@ header "Logagent"
 cd "${script_dir}/logagent"
 pulumi $pulumi_args up
 
-header "Demo App"
-cd "${script_dir}/demo-app"
+header "Bank of Anthos"
+cd "${script_dir}/anthos"
 pulumi $pulumi_args up
