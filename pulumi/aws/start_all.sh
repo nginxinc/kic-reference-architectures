@@ -48,7 +48,10 @@ find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir 
 if [[ -z "${AWS_PROFILE+x}" ]] ; then
   echo "AWS_PROFILE not set"
   if ! grep --quiet '^AWS_PROFILE=.*' "${script_dir}/config/environment"; then
-    read -r -e -p "Enter the name of the AWS Profile to use in all projects: " AWS_PROFILE
+    read -r -e -p "Enter the name of the AWS Profile to use in all projects (leave blank for default): " AWS_PROFILE
+      if [[ -z "${AWS_PROFILE}" ]] ; then
+        AWS_PROFILE=default
+      fi
     echo "AWS_PROFILE=${AWS_PROFILE}" >> "${script_dir}/config/environment"
     source "${script_dir}/config/environment"
     find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
