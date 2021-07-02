@@ -46,10 +46,18 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
                            metadata={'name': 'boa'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-# Create resources from standard Kubernetes guestbook YAML example.
+# Create resources for the Bank of Anthos
 boa = ConfigGroup(
     'boa',
     files=['manifests/*.yaml'],
+    transformations=[add_namespace],
+    opts=pulumi.ResourceOptions(depends_on=[ns])
+)
+
+# Create resources from standard Kubernetes guestbook YAML example.
+boain = ConfigGroup(
+    'boain',
+    files=['ingress/*.yaml'],
     transformations=[add_namespace],
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )

@@ -1,0 +1,14 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: boa
+spec:
+  host: demo.example.com
+  upstreams:
+  - name: frontend
+    service: frontend
+    port: 80
+  routes:
+  - path: /
+    action:
+      pass: frontend
