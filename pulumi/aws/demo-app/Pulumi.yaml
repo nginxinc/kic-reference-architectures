@@ -1,7 +1,0 @@
-name: demo-app
-runtime:
-  name: python
-  options:
-    virtualenv: ../venv
-config: ../config
-description: Creates new instance of a demo application in Kubernetes
