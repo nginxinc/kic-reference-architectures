@@ -135,6 +135,9 @@ class IngressControllerImageProvider(ResourceProvider):
 
     @staticmethod
     def image_name_alias(make_target: str, image_tag) -> DockerImageName:
+        if not image_tag:
+            raise ValueError('image_tag must not be empty nor None')
+
         image_type = make_target.replace('-image', '')
         return DockerImageName(repository='nginx/nginx-ingress', tag=f'{image_tag}-{image_type}')
 
