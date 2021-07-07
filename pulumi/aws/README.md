@@ -212,6 +212,9 @@ deployed to the `logagent` namespace.
 
 ### Demo Application
 
-A simple sample application is contained in the [`demo-app`](./demo-app)
-directory. This project shows off how one may deploy their application
-to a cluster that is using KIC.
+A version of the Google 
+[_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos)
+application is contained in the [`anthos`](./anthos) directory. This is 
+a lightly modified version of the standard application that uses the 
+NGINX KIC as an Ingress controller, which shows how one may deploy 
+their application to a cluster using the NGINX or NGINX Plus KIC.
