@@ -83,8 +83,8 @@ class IngressControllerImageArgs:
 
 
 class IngressControllerSourceArchiveUrl:
-    LAST_KNOWN_KIC_VERSION = '1.11.3'
-    DOWNLOAD_URL = f'https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/|%|VERSION|%|.tar.gz'
+    LAST_KNOWN_KIC_VERSION = '1.12.0'
+    DOWNLOAD_URL = 'https://github.com/nginxinc/kubernetes-ingress.git'
 
     @staticmethod
     def latest_version() -> str:
@@ -108,7 +108,7 @@ class IngressControllerSourceArchiveUrl:
         if not version:
             version = IngressControllerSourceArchiveUrl.latest_version()
 
-        return IngressControllerSourceArchiveUrl.DOWNLOAD_URL.replace('|%|VERSION|%|', version)
+        return f'{IngressControllerSourceArchiveUrl.DOWNLOAD_URL}#{version}'
 
 
 class IngressControllerImageProvider(ResourceProvider):
@@ -310,7 +310,7 @@ class IngressControllerImageProvider(ResourceProvider):
         for p in self.REQUIRED_PROPS:
             check_for_param(p)
 
-        parse_result = parse.urlparse(news['kic_src_url'], allow_fragments=False)
+        parse_result = parse.urlparse(news['kic_src_url'])
         url_type = URLType.from_parsed_url(parse_result)
 
         if url_type == URLType.UNKNOWN:

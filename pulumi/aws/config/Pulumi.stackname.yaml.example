@@ -33,8 +33,33 @@ config:
   # By default the latest version of the NGINX Kubernetes Ingress Controller
   # source code will be downloaded and built unless an alternative URL is
   # provided for the kic_src_url parameter. To use the default, just omit this key.
-  # Additionally, this configuration value can also point to a directory on the local file system.
-  kic:src_url: https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.3.tar.gz
+  # URLs can point to a directory path on the local filesystem, tar.gz archive, or to a
+  # git repository. Specify a tag/commit/branch for a git repository URL in the fragment.
+  #
+  # Example URLs:
+  #
+  # HTTP/HTTPS url pointing to a tar.gz archive:
+  # https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.3.tar.gz
+  #
+  # tar.gz archive on the local filesystem:
+  # file:///var/tmp/v1.11.3.tar.gz
+  # /var/tmp/v1.11.3.tar.gz
+  #
+  # Directory containing the source tree on the local filesystem:
+  # file:///var/tmp/kubernetes-ingress-1.11.3
+  # /var/tmp/kubernetes-ingress-1.11.3
+  #
+  # Github URL without a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git
+  # git@github.com:nginxinc/kubernetes-ingress.git
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git
+  #
+  # Github URL with a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git#v1.12.0
+  # git@github.com:nginxinc/kubernetes-ingress.git#v1.12.0
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git#v1.12.0
+
+  kic:src_url: https://github.com/nginxinc/kubernetes-ingress.git#v1.12.0
   # When set to true, Pulumi's diff logic is circumvented and the image will always be
   # rebuilt regardless of the input variables to Pulumi being the same or not.
   kic:always_rebuild: false

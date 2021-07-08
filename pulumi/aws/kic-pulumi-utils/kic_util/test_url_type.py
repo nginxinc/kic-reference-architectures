@@ -51,3 +51,39 @@ class TestURLType(unittest.TestCase):
         expected = URLType.LOCAL_PATH
         actual = URLType.from_url(local_path)
         self.assertEqual(expected, actual, f'path [{local_path}] was misidentified')
+
+    def test_identify_url_type_github_https_without_tag(self):
+        url = 'https://github.com/nginxinc/kubernetes-ingress.git'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
+
+    def test_identify_url_type_github_https_with_tag(self):
+        url = 'https://github.com/nginxinc/kubernetes-ingress.git#v1.12.0'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
+
+    def test_identify_url_type_github_no_schema_without_tag(self):
+        url = 'git@github.com:nginxinc/kubernetes-ingress.git'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
+
+    def test_identify_url_type_github_no_schema_with_tag(self):
+        url = 'git@github.com:nginxinc/kubernetes-ingress.git#v1.11.3'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
+
+    def test_identify_url_type_github_ssh_without_tag(self):
+        url = 'ssh://git@github.com:nginxinc/kubernetes-ingress.git'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
+
+    def test_identify_url_type_github_ssh_with_tag(self):
+        url = 'ssh://git@github.com:nginxinc/kubernetes-ingress.git#v1.12.0'
+        expected = URLType.GIT_REPO
+        actual = URLType.from_url(url)
+        self.assertEqual(expected, actual)
