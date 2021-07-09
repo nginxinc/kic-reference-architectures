@@ -3,7 +3,6 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.yaml import ConfigGroup
-from pulumi import export
 from kic_util import pulumi_config
 
 
