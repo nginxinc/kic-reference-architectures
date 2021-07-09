@@ -1,14 +1,14 @@
-apiVersion: k8s.nginx.org/v1
-kind: VirtualServer
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
 metadata:
-  name: boa
+  name: bankofanthos
 spec:
-  host: demo.example.com
-  upstreams:
-  - name: frontend
-    service: frontend
-    port: 80
-  routes:
-  - path: /
-    action:
-      pass: frontend
+  ingressClassName: nginx # use only with k8s version >= 1.18.0
+  rules:
+  - host: demo.example.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: frontend
+          servicePort: 80
