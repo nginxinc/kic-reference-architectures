@@ -11,11 +11,20 @@ def pulumi_eks_project_name():
     eks_project_path = os.path.join(script_dir, '..', 'eks')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
-
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ingress_project_path = os.path.join(script_dir, '..', 'kic-helm-chart')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
+def anthos_manifests_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
+    return anthos_manifests_path
+
+def ingress_manifests_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    ingress_manifests_path = os.path.join(script_dir, 'ingress', '*.yaml')
+    return ingress_manifests_path
 
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
@@ -44,17 +53,21 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 # Create resources for the Bank of Anthos
+anthos_manifests=anthos_manifests_location()
+
 boa = ConfigGroup(
     'boa',
-    files=['manifests/*.yaml'],
+    files=[anthos_manifests],
     transformations=[add_namespace],
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
-# Create resources from standard Kubernetes guestbook YAML example.
+# Create ingress resources for the Bank of Anthos
+ingress_manifests=ingress_manifests_location()
+
 boain = ConfigGroup(
     'boain',
-    files=['ingress/*.yaml'],
+    files=[ingress_manifests],
     transformations=[add_namespace],
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
