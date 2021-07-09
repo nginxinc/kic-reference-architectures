@@ -20,7 +20,6 @@ def pulumi_ingress_project_name():
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
 
-config = pulumi.Config()
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
