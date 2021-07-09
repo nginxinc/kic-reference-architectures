@@ -5,7 +5,6 @@ import pulumi_kubernetes as k8s
 from pulumi_kubernetes.yaml import ConfigGroup
 from pulumi import export
 from kic_util import pulumi_config
-import pydevd_pycharm
 
 
 def pulumi_eks_project_name():
