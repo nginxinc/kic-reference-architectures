@@ -57,6 +57,85 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
                            metadata={'name': 'boa'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
+# Add Config Maps for Bank of Anthos
+accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
+                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      api_version="v1",
+                                                      kind="ConfigMap",
+                                                      metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                          name="accounts-db-config",
+                                                          namespace=ns,
+                                                          labels={
+                                                              "app": "accounts-db",
+                                                          },
+                                                      ),
+                                                      data={
+                                                          "POSTGRES_DB": "accounts-db",
+                                                          "POSTGRES_USER": "accounts-admin",
+                                                          "POSTGRES_PASSWORD": "accounts-pwd",
+                                                          "ACCOUNTS_DB_URI": "postgresql://accounts-admin:accounts-pwd@accounts-db:5432/accounts-db",
+                                                      })
+
+environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigMap",
+                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      api_version="v1",
+                                                      kind="ConfigMap",
+                                                      metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                          name="environment-config",
+                                                          namespace=ns
+                                                      ),
+                                                      data={
+                                                          "LOCAL_ROUTING_NUM": "883745000",
+                                                          "PUB_KEY_PATH": "/root/.ssh/publickey",
+                                                      })
+service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigMap",
+                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      api_version="v1",
+                                                      kind="ConfigMap",
+                                                      metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                          name="service-api-config",
+                                                          namespace=ns
+                                                      ),
+                                                      data={
+                                                          "TRANSACTIONS_API_ADDR": "ledgerwriter:8080",
+                                                          "BALANCES_API_ADDR": "balancereader:8080",
+                                                          "HISTORY_API_ADDR": "transactionhistory:8080",
+                                                          "CONTACTS_API_ADDR": "contacts:8080",
+                                                          "USERSERVICE_API_ADDR": "userservice:8080",
+                                                      })
+demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
+                                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                    api_version="v1",
+                                                    kind="ConfigMap",
+                                                    metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                        name="demo-data-config",
+                                                        namespace=ns
+                                                    ),
+                                                    data={
+                                                        "USE_DEMO_DATA": "True",
+                                                        "DEMO_LOGIN_USERNAME": "testuser",
+                                                        "DEMO_LOGIN_PASSWORD": "password",
+                                                    })
+ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
+                                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                    api_version="v1",
+                                                    kind="ConfigMap",
+                                                    metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                        name="ledger-db-config",
+                                                        namespace=ns,
+                                                        labels={
+                                                            "app": "postgres",
+                                                        },
+                                                    ),
+                                                    data={
+                                                        "POSTGRES_DB": "postgresdb",
+                                                        "POSTGRES_USER": "admin",
+                                                        "POSTGRES_PASSWORD": "password",
+                                                        "SPRING_DATASOURCE_URL": "jdbc:postgresql://ledger-db:5432/postgresdb",
+                                                        "SPRING_DATASOURCE_USERNAME": "admin",
+                                                        "SPRING_DATASOURCE_PASSWORD": "password",
+                                                    })
+
 # Create resources for the Bank of Anthos
 anthos_manifests = anthos_manifests_location()
 
@@ -69,6 +148,7 @@ boa = ConfigGroup(
 
 boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
                                         api_version="networking.k8s.io/v1beta1",
+                                        opts=pulumi.ResourceOptions(depends_on=[ns, boa]),
                                         kind="Ingress",
                                         metadata=k8s.meta.v1.ObjectMetaArgs(
                                             name="bankofanthos",
