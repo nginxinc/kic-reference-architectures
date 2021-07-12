@@ -47,7 +47,9 @@ Since this project illustrates deploying to AWS,
 is necessary. If you want to avoid using environment variables, AWS profile
 and region definitions can be contained in the `config/Pulumi.<stack>.yaml` 
 files in each project. Refer to the Pulumi documentation for details on how to
-do this.
+do this. The script [`startup_all.sh`](./startup_all.sh) will prompt you to add 
+the AWS region and profile values that will then be added to the `config/Pulumi.<stack>.yaml`
+in each project directory.
 
 If the [`aws` CLI](https://aws.amazon.com/cli/) is installed, it will be used
 in the setup bash scripts to update your `kubectl` local configuration to use
@@ -75,7 +77,11 @@ The easiest way to run the project is to run [`start_all.sh`](./start_all.sh)
 after you have  completed the steps in [requirements](README.md#requirements).
 When doing so, be sure to choose the same 
 [Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/) 
-for all of your projects. Alternatively, you can enter into each Pulumi
+for all of your projects. Additionally, this script will prompt you for the
+AWS region and profile information. This information will be used to populate
+the `config/Pulumi.<stack>.yaml` files in each project directory.
+
+Alternatively, you can enter into each Pulumi
 project directory and execute each project independently by doing 
 `pulumi up`. Take a look at `start_all.sh` to get a feel for the flow.
 
