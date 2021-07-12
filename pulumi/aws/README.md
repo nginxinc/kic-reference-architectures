@@ -35,6 +35,11 @@ In order to run this project, you will need to first [download, install and
 configure Pulumi](https://www.pulumi.com/docs/get-started/install/) for 
 your environment.
 
+### Git
+
+The `git` command line tool is required for checking out KIC source code from
+github and for the KIC image build process.
+
 ### AWS
 
 Since this project illustrates deploying to AWS, 
