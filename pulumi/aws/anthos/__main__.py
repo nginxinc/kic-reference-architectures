@@ -2,7 +2,9 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
+import pydevd_pycharm
 from pulumi_kubernetes.yaml import ConfigGroup
+
 from kic_util import pulumi_config
 
 
@@ -11,23 +13,33 @@ def pulumi_eks_project_name():
     eks_project_path = os.path.join(script_dir, '..', 'eks')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
+
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ingress_project_path = os.path.join(script_dir, '..', 'kic-helm-chart')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
 
 def anthos_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
     return anthos_manifests_path
 
+
 def ingress_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ingress_manifests_path = os.path.join(script_dir, 'ingress', '*.yaml')
     return ingress_manifests_path
 
+
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
+
+
+def add_hostname(obj):
+    pydevd_pycharm.settrace('localhost', port=9341, stdoutToServer=True, stderrToServer=True)
+    if obj['kind'] == "Ingress" and obj['metadata']['name'] == 'bankofanthos':
+        obj['spec']['rules'][0]['host'] = 'demo.example.com'
 
 
 stack_name = pulumi.get_stack()
@@ -53,7 +65,7 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 # Create resources for the Bank of Anthos
-anthos_manifests=anthos_manifests_location()
+anthos_manifests = anthos_manifests_location()
 
 boa = ConfigGroup(
     'boa',
@@ -62,12 +74,26 @@ boa = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
-# Create ingress resources for the Bank of Anthos
-ingress_manifests=ingress_manifests_location()
 
-boain = ConfigGroup(
-    'boain',
-    files=[ingress_manifests],
-    transformations=[add_namespace],
-    opts=pulumi.ResourceOptions(depends_on=[ns])
-)
+boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
+    api_version="networking.k8s.io/v1beta1",
+    kind="Ingress",
+    metadata=k8s.meta.v1.ObjectMetaArgs(
+        name="bankofanthos",
+        namespace=ns
+    ),
+    spec=k8s.networking.v1beta1.IngressSpecArgs(
+        ingress_class_name="nginx",
+        rules=[k8s.networking.v1beta1.IngressRuleArgs(
+            host=lb_ingress_hostname,
+            http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
+                paths=[k8s.networking.v1beta1.HTTPIngressPathArgs(
+                    path="/",
+                    backend=k8s.networking.v1beta1.IngressBackendArgs(
+                        service_name="frontend",
+                        service_port=80,
+                    ),
+                )],
+            ),
+        )],
+    ))
