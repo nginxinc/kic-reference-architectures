@@ -83,23 +83,17 @@ class IngressControllerImageArgs:
 
 
 class IngressControllerSourceArchiveUrl:
-    LAST_KNOWN_KIC_VERSION = '1.12.0'
     DOWNLOAD_URL = 'https://github.com/nginxinc/kubernetes-ingress.git'
 
     @staticmethod
     def latest_version() -> str:
-        version = IngressControllerSourceArchiveUrl.LAST_KNOWN_KIC_VERSION
-
-        try:
-            ping_url = 'https://github.com/nginxinc/kubernetes-ingress/releases/latest'
-            response = requests.head(ping_url)
-            redirect = response.headers.get('location')
-            tag_url = parse.urlparse(redirect)
-            tag_url_path = tag_url.path
-            elements = tag_url_path.split('/')
-            version = elements[-1]
-        except:
-            pass
+        ping_url = 'https://github.com/nginxinc/kubernetes-ingress/releases/latest'
+        response = requests.head(ping_url)
+        redirect = response.headers.get('location')
+        tag_url = parse.urlparse(redirect)
+        tag_url_path = tag_url.path
+        elements = tag_url_path.split('/')
+        version = str(elements[-1])
 
         return version
 
