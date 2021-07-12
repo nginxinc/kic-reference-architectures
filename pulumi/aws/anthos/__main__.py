@@ -2,7 +2,6 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
-import pydevd_pycharm
 from pulumi_kubernetes.yaml import ConfigGroup
 
 from kic_util import pulumi_config
@@ -34,12 +33,6 @@ def ingress_manifests_location():
 
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
-
-
-def add_hostname(obj):
-    pydevd_pycharm.settrace('localhost', port=9341, stdoutToServer=True, stderrToServer=True)
-    if obj['kind'] == "Ingress" and obj['metadata']['name'] == 'bankofanthos':
-        obj['spec']['rules'][0]['host'] = 'demo.example.com'
 
 
 stack_name = pulumi.get_stack()
@@ -74,26 +67,25 @@ boa = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
-
 boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
-    api_version="networking.k8s.io/v1beta1",
-    kind="Ingress",
-    metadata=k8s.meta.v1.ObjectMetaArgs(
-        name="bankofanthos",
-        namespace=ns
-    ),
-    spec=k8s.networking.v1beta1.IngressSpecArgs(
-        ingress_class_name="nginx",
-        rules=[k8s.networking.v1beta1.IngressRuleArgs(
-            host=lb_ingress_hostname,
-            http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
-                paths=[k8s.networking.v1beta1.HTTPIngressPathArgs(
-                    path="/",
-                    backend=k8s.networking.v1beta1.IngressBackendArgs(
-                        service_name="frontend",
-                        service_port=80,
-                    ),
-                )],
-            ),
-        )],
-    ))
+                                        api_version="networking.k8s.io/v1beta1",
+                                        kind="Ingress",
+                                        metadata=k8s.meta.v1.ObjectMetaArgs(
+                                            name="bankofanthos",
+                                            namespace=ns
+                                        ),
+                                        spec=k8s.networking.v1beta1.IngressSpecArgs(
+                                            ingress_class_name="nginx",
+                                            rules=[k8s.networking.v1beta1.IngressRuleArgs(
+                                                host=lb_ingress_hostname,
+                                                http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
+                                                    paths=[k8s.networking.v1beta1.HTTPIngressPathArgs(
+                                                        path="/",
+                                                        backend=k8s.networking.v1beta1.IngressBackendArgs(
+                                                            service_name="frontend",
+                                                            service_port=80,
+                                                        ),
+                                                    )],
+                                                ),
+                                            )],
+                                        ))
