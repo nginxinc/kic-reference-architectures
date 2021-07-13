@@ -1,0 +1,90 @@
+config:
+  # If you have an AWS profile defined, you can configure it here instead of using an environment variable.
+  aws:profile: myProfile
+  # Your AWS region can be configured here instead of using an environment variable.
+  aws:region: us-east-1
+
+  # This is the Kubernetes version to install using EKS. Changing this value may result in bugs in the behavior
+  # of the reference architecture because it is designed around the APIs for 1.19.
+  eks:k8s_version: 1.19
+  # This is the default instance type used by EKS.
+  eks:instance_type: t2.large
+  # The minimum number of compute instances to provision for the EKS cluster.
+  eks:min_size: 3
+  # The maximum size of the EKS cluster.
+  eks:max_size: 12
+  # The desired capacity of the EKS cluster.
+  eks:desired_capacity: 3
+
+  # This parameter informs the image creation build script what type of
+  # Docker image to build. You will need to check the source code to know
+  # exactly what targets are available. As of 1.11.2, the following make
+  # targets are available:
+  #   debian-image (default)
+  #   alpine-image
+  #   debian-image-plus
+  #   debian-image-nap-plus
+  #   openshift-image
+  #   openshift-image-plus
+  #   openshift-image-nap-plus
+  #   debian-image-opentracing
+  #   debian-image-opentracing-plus
+  kic:make_target: debian-image
+  # By default the latest version of the NGINX Kubernetes Ingress Controller
+  # source code will be downloaded and built unless an alternative URL is
+  # provided for the kic_src_url parameter. To use the default, just omit this key.
+  # URLs can point to a directory path on the local filesystem, tar.gz archive, or to a
+  # git repository. Specify a tag/commit/branch for a git repository URL in the fragment.
+  #
+  # Example URLs:
+  #
+  # HTTP/HTTPS url pointing to a tar.gz archive:
+  # https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.3.tar.gz
+  #
+  # tar.gz archive on the local filesystem:
+  # file:///var/tmp/v1.11.3.tar.gz
+  # /var/tmp/v1.11.3.tar.gz
+  #
+  # Directory containing the source tree on the local filesystem:
+  # file:///var/tmp/kubernetes-ingress-1.11.3
+  # /var/tmp/kubernetes-ingress-1.11.3
+  #
+  # Github URL without a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git
+  # git@github.com:nginxinc/kubernetes-ingress.git
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git
+  #
+  # Github URL with a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git#v1.12.0
+  # git@github.com:nginxinc/kubernetes-ingress.git#v1.12.0
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git#v1.12.0
+
+  kic:src_url: https://github.com/nginxinc/kubernetes-ingress.git#v1.12.0
+  # When set to true, Pulumi's diff logic is circumvented and the image will always be
+  # rebuilt regardless of the input variables to Pulumi being the same or not.
+  kic:always_rebuild: false
+  # When the block below is defined and the make_target is set to an NGINX plus image,
+  # NGINX Plus will be built.
+  kic:nginx_plus:
+    # Path on the executing system's filesystem of the NGINX repository key.
+    kic:key_path: /etc/ssl/nginx/nginx-repo.key
+    # Path on the executing system's filesystem of the NGINX repository certificate.
+    kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
+
+  # These parameters define the name of the database and the database credentials
+  # used by the Bank of Anthos accounts application.
+  anthos:accounts_admin: admin
+  anthos:accounts_db: postgresdb
+  anthos:accounts_pwd: Password
+
+  # These parameters define the name of the database and the database credentials
+  # used by the Bank of Anthos ledger application.
+  anthos:ledger_admin: admin
+  anthos:ledger_db: postgresdb
+  anthos:ledger_pwd: Password
+
+  # These parameters define the credentials for the demo user for the Bank of Anthos
+  # application as well as defining if the demo data should be loaded.
+  anthos:demo_pwd: password
+  anthos:demo_login: testuser
+  anthos:demo_data: True

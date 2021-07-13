@@ -1,6 +1,5 @@
 import base64
 import os
-
 import pulumi
 import pulumi_kubernetes as k8s
 from Crypto.PublicKey import RSA
@@ -25,13 +24,6 @@ def anthos_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
     return anthos_manifests_path
-
-
-def ingress_manifests_location():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_manifests_path = os.path.join(script_dir, 'ingress', '*.yaml')
-    return ingress_manifests_path
-
 
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
@@ -60,6 +52,15 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 # Add Config Maps for Bank of Anthos
+
+# Configuration Values are stored in the configuration:
+#  ../config/Pulumi.STACKNAME.yaml
+config = pulumi.Config('anthos')
+accounts_pwd = config.require('accounts_pwd')
+accounts_admin = config.require('accounts_admin')
+accounts_db = config.require('accounts_db')
+accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@' + str(accounts_db) + ':5432/' + str(accounts_db)
+
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
                                                       api_version="v1",
@@ -68,14 +69,14 @@ accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigM
                                                           name="accounts-db-config",
                                                           namespace=ns,
                                                           labels={
-                                                              "app": "accounts-db",
+                                                              "app": "accounts_db",
                                                           },
                                                       ),
                                                       data={
-                                                          "POSTGRES_DB": "accounts-db",
-                                                          "POSTGRES_USER": "accounts-admin",
-                                                          "POSTGRES_PASSWORD": "accounts-pwd",
-                                                          "ACCOUNTS_DB_URI": "postgresql://accounts-admin:accounts-pwd@accounts-db:5432/accounts-db",
+                                                          "POSTGRES_DB": accounts_db,
+                                                          "POSTGRES_USER": accounts_admin,
+                                                          "POSTGRES_PASSWORD": accounts_pwd,
+                                                          "ACCOUNTS_DB_URI": accounts_db_uri
                                                       })
 
 environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigMap",
@@ -90,6 +91,8 @@ environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigM
                                                           "LOCAL_ROUTING_NUM": "883745000",
                                                           "PUB_KEY_PATH": "/root/.ssh/publickey",
                                                       })
+
+
 service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
                                                       api_version="v1",
@@ -105,6 +108,15 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                           "CONTACTS_API_ADDR": "contacts:8080",
                                                           "USERSERVICE_API_ADDR": "userservice:8080",
                                                       })
+
+
+# Configuration Values are stored in the configuration:
+#  ../config/Pulumi.STACKNAME.yaml
+config = pulumi.Config('anthos')
+demo_pwd = config.require('demo_pwd')
+demo_login = config.require('demo_login')
+demo_data = config.require('demo_data')
+
 demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
                                                     api_version="v1",
@@ -114,10 +126,19 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                         namespace=ns
                                                     ),
                                                     data={
-                                                        "USE_DEMO_DATA": "True",
-                                                        "DEMO_LOGIN_USERNAME": "testuser",
-                                                        "DEMO_LOGIN_PASSWORD": "password",
+                                                        "USE_DEMO_DATA": demo_data,
+                                                        "DEMO_LOGIN_USERNAME": demo_login,
+                                                        "DEMO_LOGIN_PASSWORD": demo_pwd,
                                                     })
+
+# Configuration Values are stored in the configuration:
+#  ../config/Pulumi.STACKNAME.yaml
+config = pulumi.Config('anthos')
+ledger_pwd = config.require('ledger_pwd')
+ledger_admin = config.require('ledger_admin')
+ledger_db = config.require('ledger_db')
+spring_url = 'jdbc:postgresql://' + str(ledger_db) + ':5432/' + str(ledger_db)
+
 ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
                                                     api_version="v1",
@@ -130,12 +151,12 @@ ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
                                                         },
                                                     ),
                                                     data={
-                                                        "POSTGRES_DB": "postgresdb",
-                                                        "POSTGRES_USER": "admin",
-                                                        "POSTGRES_PASSWORD": "password",
-                                                        "SPRING_DATASOURCE_URL": "jdbc:postgresql://ledger-db:5432/postgresdb",
-                                                        "SPRING_DATASOURCE_USERNAME": "admin",
-                                                        "SPRING_DATASOURCE_PASSWORD": "password",
+                                                        "POSTGRES_DB": ledger_db,
+                                                        "POSTGRES_USER": ledger_admin,
+                                                        "POSTGRES_PASSWORD": ledger_pwd,
+                                                        "SPRING_DATASOURCE_URL": spring_url,
+                                                        "SPRING_DATASOURCE_USERNAME": ledger_admin,
+                                                        "SPRING_DATASOURCE_PASSWORD": ledger_pwd
                                                     })
 
 key = RSA.generate(2048)
@@ -171,6 +192,7 @@ boa = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
+# Add the Ingress
 boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
                                         api_version="networking.k8s.io/v1beta1",
                                         opts=pulumi.ResourceOptions(depends_on=[ns, boa]),
