@@ -1,7 +1,9 @@
+import base64
 import os
 
 import pulumi
 import pulumi_kubernetes as k8s
+from Crypto.PublicKey import RSA
 from pulumi_kubernetes.yaml import ConfigGroup
 
 from kic_util import pulumi_config
@@ -135,6 +137,29 @@ ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
                                                         "SPRING_DATASOURCE_USERNAME": "admin",
                                                         "SPRING_DATASOURCE_PASSWORD": "password",
                                                     })
+
+key = RSA.generate(2048)
+private_key = key.export_key()
+private_key.decode()
+encode_private = base64.b64encode(private_key)
+
+public_key = key.publickey().export_key()
+public_key.decode()
+encode_public = base64.b64encode(public_key)
+
+jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
+                                    api_version="v1",
+                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                    kind="Secret",
+                                    metadata=k8s.meta.v1.ObjectMetaArgs(
+                                        name="jwt-key",
+                                        namespace=ns
+                                    ),
+                                    type="Opaque",
+                                    data={
+                                        "jwtRS256.key": str(encode_private, "utf-8"),
+                                        "jwtRS256.key.pub": str(encode_public, "utf-8")
+                                    })
 
 # Create resources for the Bank of Anthos
 anthos_manifests = anthos_manifests_location()
