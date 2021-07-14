@@ -88,3 +88,7 @@ config:
   anthos:demo_pwd: password
   anthos:demo_login: testuser
   anthos:demo_data: True
+
+  # This optional parameter supplies a hostname for the Bank of Anthos Ingress
+  # controller. If not set, the FQDN of the LB is used.
+  anthos:hostname: demo.example.com

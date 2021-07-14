@@ -193,6 +193,17 @@ boa = ConfigGroup(
 )
 
 # Add the Ingress
+# Configuration Values are stored in the configuration:
+#  ../config/Pulumi.STACKNAME.yaml
+config = pulumi.Config('anthos')
+anthos_host = config.get('hostname')
+
+# If we have not defined a hostname in our config, we use the 
+# hostname of the LB
+if not anthos_host:
+    anthos_host = lb_ingress_hostname
+
+
 boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
                                         api_version="networking.k8s.io/v1beta1",
                                         opts=pulumi.ResourceOptions(depends_on=[ns, boa]),
