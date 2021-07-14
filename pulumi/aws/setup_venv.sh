@@ -17,10 +17,22 @@ fi
 
 source "${script_dir}/venv/bin/activate"
 
+# Use the latest version of pip
+pip3 install --upgrade pip
+
 # Installs wheel package management, so that pulumi requirements install quickly
 pip3 install wheel
+
+# Get nodeenv version so that node can be installed before we install Python
+# dependencies because pulumi_eks depends on the presence of node.
+pip3 install "$(grep nodeenv requirements.txt)"
+
+# Install node.js into virtual environment so that it can be used by Python
+# modules that make call outs to it.
+nodeenv -p --node=lts
+
 # Install general package requirements
-pip3 install -r "${script_dir}/requirements.txt"
+pip3 install --requirement "${script_dir}/requirements.txt"
 # Install local common utilities module
 pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" && \
   rm -rf "${script_dir}/kic-pulumi-utils/.eggs" \
