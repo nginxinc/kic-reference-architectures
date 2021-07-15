@@ -57,8 +57,15 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 accounts_pwd = config.require('accounts_pwd')
-accounts_admin = config.require('accounts_admin')
-accounts_db = config.require('accounts_db')
+
+accounts_admin = config.get('accounts_admin')
+if not accounts_admin:
+    accounts_admin = 'admin'
+
+accounts_db = config.get('accounts_db')
+if not accounts_db:
+    accounts_db = 'postgresdb'
+
 accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@accounts-db:5432/' + str(accounts_db)
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
@@ -114,8 +121,14 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 demo_pwd = config.require('demo_pwd')
-demo_login = config.require('demo_login')
-demo_data = config.require('demo_data')
+
+demo_login = config.get('demo_login')
+if not demo_login:
+    demo_login = 'testuser'
+
+demo_data = config.get('demo_data')
+if not demo_data:
+    demo_data = 'True'
 
 demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -135,8 +148,15 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 ledger_pwd = config.require('ledger_pwd')
-ledger_admin = config.require('ledger_admin')
-ledger_db = config.require('ledger_db')
+
+ledger_admin = config.get('ledger_admin')
+if not ledger_admin:
+    ledger_admin = 'admin'
+
+ledger_db = config.get('ledger_db')
+if not ledger_db:
+    ledger_db = 'postgresdb'
+
 spring_url = 'jdbc:postgresql://ledger-db:5432/' + str(ledger_db)
 
 ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
