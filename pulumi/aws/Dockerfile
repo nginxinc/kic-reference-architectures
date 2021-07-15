@@ -1,6 +1,8 @@
-FROM docker:latest AS docker
+ARG ARCH=amd64
 
-FROM pulumi/pulumi-python
+FROM $ARCH/docker:latest AS docker
+
+FROM $ARCH/debian:bullseye-slim
 ARG DEBIAN_FRONTEND=noninteractive
 ARG UID
 ARG GID
@@ -11,11 +13,13 @@ RUN set -eux; \
     apt-get install --no-install-recommends -qqq -y \
         build-essential \
         ca-certificates \
-        curl \
+        python3-venv \
+        wget \
         git; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     groupadd --gid $DOCKER_GID docker; \
     groupadd --gid $GID runner; \
+    mkdir -p /pulumi/projects; \
     useradd --home-dir /pulumi/projects/kic-reference-architectures --groups docker --uid $UID --gid $GID --shell /bin/bash --create-home runner; \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* /usr/share/man/* /root/.cache
 

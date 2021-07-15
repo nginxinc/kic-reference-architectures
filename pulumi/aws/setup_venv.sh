@@ -55,18 +55,26 @@ OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 if command -v wget > /dev/null; then
   download_cmd="wget --quiet --max-redirect=12 --output-document -"
 elif command -v curl > /dev/null; then
-  download_cmd="curl --silent --location"
+  download_cmd="curl --fail --silent --location"
 else
   >&2 echo "either wget or curl must be installed"
   exit 1
 fi
 
-# Add local kubectl if a version is not in the path
-if ! command -v kubectl > /dev/null; then
-  echo "Downloading kubectl into virtual environment"
-  KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
-  ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${script_dir}/venv/bin/kubectl"
-  KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
-  echo "${KUBECTL_CHECKSUM}  ${script_dir}/venv/bin/kubectl" | sha256sum --check
-  chmod +x "${script_dir}/venv/bin/kubectl"
-fi
+# Add local kubectl to the virtual environment
+echo "Downloading kubectl into virtual environment"
+KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
+${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${script_dir}/venv/bin/kubectl"
+KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
+echo "${KUBECTL_CHECKSUM}  ${script_dir}/venv/bin/kubectl" | sha256sum --check
+chmod +x "${script_dir}/venv/bin/kubectl"
+
+# Add Pulumi to the virtual environment
+echo "Downloading Pulumi CLI into virtual environment"
+PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/requirements.txt" | cut -d '=' -f2)"
+PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
+PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
+
+${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+tar --extract --gunzip --directory "${script_dir}/venv/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"

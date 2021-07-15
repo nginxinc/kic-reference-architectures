@@ -22,7 +22,18 @@ else
   DOCKER_USER_GID=1000
 fi
 
+ARCH=""
+case $(uname -m) in
+    i386)    ARCH="386" ;;
+    i686)    ARCH="386" ;;
+    x86_64)  ARCH="amd64" ;;
+    aarch64) ARCH="arm64v8" ;;
+    arm)     dpkg --print-architecture | grep -q "arm64" && ARCH="arm64v8" || ARCH="arm" ;;
+    *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
+esac
+
 docker build \
+  --build-arg ARCH="${ARCH}" \
   --build-arg UID="${DOCKER_USER_UID}" \
   --build-arg GID="${DOCKER_USER_GID}" \
   --build-arg DOCKER_GID="${DOCKER_GID}" \
