@@ -1,4 +1,3 @@
-FROM bitnami/kubectl:latest AS kubectl
 FROM docker:latest AS docker
 
 FROM pulumi/pulumi-python
@@ -13,6 +12,7 @@ RUN set -eux; \
     apt-get install --no-install-recommends -qqq -y \
         build-essential \
         ca-certificates \
+        curl \
         git; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     groupadd --gid $DOCKER_GID docker; \
