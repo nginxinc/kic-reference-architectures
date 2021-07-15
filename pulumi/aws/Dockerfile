@@ -5,7 +5,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG UID
 ARG GID
 ARG DOCKER_GID=999
-COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/
 COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
 RUN set -eux; \
     apt-get update -qq; \
