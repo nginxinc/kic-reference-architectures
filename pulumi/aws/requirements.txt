@@ -8,3 +8,4 @@ requests~=2.25.1
 passlib~=1.7.4
 PyYAML~=5.4.1
 setuptools~=57.0.0
+pycryptodome~=3.10.1
