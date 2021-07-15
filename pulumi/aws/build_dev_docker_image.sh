@@ -6,15 +6,17 @@ set -o pipefail  # don't hide errors within pipes
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-if command -v getent > /dev/null; then
+if [ -S "/var/run/docker.sock" ]; then
+  DOCKER_GID="$(stat --printf="%g" /var/run/docker.sock 2>/dev/null || echo 999)"
+elif command -v getent > /dev/null; then
   DOCKER_GID="$(getent group docker | cut --delimiter=: --field=3)"
 else
   DOCKER_GID=999
 fi
 
 if command -v id > /dev/null; then
-  DOCKER_USER_UID="$(id --user)"
-  DOCKER_USER_GID="$(id --group)"
+  DOCKER_USER_UID="$(id -u || echo 1000)"
+  DOCKER_USER_GID="$(id -g || echo 1000)"
 else
   DOCKER_USER_UID=1000
   DOCKER_USER_GID=1000

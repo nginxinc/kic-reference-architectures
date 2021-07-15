@@ -29,3 +29,5 @@ RUN set -eux; \
     /pulumi/projects/kic-reference-architectures/setup_venv.sh; \
     rm -rf /pulumi/projects/kic-reference-architectures/.cache; \
     echo 'source /pulumi/projects/kic-reference-architectures/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc
+
+ENTRYPOINT ["/bin/bash"]
