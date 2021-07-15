@@ -25,6 +25,7 @@ def anthos_manifests_location():
     anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
     return anthos_manifests_path
 
+
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'boa'
 
@@ -42,16 +43,27 @@ eks_stack_ref.get_output('cluster_name').apply(
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample', kubeconfig=kubeconfig)
 
+# Logic to extract the FQDN of the load balancer for Ingress
 ingress_project_name = pulumi_ingress_project_name()
 ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
 ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
 lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
 
+# Create the namespace for Bank of Anthos
 ns = k8s.core.v1.Namespace(resource_name='boa',
                            metadata={'name': 'boa'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-# Add Config Maps for Bank of Anthos
+# Add Config Maps for Bank of Anthos; these are built in
+# Pulumi in order to manage secrets and provide the option
+# for users to override defaults in the configuration file.
+#
+# Configuration values that are required use the `require`
+# method. Those that are optional use the `get` method, and have
+# additional logic to set defaults if no value is set by the user
+#
+# Note that the Pulumi code will exit with an error message if
+# a required variable is not defined in the configuration file.
 
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
@@ -66,7 +78,8 @@ accounts_db = config.get('accounts_db')
 if not accounts_db:
     accounts_db = 'postgresdb'
 
-accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@accounts-db:5432/' + str(accounts_db)
+accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@accounts-db:5432/' + str(
+    accounts_db)
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -99,7 +112,6 @@ environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigM
                                                           "PUB_KEY_PATH": "/root/.ssh/publickey",
                                                       })
 
-
 service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
                                                       api_version="v1",
@@ -115,7 +127,6 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                           "CONTACTS_API_ADDR": "contacts:8080",
                                                           "USERSERVICE_API_ADDR": "userservice:8080",
                                                       })
-
 
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
@@ -202,7 +213,15 @@ jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
                                         "jwtRS256.key.pub": str(encode_public, "utf-8")
                                     })
 
-# Create resources for the Bank of Anthos
+# Create resources for the Bank of Anthos using the
+# Kubernetes YAML manifests which have been pulled from
+# the google repository.
+#
+# Note that these have been lightly edited to remove
+# dependencies on GCP where necessary. Additionally, the
+# `frontend` service has been updated to use a ClusterIP
+# rather than the external load balancer, as that interaction
+# is now handled by the NGNIX KIC.
 anthos_manifests = anthos_manifests_location()
 
 boa = ConfigGroup(
@@ -212,17 +231,25 @@ boa = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
-# Add the Ingress
+# Add the Ingress controller for the Bank of Anthos
+# application. This uses the NGINX KIC that is installed
+# as part of this Pulumi stack.
+#
+# By default, the deployment logic determines and uses the
+# FQDN of the Load Balancer for the Ingress controller.
+# This can be adjusted by the user by adding a value to the
+# configuration file. This must be a FQDN that resolves to
+# the IP of the NGINX KIC's load balancer.
+#
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 anthos_host = config.get('hostname')
 
 # If we have not defined a hostname in our config, we use the 
-# hostname of the LB
+# hostname of the LB.
 if not anthos_host:
     anthos_host = lb_ingress_hostname
-
 
 boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
                                         api_version="networking.k8s.io/v1beta1",
