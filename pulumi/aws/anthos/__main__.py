@@ -59,7 +59,7 @@ config = pulumi.Config('anthos')
 accounts_pwd = config.require('accounts_pwd')
 accounts_admin = config.require('accounts_admin')
 accounts_db = config.require('accounts_db')
-accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@' + str(accounts_db) + ':5432/' + str(accounts_db)
+accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@accounts-db:5432/' + str(accounts_db)
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -128,7 +128,7 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     data={
                                                         "USE_DEMO_DATA": demo_data,
                                                         "DEMO_LOGIN_USERNAME": demo_login,
-                                                        "DEMO_LOGIN_PASSWORD": demo_pwd,
+                                                        "DEMO_LOGIN_PASSWORD": demo_pwd
                                                     })
 
 # Configuration Values are stored in the configuration:
@@ -137,7 +137,7 @@ config = pulumi.Config('anthos')
 ledger_pwd = config.require('ledger_pwd')
 ledger_admin = config.require('ledger_admin')
 ledger_db = config.require('ledger_db')
-spring_url = 'jdbc:postgresql://' + str(ledger_db) + ':5432/' + str(ledger_db)
+spring_url = 'jdbc:postgresql://ledger-db:5432/' + str(ledger_db)
 
 ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
