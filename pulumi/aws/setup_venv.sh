@@ -43,11 +43,12 @@ pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" && \
 
 ARCH=""
 case $(uname -m) in
-    i386)   ARCH="386" ;;
-    i686)   ARCH="386" ;;
-    x86_64) ARCH="amd64" ;;
-    arm)    dpkg --print-ARCH | grep -q "arm64" && ARCH="arm64" || ARCH="arm" ;;
-    *)   echo "Unable to determine system architecture."; exit 1 ;;
+    i386)    ARCH="386" ;;
+    i686)    ARCH="386" ;;
+    x86_64)  ARCH="amd64" ;;
+    aarch64) ARCH="arm64" ;;
+    arm)     dpkg --print-architecture | grep -q "arm64" && ARCH="arm64" || ARCH="arm" ;;
+    *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
 esac
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 
