@@ -52,6 +52,10 @@ def find_kic_util_path():
     venv_path = virtual_env if virtual_env else 'venv'
 
     venv_start_dir = f'{venv_path}/lib/python{py_ver}/site-packages/kic_util'
+
+    if not os.path.isdir(venv_start_dir):
+        raise NotADirectoryError(venv_start_dir)
+
     # Load in utilities module specifically from venv path
     kic_util_loader = unittest.defaultTestLoader.discover(
         start_dir=venv_start_dir,

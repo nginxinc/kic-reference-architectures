@@ -18,17 +18,11 @@ jobs:
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-    # Make sure that pip stays upgraded.
-    - run: python -m pip install --upgrade pip
-
-    # The package installation will only be executed when requirements.txt is changed.
-    - run: pip install -r pulumi/aws/requirements.txt
+    # The venv installation script will only be invoked when requirements.txt is changed
+    - run: ./setup_venv.sh
+      working-directory: pulumi/aws
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
-
-    # Install utilities module used in Pulumi projects
-    - run: pip install --use-feature=in-tree-build pulumi/aws/kic-pulumi-utils
-    - run: rm -rf pulumi/aws/kic-pulumi-utils/.eggs pulumi/aws/kic-pulumi-utils/build pulumi/aws/kic-pulumi-utils/kic_pulumi_utils.egg-info
 
     - name: Test
       working-directory: pulumi/aws
-      run: ./test.py
+      run: source venv/bin/activate && python3 test.py
