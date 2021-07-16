@@ -10,12 +10,17 @@ if ! command -v python3 > /dev/null; then
   exit 1
 fi
 
-if [ ! -d "${script_dir}/venv" ]; then
-  echo "Creating new virtual environment: ${script_dir}/venv"
-  python3 -m venv "${script_dir}/venv"
+if [ -z "${VIRTUAL_ENV}" ]; then
+  VIRTUAL_ENV="${script_dir}/venv"
+  echo "No virtual environment already specified, defaulting to: ${VIRTUAL_ENV}"
 fi
 
-source "${script_dir}/venv/bin/activate"
+if [ ! -d "${VIRTUAL_ENV}" ]; then
+  echo "Creating new virtual environment: ${VIRTUAL_ENV}"
+  python3 -m venv "${VIRTUAL_ENV}"
+fi
+
+source "${VIRTUAL_ENV}/bin/activate"
 
 set -o nounset   # abort on unbound variable
 
@@ -64,10 +69,10 @@ fi
 # Add local kubectl to the virtual environment
 echo "Downloading kubectl into virtual environment"
 KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
-${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${script_dir}/venv/bin/kubectl"
+${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${VIRTUAL_ENV}/bin/kubectl"
 KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
-echo "${KUBECTL_CHECKSUM}  ${script_dir}/venv/bin/kubectl" | sha256sum --check
-chmod +x "${script_dir}/venv/bin/kubectl"
+echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | sha256sum --check
+chmod +x "${VIRTUAL_ENV}/bin/kubectl"
 
 # Add Pulumi to the virtual environment
 echo "Downloading Pulumi CLI into virtual environment"
@@ -76,5 +81,5 @@ PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION
 PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
 ${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DESTTARBALL_DEST}"
-tar --extract --gunzip --directory "${script_dir}/venv/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
 rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
