@@ -18,10 +18,8 @@ jobs:
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-    # The venv installation script will only be invoked when requirements.txt is changed
     - run: ./setup_venv.sh
       working-directory: pulumi/aws
-      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
     - name: Test
       working-directory: pulumi/aws
