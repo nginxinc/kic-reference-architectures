@@ -103,7 +103,7 @@ vpc - defines and installs the VPC and subnets to use with EKS
         └─kic-helm-chart - deploys NGINX Ingress Controller to the EKS cluster 
           └─logstore - deploys a logstore (elasticsearch) to the EKS cluster 
             └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
-              └─demo-app - deploys a sample application to the cluster
+              └─anthos - deploys the google Bank of Anthos application to the EKS cluster
 ```
 
 ## Configuration
@@ -217,6 +217,22 @@ deployed to the `logagent` namespace.
 
 ### Demo Application
 
-A simple sample application is contained in the [`demo-app`](./demo-app)
-directory. This project shows off how one may deploy their application
-to a cluster that is using KIC.
+A version of the Google 
+[_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos)
+application is contained in the [`anthos`](./anthos) directory. 
+
+Normally, the `frontend` micorservice is exposed via a load balancer for
+traffic management. This deployment has been modified to use the NGINX or
+NGINX Plus KIC to manage traffic to the `frontend` microservice. The NGINX
+or NGINX Plus KIC is integrated into the cluster logging system, and the 
+user can configure the KIC as desired.
+
+An additional change to the application is the conversion of several of 
+the standard Kubernetes deployment manifests into Pulumi code. This has been
+done for the configuration maps, the ingress controller, and the JWT RSA
+signing kay pair. This allows the user to take advantage Pulumi's feature 
+set, by demonstrating the process of creating and deploying an RSA key pair
+at deployment time and using the project configuration file to set config
+variables, including secrets.
+
+
