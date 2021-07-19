@@ -1,17 +1,11 @@
 import argparse
-import atexit
-import gzip
 import os.path
 import re
 import shlex
-import shutil
-import tarfile
-import tempfile
 import uuid
 import pathlib
 from typing import Optional, Any, List, Dict
-from urllib import request, parse
-from enum import Enum
+from urllib import parse
 
 import pulumi
 import requests
@@ -19,7 +13,8 @@ from pulumi.dynamic import ResourceProvider, Resource, CreateResult, CheckResult
     UpdateResult, DiffResult
 
 from kic_util.docker_image_name import DockerImageName
-from kic_util import external_process
+from kic_util import external_process, archive_download
+from kic_util.url_type import URLType
 
 __all__ = [
     'IngressControllerImage',
@@ -29,9 +24,8 @@ __all__ = [
 ]
 
 
-class DownloadExtractError(RuntimeError):
-    """Error class thrown when there is a problem getting KIC source"""
-    pass
+class ImageBuildStateError(RuntimeError):
+    """Error class thrown when there is a runtime problem building the KIC image"""
 
 
 class ImageBuildOutputParseError(RuntimeError):
@@ -88,31 +82,18 @@ class IngressControllerImageArgs:
         return pulumi.get(self, "make_target")
 
 
-class URLType(Enum):
-    GENERAL_TAR_GZ = 0
-    LOCAL_TAR_GZ = 1
-    LOCAL_PATH = 2
-    UNKNOWN = 3
-
-
 class IngressControllerSourceArchiveUrl:
-    LAST_KNOWN_KIC_VERSION = '1.11.3'
-    DOWNLOAD_URL = f'https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/|%|VERSION|%|.tar.gz'
+    DOWNLOAD_URL = 'https://github.com/nginxinc/kubernetes-ingress.git'
 
     @staticmethod
     def latest_version() -> str:
-        version = IngressControllerSourceArchiveUrl.LAST_KNOWN_KIC_VERSION
-
-        try:
-            ping_url = 'https://github.com/nginxinc/kubernetes-ingress/releases/latest'
-            response = requests.head(ping_url)
-            redirect = response.headers.get('location')
-            tag_url = parse.urlparse(redirect)
-            tag_url_path = tag_url.path
-            elements = tag_url_path.split('/')
-            version = elements[-1]
-        except:
-            pass
+        ping_url = 'https://github.com/nginxinc/kubernetes-ingress/releases/latest'
+        response = requests.head(ping_url)
+        redirect = response.headers.get('location')
+        tag_url = parse.urlparse(redirect)
+        tag_url_path = tag_url.path
+        elements = tag_url_path.split('/')
+        version = str(elements[-1])
 
         return version
 
@@ -121,7 +102,7 @@ class IngressControllerSourceArchiveUrl:
         if not version:
             version = IngressControllerSourceArchiveUrl.latest_version()
 
-        return IngressControllerSourceArchiveUrl.DOWNLOAD_URL.replace('|%|VERSION|%|', version)
+        return f'{IngressControllerSourceArchiveUrl.DOWNLOAD_URL}#{version}'
 
 
 class IngressControllerImageProvider(ResourceProvider):
@@ -220,59 +201,17 @@ class IngressControllerImageProvider(ResourceProvider):
         return None
 
     @staticmethod
-    def identify_url_type(url: str) -> (URLType, parse.ParseResult):
-        result = parse.urlparse(url, allow_fragments=False)
-        is_tarball = result.path.endswith('.tar.gz')
-        url_type = URLType.UNKNOWN
-
-        if result.scheme == 'file':
-            url_type = URLType.LOCAL_TAR_GZ if is_tarball else URLType.LOCAL_PATH
-        elif result.scheme == '':
-            path = pathlib.Path(url)
-            if path.is_dir():
-                url_type = URLType.LOCAL_PATH
-            elif path.is_file() and is_tarball:
-                url_type = URLType.LOCAL_TAR_GZ
-        elif is_tarball:
-            url_type = URLType.GENERAL_TAR_GZ
-
-        return url_type, result
-
-    @staticmethod
     def find_kic_source_dir(url: str) -> str:
-        url_type, result = IngressControllerImageProvider.identify_url_type(url)
+        extracted_path = archive_download.download_and_extract_archive_from_url(url)
 
-        if url_type == URLType.GENERAL_TAR_GZ or url_type == URLType.LOCAL_TAR_GZ:
-            extracted_path = IngressControllerImageProvider.download_and_extract_kic_source(result.geturl())
-            listing = os.listdir(extracted_path)
-            if len(listing) != 1:
-                raise DownloadExtractError(f'Multiple top level items found in path: {extracted_path}')
+        # Sometimes the extracted directory contains a single directory that represents the
+        # name and version of the KIC release. In that case, we navigate to that directory
+        # and use it as our source directory.
+        listing = os.listdir(extracted_path)
+        if len(listing) == 1:
             return os.path.join(extracted_path, listing[0])
-        elif url_type == URLType.LOCAL_PATH:
-            return result.path
         else:
-            raise ValueError(f'Unknown URLType: {url_type}')
-
-    @staticmethod
-    def download_and_extract_kic_source(url: str):
-        temp_dir = tempfile.mkdtemp(prefix='kic-src_')
-        # Limit access of directory to only the creating user
-        os.chmod(path=temp_dir, mode=0o0700)
-        # Delete source directory upon exit, so that we don't have cruft lying around
-        atexit.register(lambda: shutil.rmtree(temp_dir))
-
-        # Download archive
-        try:
-            # Read the file inside the .gz archive located at url
-            with request.urlopen(url) as response:
-                with gzip.GzipFile(fileobj=response) as uncompressed:
-                    with tarfile.TarFile(fileobj=uncompressed) as tarball:
-                        tarball.extractall(path=temp_dir)
-
-        except Exception as e:
-            msg = f'Unable to download and/or extract KIC source from [{url}] to directory [{temp_dir}]'
-            raise DownloadExtractError(f"{msg}\n  cause: {e}") from e
-        return temp_dir
+            return extracted_path
 
     def link_nginx_plus_files_to_source_dir(self, nginx_plus_args: NginxPlusArgs, source_dir: str):
         key_path = pathlib.Path(nginx_plus_args['key_path'])
@@ -313,9 +252,10 @@ class IngressControllerImageProvider(ResourceProvider):
         make_target = props['make_target']
 
         source_dir = IngressControllerImageProvider.find_kic_source_dir(kic_src_url)
+        pulumi.log.debug(f'Building KIC in source directory: {source_dir}', self.resource)
 
         if not os.path.isdir(source_dir):
-            raise DownloadExtractError(f'Expected source code directory not found at path: {source_dir}')
+            raise ImageBuildStateError(f'Expected source code directory not found at path: {source_dir}')
 
         # Link nginx repo certificates into the source directory so that they can be referenced from the build process
         if 'nginx_plus_args' in props and props['nginx_plus_args']:
@@ -364,12 +304,8 @@ class IngressControllerImageProvider(ResourceProvider):
         for p in self.REQUIRED_PROPS:
             check_for_param(p)
 
-        url_type, parse_result = IngressControllerImageProvider.identify_url_type(news['kic_src_url'])
-
-        # Parse the URL as a local path if there is no scheme assigned
-        if not parse_result.scheme:
-            news['kic_src_url'] = f"file://{news['kic_src_url']}"
-            url_type, parse_result = IngressControllerImageProvider.identify_url_type(news['kic_src_url'])
+        parse_result = parse.urlparse(news['kic_src_url'])
+        url_type = URLType.from_parsed_url(parse_result)
 
         if url_type == URLType.UNKNOWN:
             failures.append(CheckFailure(property_='kic_src_url', reason=f"unsupported URL: {news['kic_src_url']}"))

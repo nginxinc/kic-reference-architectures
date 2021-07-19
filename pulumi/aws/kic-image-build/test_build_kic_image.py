@@ -1,8 +1,5 @@
-import atexit
-import shutil
 import os
 import unittest
-import tempfile
 import ingress_controller_image as kic_image
 
 
@@ -185,47 +182,3 @@ class TestKICImage(unittest.TestCase):
         expected = 'sha256:9358beb5cb1c6d6a9c005b18bdad08b0f2259b82d32687b03334256cbd500997'
         actual = self.kic_image_provider.parse_image_id_from_output(stderr)
         self.assertEqual(expected, actual)
-
-    def test_identify_url_type_remote_http(self):
-        url = 'http://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.1.tar.gz'
-        expected = kic_image.URLType.GENERAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
-
-    def test_identify_url_type_remote_https(self):
-        url = 'https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.1.tar.gz'
-        expected = kic_image.URLType.GENERAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
-
-    def test_identify_url_type_remote_ftp(self):
-        url = 'ftp://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.1.tar.gz'
-        expected = kic_image.URLType.GENERAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
-
-    def test_identify_url_type_local_file_with_scheme(self):
-        url = 'file:///tmp/v1.11.1.tar.gz'
-        expected = kic_image.URLType.LOCAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual)
-
-    def test_identify_url_type_local_file_without_scheme(self):
-        _, local_path = tempfile.mkstemp(prefix='unit_test_file', suffix='.tar.gz', text=True)
-        atexit.register(lambda: os.unlink(local_path))
-        expected = kic_image.URLType.LOCAL_TAR_GZ
-        actual, _ = self.kic_image_provider.identify_url_type(local_path)
-        self.assertEqual(expected, actual, f'path [{local_path}] was misidentified')
-
-    def test_identify_url_type_local_dir_with_scheme(self):
-        url = 'file:///usr/local/src/kic'
-        expected = kic_image.URLType.LOCAL_PATH
-        actual, _ = self.kic_image_provider.identify_url_type(url)
-        self.assertEqual(expected, actual, f'url [{url}] was misidentified')
-
-    def test_identify_url_type_local_dir_without_scheme(self):
-        local_path = tempfile.mkdtemp(prefix='unit_test_dir')
-        atexit.register(lambda: shutil.rmtree(local_path))
-        expected = kic_image.URLType.LOCAL_PATH
-        actual, _ = self.kic_image_provider.identify_url_type(local_path)
-        self.assertEqual(expected, actual, f'path [{local_path}] was misidentified')
