@@ -68,7 +68,7 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
-accounts_pwd = config.require('accounts_pwd')
+accounts_pwd = config.require_secret('accounts_pwd')
 
 accounts_admin = config.get('accounts_admin')
 if not accounts_admin:
@@ -131,7 +131,7 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
-demo_pwd = config.require('demo_pwd')
+demo_pwd = config.require_secret('demo_pwd')
 
 demo_login = config.get('demo_login')
 if not demo_login:
@@ -158,7 +158,7 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
 # Configuration Values are stored in the configuration:
 #  ../config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
-ledger_pwd = config.require('ledger_pwd')
+ledger_pwd = config.require_secret('ledger_pwd')
 
 ledger_admin = config.get('ledger_admin')
 if not ledger_admin:

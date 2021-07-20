@@ -84,6 +84,64 @@ else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
 fi
 
+# If it does not already exist we will create the configuration file for the 
+# bank of anthos application.
+# 
+# This is done by merging the main config file with the configuration 
+# file from the main config.
+#
+# This is a work-around, as we are using a common configuration file for
+# the project but secrets are encrypted at the stack/project level.
+#
+# The logic is
+# 1. If a configuration file of the format ./config/Pulumi.stackname.yaml
+#    exists in the Anthos directory we just check for the secrets.
+# 2. If the file does not exist, we create a file by merging the contents
+#    of the top level config file (Pulumi.stackname.yaml) with the template
+#    file in the Anthos directory (./config/Pulumi.stackname.yaml.example)
+#    to create ./config/Pulumi.stackname.yaml.
+# 
+# To fully recreate the file (including re-adding the passwords) you can 
+# remove the ./config/Pulumi.stackname.yaml file and re-run this script.
+#
+# This work-around is expected to be obsoleted by the work described in 
+# https://github.com/pulumi/pulumi/issues/4604, specifically around issue
+# https://github.com/pulumi/pulumi/issues/2307
+#
+if [ ! -f "${script_dir}/anthos/config/Pulumi.${PULUMI_STACK}.yaml" ]; then
+    echo "Merging master config with Bank of Anthos config"
+    yamlreader ${script_dir}/config/Pulumi.${PULUMI_STACK}.yaml ${script_dir}/anthos/config/Pulumi.stackname.yaml.example  > \
+    ${script_dir}/anthos/config/Pulumi.${PULUMI_STACK}.yaml
+else
+    echo "Bank of Anthos config exists"
+fi
+
+# Check for secrets being set
+echo "Checking for required secrets"
+
+# Anthos Accounts Database
+if pulumi config get anthos:accounts_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
+  echo "Password found for the anthos accounts database"
+else
+  echo "Create a password for the anthos accounts database"
+  pulumi config set --secret anthos:accounts_pwd -C ${script_dir}/anthos
+fi
+
+# Anthos Ledger Database
+if pulumi config get anthos:ledger_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
+  echo "Password found for anthos ledger database"
+else
+  echo "Create a password for the anthos ledger database"
+  pulumi config set --secret anthos:ledger_pwd -C ${script_dir}/anthos
+fi
+
+# Demo Account
+if pulumi config get anthos:demo_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
+  echo "Password found for anthos demo account"
+else
+  echo "Create a password for the anthos demo application; you will need this to log in"
+  pulumi config set --secret anthos:demo_pwd -C ${script_dir}/anthos
+fi
 
 # Show colorful fun headers if the right utils are installed
 function header() {
