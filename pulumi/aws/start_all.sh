@@ -110,7 +110,7 @@ fi
 #
 if [ ! -f "${script_dir}/anthos/config/Pulumi.${PULUMI_STACK}.yaml" ]; then
     echo "Merging master config with Bank of Anthos config"
-    yamlreader ${script_dir}/config/Pulumi.${PULUMI_STACK}.yaml ${script_dir}/anthos/config/Pulumi.stackname.yaml.example  > \
+    ${script_dir}/venv/bin/yamlreader ${script_dir}/config/Pulumi.${PULUMI_STACK}.yaml ${script_dir}/anthos/config/Pulumi.stackname.yaml.example  > \
     ${script_dir}/anthos/config/Pulumi.${PULUMI_STACK}.yaml
 else
     echo "Bank of Anthos config exists"
