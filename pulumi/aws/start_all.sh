@@ -199,6 +199,10 @@ header "Logagent"
 cd "${script_dir}/logagent"
 pulumi $pulumi_args up
 
+header "Cert Manager"
+cd "${script_dir}/certmgr"
+pulumi $pulumi_args up
+
 header "Bank of Anthos"
 cd "${script_dir}/anthos"
 pulumi $pulumi_args up

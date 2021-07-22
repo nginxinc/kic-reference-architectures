@@ -1,8 +1,10 @@
 import base64
 import os
+
 import pulumi
 import pulumi_kubernetes as k8s
 from Crypto.PublicKey import RSA
+from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
 
 from kic_util import pulumi_config
@@ -24,6 +26,16 @@ def anthos_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
     return anthos_manifests_path
+
+
+# We will only want to be deploying one type of cerficate issuer
+# as part of this application; this can (and should) be changed as
+# needed. For example, if the user is taking advantage of ACME let's encrypt
+# in order to generate certs.
+def k8_manifest_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    k8_manifest_path = os.path.join(script_dir, 'cert', 'self-sign.yaml')
+    return k8_manifest_path
 
 
 def add_namespace(obj):
@@ -231,6 +243,17 @@ boa = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
+# We need to create an issuer for the cert-manager (which is installed in a
+# separate project directory). This can (and should) be adjusted as required,
+# as the default issuer is self-signed.
+
+k8_manifest = k8_manifest_location()
+
+selfissuer = ConfigFile(
+    "selfissuer",
+    transformations=[add_namespace],
+    file=k8_manifest)
+
 # Add the Ingress controller for the Bank of Anthos
 # application. This uses the NGINX KIC that is installed
 # as part of this Pulumi stack.
@@ -251,26 +274,32 @@ anthos_host = config.get('hostname')
 if not anthos_host:
     anthos_host = lb_ingress_hostname
 
-boa_in = k8s.networking.v1beta1.Ingress("boaIngress",
-                                        api_version="networking.k8s.io/v1beta1",
-                                        opts=pulumi.ResourceOptions(depends_on=[ns, boa]),
-                                        kind="Ingress",
-                                        metadata=k8s.meta.v1.ObjectMetaArgs(
-                                            name="bankofanthos",
-                                            namespace=ns
-                                        ),
-                                        spec=k8s.networking.v1beta1.IngressSpecArgs(
-                                            ingress_class_name="nginx",
-                                            rules=[k8s.networking.v1beta1.IngressRuleArgs(
-                                                host=lb_ingress_hostname,
-                                                http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
-                                                    paths=[k8s.networking.v1beta1.HTTPIngressPathArgs(
-                                                        path="/",
-                                                        backend=k8s.networking.v1beta1.IngressBackendArgs(
-                                                            service_name="frontend",
-                                                            service_port=80,
-                                                        ),
-                                                    )],
-                                                ),
-                                            )],
-                                        ))
+boaingress = k8s.networking.v1beta1.Ingress("boaingress",
+                                            api_version="networking.k8s.io/v1beta1",
+                                            kind="Ingress",
+                                            metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                name="boaingress",
+                                                namespace=ns,
+                                                annotations={
+                                                    "cert-manager.io/cluster-issuer": "selfsigned-issuer",
+                                                },
+                                            ),
+                                            spec=k8s.networking.v1beta1.IngressSpecArgs(
+                                                ingress_class_name="nginx",
+                                                tls=[k8s.networking.v1beta1.IngressTLSArgs(
+                                                    hosts=[lb_ingress_hostname],
+                                                    secret_name="anthos-secret",
+                                                )],
+                                                rules=[k8s.networking.v1beta1.IngressRuleArgs(
+                                                    host=lb_ingress_hostname,
+                                                    http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
+                                                        paths=[k8s.networking.v1beta1.HTTPIngressPathArgs(
+                                                            path="/",
+                                                            backend=k8s.networking.v1beta1.IngressBackendArgs(
+                                                                service_name="frontend",
+                                                                service_port=80,
+                                                            ),
+                                                        )],
+                                                    ),
+                                                )],
+                                            ))

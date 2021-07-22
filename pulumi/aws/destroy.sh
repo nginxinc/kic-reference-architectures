@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-set -o errexit   # abort on nonzero exit status
+#set -o errexit   # abort on nonzero exit status
 set -o nounset   # abort on unbound variable
 set -o pipefail  # don't hide errors within pipes
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "${script_dir}/anthos"
+pulumi --emoji destroy --yes
+
+cd "${script_dir}/certmgr"
 pulumi --emoji destroy --yes
 
 cd "${script_dir}/logagent"
