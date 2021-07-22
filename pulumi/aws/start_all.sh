@@ -26,10 +26,6 @@ if ! command -v node > /dev/null; then
   exit 1
 fi
 
-if ! command -v aws > /dev/null; then
-  echo "AWS CLI not installed; some functionality will not be available"
-fi
-
 if [ ! -f "${script_dir}/config/environment" ]; then
   touch "${script_dir}/config/environment"
 fi
@@ -65,11 +61,9 @@ fi
 # First, check the config file for our current profile. If there
 # is no AWS command we assume that there is no config file, which
 # may not always be a valid assumption.
-if command -v aws > /dev/null; then
-  if aws configure get region --profile ${AWS_PROFILE}  > /dev/null ; then
-    AWS_DEFAULT_REGION=$(aws configure get region --profile ${AWS_PROFILE})
-    echo $AWS_DEFAULT_REGION
-  fi
+if "${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE}  > /dev/null ; then
+  AWS_DEFAULT_REGION=$("${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE})
+  echo $AWS_DEFAULT_REGION
 fi
 
 if [[ -z "${AWS_DEFAULT_REGION+x}" ]] ; then
@@ -145,45 +139,27 @@ fi
 
 # Show colorful fun headers if the right utils are installed
 function header() {
-  if command -v colorscript > /dev/null; then
-    colorscript --exec crunchbang-mini
-  else
-    echo "####################################"
-  fi
-
-  if command -v figlet > /dev/null; then
-    if command -v lolcat > /dev/null; then
-      figlet "$1" | lolcat
-    else
-      figlet "$1"
-    fi
-  else
-    echo "▶ $1"
-  fi
+  "${script_dir}"/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/venv/bin/lolcat
 }
 
 function add_kube_config() {
-    if command -v aws > /dev/null; then
-      pulumi_region="$(pulumi config get aws:region)"
-      if [ "${pulumi_region}" != "" ]; then
-        region_arg="--region ${pulumi_region}"
-      else
-        region_arg=""
-      fi
-      pulumi_aws_profile="$(pulumi config get aws:profile)"
-      if [ "${pulumi_aws_profile}" != "" ]; then
-        profile_arg="--profile ${pulumi_aws_profile}"
-      else
-        profile_arg=""
-      fi
-
-      cluster_name="$(pulumi stack output cluster_name)"
-
-      echo "adding ${cluster_name} cluster to local kubeconfig"
-      aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
+    pulumi_region="$(pulumi config get aws:region)"
+    if [ "${pulumi_region}" != "" ]; then
+      region_arg="--region ${pulumi_region}"
     else
-        echo "aws cli command not available on path - not writing cluster kubeconfig"
+      region_arg=""
     fi
+    pulumi_aws_profile="$(pulumi config get aws:profile)"
+    if [ "${pulumi_aws_profile}" != "" ]; then
+      profile_arg="--profile ${pulumi_aws_profile}"
+    else
+      profile_arg=""
+    fi
+
+    cluster_name="$(pulumi stack output cluster_name)"
+
+    echo "adding ${cluster_name} cluster to local kubeconfig"
+    "${script_dir}"/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
 }
 
 pulumi_args="--emoji"
