@@ -13,3 +13,4 @@ PyYAML~=5.4.1
 requests~=2.26.0
 setuptools~=57.4.0
 wheel~=0.36.2
+yamlreader==3.0.4

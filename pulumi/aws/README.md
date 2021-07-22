@@ -215,4 +215,16 @@ set, by demonstrating the process of creating and deploying an RSA key pair
 at deployment time and using the project configuration file to set config
 variables, including secrets.
 
+**Note** Due to the way that Pulumi currently handles secrets, the [anthos](./anthos)
+directory contains its own configuration direcotry [anthos/config](./anthos/config).
+This directory contains an example configuration file that is merged with the base
+configuration file created for the stack under [config](./config) by the startup 
+script [start_all.sh](./start_all.sh). This merge and prompt for passwords to add to 
+the configuratoin file only occurs on the first run; if the configuration exists the 
+logic in the startup script will leave it as-is. It is possible to re-merge the files
+by deleting the stack config file under [anthos/config](./anthos/config). This is a 
+work-around that will be retired as Pulumi provides better tools for hierarchtical
+configuration files.
+
+
 
