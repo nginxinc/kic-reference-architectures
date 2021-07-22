@@ -23,12 +23,6 @@ Within the project, you will need to install the Python required libraries into
 the `venv` directory. The easiest way to do this is to invoke the 
 [`setup_venv.sh`](./setup_venv.sh) included in the project.
 
-### NodeJS
-
-A Python dependency that this project relies on makes call outs to a NodeJS
-dependency, so unfortunately NodeJS is also a dependency to run the
-reference architecture.
-
 ### Pulumi
 
 In order to run this project, you will need to first [download, install and 
@@ -51,25 +45,11 @@ do this. The script [`startup_all.sh`](./startup_all.sh) will prompt you to add
 the AWS region and profile values that will then be added to the `config/Pulumi.<stack>.yaml`
 in each project directory.
 
-If the [`aws` CLI](https://aws.amazon.com/cli/) is installed, it will be used
-in the setup bash scripts to update your `kubectl` local configuration to use
-the newly created EKS.
-
 ### Kubernetes
 
 Although not required, installing the [CLI tool `kubectl`](https://kubernetes.io/docs/tasks/tools/)
 will allow you to interact with the Kubernetes cluster that you have stood up
 using this project.
-
-### Bash
-
-The setup bash scripts will invoke external utilities to display colors and
-large banners announcing what resources are set up. These utilities are
-completely optional. If you want to see the colorized text display, install
-the following.
- * [`colorscript`](https://github.com/charitarthchugh/shell-color-scripts)
- * [`figlet`](http://www.figlet.org/)
- * [`lolcat`](https://github.com/ur0/lolcat) or a suitable alternative
 
 ## Getting Started
 

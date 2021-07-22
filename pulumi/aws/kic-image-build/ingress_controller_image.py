@@ -265,7 +265,8 @@ class IngressControllerImageProvider(ResourceProvider):
         try:
             os.chdir(source_dir)
             # Invoke make in the KIC source tree to build the Docker image
-            env = {'DOCKER_BUILD_OPTIONS': '--no-cache'}
+            env = dict(os.environ)
+            env['DOCKER_BUILD_OPTIONS'] = '--no-cache'
             build_cmd = f'make {make_target} TARGET=container'
             pulumi.log.info(f'Running build: {build_cmd}')
             res, err = external_process.run(cmd=build_cmd, env=env)
