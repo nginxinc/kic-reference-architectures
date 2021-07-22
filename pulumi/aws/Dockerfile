@@ -13,9 +13,11 @@ RUN set -eux; \
     apt-get install --no-install-recommends -qqq -y \
         build-essential \
         ca-certificates \
+        nano \
         python3-venv \
         wget \
-        git; \
+        git \
+        vim; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     groupadd --gid $DOCKER_GID docker; \
     groupadd --gid $GID runner; \
