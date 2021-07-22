@@ -36,7 +36,11 @@ pip3 install "$(grep nodeenv requirements.txt)"
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
-nodeenv -p --node=lts
+if [ ! -x "${VIRTUAL_ENV}/bin/node" ]; then
+  nodeenv -p --node=lts
+else
+  echo "Node.js version $("${VIRTUAL_ENV}/bin/node" --version) is already installed"
+fi
 
 # Install general package requirements
 pip3 install --requirement "${script_dir}/requirements.txt"
@@ -67,19 +71,27 @@ else
 fi
 
 # Add local kubectl to the virtual environment
-echo "Downloading kubectl into virtual environment"
-KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
-${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${VIRTUAL_ENV}/bin/kubectl"
-KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
-echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | sha256sum --check
-chmod +x "${VIRTUAL_ENV}/bin/kubectl"
+if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
+  echo "Downloading kubectl into virtual environment"
+  KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
+  ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${VIRTUAL_ENV}/bin/kubectl"
+  KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
+  echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | sha256sum --check
+  chmod +x "${VIRTUAL_ENV}/bin/kubectl"
+else
+  echo "kubectl is already installed"
+fi
 
 # Add Pulumi to the virtual environment
 echo "Downloading Pulumi CLI into virtual environment"
 PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/requirements.txt" | cut -d '=' -f2)"
-PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
-PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
-${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DESTTARBALL_DEST}"
-tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
-rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$("${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then
+  echo "Pulumi version ${PULUMI_VERSION} is already installed"
+else
+  PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
+  PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
+  ${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+fi
