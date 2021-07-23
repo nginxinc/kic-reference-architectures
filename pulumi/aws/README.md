@@ -83,7 +83,8 @@ vpc - defines and installs the VPC and subnets to use with EKS
         └─kic-helm-chart - deploys NGINX Ingress Controller to the EKS cluster 
           └─logstore - deploys a logstore (elasticsearch) to the EKS cluster 
             └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
-              └─anthos - deploys the google Bank of Anthos application to the EKS cluster
+              └─certmgr - deploys the open source cert-manager.io helm chart to the EKS cluster
+                └─anthos - deploys the google Bank of Anthos application to the EKS cluster
 ```
 
 ## Configuration
@@ -194,6 +195,13 @@ to the logstore deployed in the previous step. This solution can be
 swapped for other options as desired. This application is
 deployed to the `logagent` namespace.
 
+### Certificate Management
+
+TLS is enabled via [cert-manager](https://cert-manager.io/) which is installed in 
+the cert-manager namespace. Creation of ClusterIssuer or Issuer resources
+is delegated to the individual applications and is not done as part of this 
+deployment. 
+
 
 ### Demo Application
 
@@ -214,6 +222,13 @@ signing kay pair. This allows the user to take advantage Pulumi's feature
 set, by demonstrating the process of creating and deploying an RSA key pair
 at deployment time and using the project configuration file to set config
 variables, including secrets.
+
+As part of the Bank of Anthos deployment, we deploy a cluster-wide 
+[self-signed](https://cert-manager.io/docs/configuration/selfsigned/)
+issuer using the cert-manager deployed above. This is then used by the 
+Ingress object created to enable TLS access to the application. Note that
+this Issuer can be changed out by the user, for example to use the 
+[ACME](https://cert-manager.io/docs/configuration/acme/) issuer. 
 
 **Note** Due to the way that Pulumi currently handles secrets, the [anthos](./anthos)
 directory contains its own configuration direcotry [anthos/config](./anthos/config).
