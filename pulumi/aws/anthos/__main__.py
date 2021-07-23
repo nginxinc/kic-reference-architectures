@@ -269,27 +269,52 @@ selfissuer = ConfigFile(
 config = pulumi.Config('anthos')
 anthos_host = config.get('hostname')
 
-# If we have not defined a hostname in our config, we use the 
-# hostname of the LB.
+# If we have not defined a hostname in our config, we use the  hostname of the load
+# balancer. The default TLS uses self-signed certificates, so no hostname validation
+# is required. However, if the user makes use of ACME or other certificate authorities
+# the hostname chosen will need to resolve appropriately.
 if not anthos_host:
     anthos_host = lb_ingress_hostname
 
+# This block is responsible for creating the Ingress object for the application. This object
+# is deployed into the same namespace as the application and requires that an IngressClass
+# and Ingress controller be installed (which is done in an earlier step, deploying the KIC).
+#
+# Note that we are using an older version of the API (v1beta1) in order to accomodate older builds
+# of the KIC. This will be changed in the future and is being tracked by Issue #26
 boaingress = k8s.networking.v1beta1.Ingress("boaingress",
                                             api_version="networking.k8s.io/v1beta1",
                                             kind="Ingress",
                                             metadata=k8s.meta.v1.ObjectMetaArgs(
                                                 name="boaingress",
                                                 namespace=ns,
+                                                # This annotation is used to request a certificate from the cert
+                                                # manager. The manager watches for ingress objects with this
+                                                # annotation and handles certificate generation.
+                                                #
+                                                # It is possible to use different cert issuers with cert-manager,
+                                                # but in the current deployment we only have a self-signed issuer
+                                                # configured.
                                                 annotations={
                                                     "cert-manager.io/cluster-issuer": "selfsigned-issuer",
                                                 },
                                             ),
                                             spec=k8s.networking.v1beta1.IngressSpecArgs(
                                                 ingress_class_name="nginx",
+                                                # The block below sets up the TLS configuration for the Ingress
+                                                # controller. The secret defined here will be used by the issuer
+                                                # to store the generated certificate.
                                                 tls=[k8s.networking.v1beta1.IngressTLSArgs(
                                                     hosts=[lb_ingress_hostname],
                                                     secret_name="anthos-secret",
                                                 )],
+                                                # The block below defines the rules for traffic coming into the KIC.
+                                                # In the example below, we take any traffic on the host for path /
+                                                # and direct it to the frontend server on port 80. Additional routes
+                                                # could be added if desired. Also, different hostnames could be defined
+                                                # if desired. For example, an additional CNAME could be added to point
+                                                # to this same KIC along with a separate tls and host rule to direct
+                                                # traffic to a different backend.
                                                 rules=[k8s.networking.v1beta1.IngressRuleArgs(
                                                     host=lb_ingress_hostname,
                                                     http=k8s.networking.v1beta1.HTTPIngressRuleValueArgs(
