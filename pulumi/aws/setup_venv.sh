@@ -76,7 +76,7 @@ if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
   KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
   ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${VIRTUAL_ENV}/bin/kubectl"
   KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
-  echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | sha256sum --check
+  echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | shasum --algorithm 256 --check
   chmod +x "${VIRTUAL_ENV}/bin/kubectl"
 else
   echo "kubectl is already installed"
