@@ -1,0 +1,7 @@
+name: certmgr
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: ../config
+description: Sets up cert-manager.io 
