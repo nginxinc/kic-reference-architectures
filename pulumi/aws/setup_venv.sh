@@ -3,6 +3,34 @@
 set -o errexit   # abort on nonzero exit status
 set -o pipefail  # don't hide errors within pipes
 
+# Function below is based upon code in this StackOverflow post:
+# https://stackoverflow.com/a/31939275/33611
+# CC BY-SA 3.0 License: https://creativecommons.org/licenses/by-sa/3.0/
+function askYesNo {
+        QUESTION=$1
+        DEFAULT=$2
+        if [ "$DEFAULT" = true ]; then
+                OPTIONS="[Y/n]"
+                DEFAULT="y"
+            else
+                OPTIONS="[y/N]"
+                DEFAULT="n"
+        fi
+        if [ "${DEBIAN_FRONTEND}" != "noninteractive" ]; then
+          read -p "$QUESTION $OPTIONS " -n 1 -s -r INPUT
+          INPUT=${INPUT:-${DEFAULT}}
+          echo "${INPUT}"
+        fi
+
+        if [ "${DEBIAN_FRONTEND}" == "noninteractive" ]; then
+            ANSWER=$DEFAULT
+        elif [[ "$INPUT" =~ ^[yY]$ ]]; then
+            ANSWER=true
+        else
+            ANSWER=false
+        fi
+}
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if ! command -v python3 > /dev/null; then
@@ -10,14 +38,72 @@ if ! command -v python3 > /dev/null; then
   exit 1
 fi
 
-if [ -z "${VIRTUAL_ENV}" ]; then
-  VIRTUAL_ENV="${script_dir}/venv"
-  echo "No virtual environment already specified, defaulting to: ${VIRTUAL_ENV}"
+# If pyenv is available we use a hardcoded python version
+if command -v pyenv > /dev/null; then
+  eval "$(pyenv init -)"
+  pyenv install --skip-existing < "${script_dir}/.python-version"
+
+  # If the pyenv-virtualenv tools are installed, prompt the user if they want to
+  # use them.
+  if [ -d "${PYENV_ROOT}/plugins/pyenv-virtualenv" ]; then
+    askYesNo "Use pyenv-virtualenv to manage virtual environment?" true
+    if [ $ANSWER = true ]; then
+      has_pyenv_venv_plugin=1
+    else
+      has_pyenv_venv_plugin=0
+    fi
+  else
+    has_pyenv_venv_plugin=0
+  fi
+else
+  has_pyenv_venv_plugin=0
 fi
 
-if [ ! -d "${VIRTUAL_ENV}" ]; then
-  echo "Creating new virtual environment: ${VIRTUAL_ENV}"
-  python3 -m venv "${VIRTUAL_ENV}"
+# if pyenv with virtual-env plugin is installed, use that
+if [ ${has_pyenv_venv_plugin} -eq 1 ]; then
+  eval "$(pyenv virtualenv-init -)"
+
+  if ! pyenv virtualenvs --bare | grep --quiet '^ref-arch-pulumi-aws'; then
+    pyenv virtualenv ref-arch-pulumi-aws
+  fi
+
+  if [ -z "${VIRTUAL_ENV}" ]; then
+    pyenv activate ref-arch-pulumi-aws
+  fi
+
+  if [ -h "${script_dir}/venv" ]; then
+    echo "Link already exists [${script_dir}/venv] - removing and relinking"
+    rm "${script_dir}/venv"
+  elif [ -d "${script_dir}/venv" ]; then
+    echo "Virtual environment directory already exists"
+    askYesNo "Delete and replace with pyenv-virtualenv managed link?" false
+    if [ $ANSWER = true ]; then
+      echo "Deleting ${script_dir}/venv"
+      rm -rf "${script_dir}/venv"
+    else
+      >&2 echo "The path ${script_dir}/venv must not be a virtual environment directory when using pyenv-virtualenv"
+      >&2 echo "Exiting. Please manually remove the directory"
+      exit 1
+    fi
+  fi
+
+  echo "Linking virtual environment [${VIRTUAL_ENV}] to local directory [venv]"
+  ln -s "${VIRTUAL_ENV}" "${script_dir}/venv"
+fi
+
+# If pyenv isn't present do everything with default python tooling
+if [ ${has_pyenv_venv_plugin} -eq 0 ]; then
+  if [ -z "${VIRTUAL_ENV}" ]; then
+    VIRTUAL_ENV="${script_dir}/venv"
+    echo "No virtual environment already specified, defaulting to: ${VIRTUAL_ENV}"
+  fi
+
+  if [ ! -d "${VIRTUAL_ENV}" ]; then
+    echo "Creating new virtual environment: ${VIRTUAL_ENV}"
+    python3 -m venv "${VIRTUAL_ENV}"
+  fi
+
+  source "${VIRTUAL_ENV}/bin/activate"
 fi
 
 source "${VIRTUAL_ENV}/bin/activate"
