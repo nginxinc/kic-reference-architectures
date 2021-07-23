@@ -7,9 +7,6 @@ from pulumi_kubernetes.helm.v3 import FetchOpts
 
 from kic_util import pulumi_config
 
-CERTMGR_HELM_REPO_NAME = 'jetstack'
-CERTMGR_HELM_REPO_URL = 'https://charts.jetstack.io'
-
 
 # Removes the status field from the Nginx Ingress Helm Chart, so that i#t is
 # compatible with the Pulumi Chart implementation.
@@ -43,13 +40,27 @@ ns = k8s.core.v1.Namespace(resource_name='cert-manager',
 chart_values = {
     "installCRDs": True
 }
+helm_repo_name = 'jetstack'
+helm_repo_url = 'https://charts.jetstack.io'
+
+config = pulumi.Config('certmgr')
+chart_version = config.get('chart_version')
+if not chart_version:
+    chart_version = 'v1.4.0'
+helm_repo_name = config.get('certmgr_helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'jetstack'
+
+helm_repo_url = config.get('certmgr_helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://charts.jetstack.io'
 
 chart_ops = helm.ChartOpts(
     chart='cert-manager',
     namespace=ns.metadata.name,
-    repo=CERTMGR_HELM_REPO_NAME,
-    fetch_opts=FetchOpts(repo=CERTMGR_HELM_REPO_URL),
-    version='v1.4.0',
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
     values=chart_values,
     transformations=[remove_status_field],
 )
