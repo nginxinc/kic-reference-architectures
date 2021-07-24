@@ -1,1 +1,4 @@
+.git
+build_dev_docker_image.sh
+Dockerfile
 venv
