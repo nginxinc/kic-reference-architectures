@@ -31,15 +31,41 @@ function askYesNo {
         fi
 }
 
+# Function below is based upon code in this StackOverflow post:
+# https://stackoverflow.com/a/18443300/33611
+# CC BY-SA 3.0 License: https://creativecommons.org/licenses/by-sa/3.0/
+realpath() (
+  OURPWD=$PWD
+  cd "$(dirname "$1")"
+  LINK=$(readlink "$(basename "$1")")
+  while [ "$LINK" ]; do
+    cd "$(dirname "$LINK")"
+    LINK=$(readlink "$(basename "$1")")
+  done
+  REALPATH="$PWD/$(basename "$1")"
+  cd "$OURPWD"
+  echo "$REALPATH"
+)
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-if ! command -v python3 > /dev/null; then
-  >&2 echo "Python 3 must be installed to continue"
+if ! command -v git > /dev/null; then
+   >&2 echo "git must be installed to continue"
   exit 1
+fi
+
+if ! command -v python3 > /dev/null; then
+  echo "Python 3 is not installed. Adding pyenv to allow for Python installation"
+  export PYENV_ROOT="${script_dir}/.pyenv"
+  mkdir -p "${PYENV_ROOT}"
+  git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2> "${script_dir}/pyenv_git_clone.log" \
+    && rm "${script_dir}/pyenv_git_clone.log" # remove log if clone worked
+  export PATH="$PYENV_ROOT/bin:$PATH"
 fi
 
 # If pyenv is available we use a hardcoded python version
 if command -v pyenv > /dev/null; then
+  eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
   pyenv install --skip-existing < "${script_dir}/.python-version"
 

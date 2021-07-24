@@ -12,27 +12,31 @@ definitions here should be reproducible in other languages.
 
 ## Requirements
 
-### Python
-
-This project is compatible with Python 3.6+. To run the project,
-you will need to have installed Python on your system as well as the 
-[venv module](https://docs.python.org/3/library/venv.html) and
-[pip](https://pypi.org/project/pip/).
-
-Within the project, you will need to install the Python required libraries into
-the `venv` directory. The easiest way to do this is to invoke the 
-[`setup_venv.sh`](./setup_venv.sh) included in the project.
-
-### Pulumi
-
-In order to run this project, you will need to first [download, install and 
-configure Pulumi](https://www.pulumi.com/docs/get-started/install/) for 
-your environment.
-
 ### Git
 
 The `git` command line tool is required for checking out KIC source code from
 github and for the KIC image build process.
+
+### Make / Build Essential
+
+The ``
+
+### Setup
+
+Within the project, you will need to install Python and dependent libraries 
+into the `venv` directory. To do this is to invoke the [`setup_venv.sh`](./setup_venv.sh) 
+included in the project. This script will install into the [virtual environment](https://docs.python.org/3/tutorial/venv.html)
+directory:
+
+ * Python (via pyenv) if it is not already present
+ * Pulumi CLI utilities
+ * AWS CLI utilities 
+ * `kubectl`
+
+After running [`setup_venv.sh`](./setup_venv.sh), you will need to activate 
+the newly created virtual environment by running `source venv/bin/activate`.
+This will load the virtual environment's path and other environment variables
+into the current shell.
 
 ### AWS
 
