@@ -1,10 +1,10 @@
-awscli~=1.20.4
+awscli~=1.20.6
 fart~=0.1.5
 lolcat~=1.4
 nodeenv~=1.6.0
 passlib~=1.7.4
-pulumi~=3.7.1
-pulumi-aws~=4.13.0
+pulumi~=3.8.0
+pulumi-aws~=4.14.0
 pulumi-docker~=3.0.0
 pulumi-eks>=0.31.0
 pulumi-kubernetes~=3.5.1
