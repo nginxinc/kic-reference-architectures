@@ -78,7 +78,8 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
 # a required variable is not defined in the configuration file.
 
 # Configuration Values are stored in the configuration:
-#  ../config/Pulumi.STACKNAME.yaml
+#  ./config/Pulumi.STACKNAME.yaml
+# Note this config is speciic to the anthos code!
 config = pulumi.Config('anthos')
 accounts_pwd = config.require_secret('accounts_pwd')
 
@@ -90,8 +91,13 @@ accounts_db = config.get('accounts_db')
 if not accounts_db:
     accounts_db = 'postgresdb'
 
-accounts_db_uri = 'postgresql://' + str(accounts_admin) + ':' + str(accounts_pwd) + '@accounts-db:5432/' + str(
-    accounts_db)
+# The database password is a secret, and in order to use it in a string concat
+# we need to decrypt the password with Output.unsecret() before we use it.
+# This function provides the logic to accomplish this.
+accounts_db_uri = pulumi.Output.unsecret(accounts_pwd).apply(
+            lambda pwd:
+                f'postgresql://{str(accounts_admin)}:{str(pwd)}@accounts-db:5432/{str(accounts_db)}'
+                )
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -141,7 +147,7 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                       })
 
 # Configuration Values are stored in the configuration:
-#  ../config/Pulumi.STACKNAME.yaml
+#  ./config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 demo_pwd = config.require_secret('demo_pwd')
 
@@ -168,7 +174,7 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     })
 
 # Configuration Values are stored in the configuration:
-#  ../config/Pulumi.STACKNAME.yaml
+#  ./config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 ledger_pwd = config.require_secret('ledger_pwd')
 
@@ -265,7 +271,7 @@ selfissuer = ConfigFile(
 # the IP of the NGINX KIC's load balancer.
 #
 # Configuration Values are stored in the configuration:
-#  ../config/Pulumi.STACKNAME.yaml
+#  ./config/Pulumi.STACKNAME.yaml
 config = pulumi.Config('anthos')
 anthos_host = config.get('hostname')
 
