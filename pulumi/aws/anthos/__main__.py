@@ -1,13 +1,13 @@
 import base64
 import os
 
-import pulumi
 import pulumi_kubernetes as k8s
 from Crypto.PublicKey import RSA
+from kic_util import pulumi_config
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
 
-from kic_util import pulumi_config
+import pulumi
 
 
 def pulumi_eks_project_name():
@@ -36,6 +36,18 @@ def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     k8_manifest_path = os.path.join(script_dir, 'cert', 'self-sign.yaml')
     return k8_manifest_path
+
+
+# The database password is a secret, and in order to use it in a string concat
+# we need to decrypt the password with Output.unsecret() before we use it.
+# This function provides the logic to accomplish this, while still using the pulumi
+# secrets for the resulting string:
+def create_pg_uri(password_object):
+    user = str(accounts_admin)
+    password = str(password_object)
+    database = str(accounts_db)
+    uri = f'postgresql://{user}:{password}@accounts-db:5432/{database}'
+    return pulumi.Output.secret(uri)
 
 
 def add_namespace(obj):
@@ -91,13 +103,7 @@ accounts_db = config.get('accounts_db')
 if not accounts_db:
     accounts_db = 'postgresdb'
 
-# The database password is a secret, and in order to use it in a string concat
-# we need to decrypt the password with Output.unsecret() before we use it.
-# This function provides the logic to accomplish this.
-accounts_db_uri = pulumi.Output.unsecret(accounts_pwd).apply(
-            lambda pwd:
-                f'postgresql://{str(accounts_admin)}:{str(pwd)}@accounts-db:5432/{str(accounts_db)}'
-                )
+accounts_db_uri = pulumi.Output.unsecret(accounts_pwd).apply(create_pg_uri)
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -146,18 +152,8 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                           "USERSERVICE_API_ADDR": "userservice:8080",
                                                       })
 
-# Configuration Values are stored in the configuration:
-#  ./config/Pulumi.STACKNAME.yaml
-config = pulumi.Config('anthos')
-demo_pwd = config.require_secret('demo_pwd')
-
-demo_login = config.get('demo_login')
-if not demo_login:
-    demo_login = 'testuser'
-
-demo_data = config.get('demo_data')
-if not demo_data:
-    demo_data = 'True'
+# Demo data is hardcoded in the current incarnation of the bank of
+# anthos project, so we go along with that for now.
 
 demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -168,9 +164,9 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                         namespace=ns
                                                     ),
                                                     data={
-                                                        "USE_DEMO_DATA": demo_data,
-                                                        "DEMO_LOGIN_USERNAME": demo_login,
-                                                        "DEMO_LOGIN_PASSWORD": demo_pwd
+                                                        "USE_DEMO_DATA": "True",
+                                                        "DEMO_LOGIN_USERNAME": "testuser",
+                                                        "DEMO_LOGIN_PASSWORD": "password"
                                                     })
 
 # Configuration Values are stored in the configuration:

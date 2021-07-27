@@ -8,18 +8,9 @@ config:
   anthos:ledger_admin: admin
   anthos:ledger_db: postgresdb
 
-  # These parameters define the credentials for the demo user for the Bank of Anthos
-  # application as well as defining if the demo data should be loaded.
-  #
-  # Note that the encrypted password is a required value; Pulumi will abort the Bank of Anthos
-  # deployment if no password is provided.
-  #anthos:demo_pwd: password # Required
-  anthos:demo_login: testuser
-  anthos:demo_data: True
-
   # This optional parameter supplies a hostname for the Bank of Anthos Ingress
   # controller. If not set, the FQDN of the LB is used.
-  anthos:hostname: demo.example.com
+  #anthos:hostname: demo.example.com
 
   # These parameters define the name of the database and the database credentials
   # used by the Bank of Anthos accounts application.

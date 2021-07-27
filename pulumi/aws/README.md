@@ -45,7 +45,7 @@ Since this project illustrates deploying to AWS,
 is necessary. If you want to avoid using environment variables, AWS profile
 and region definitions can be contained in the `config/Pulumi.<stack>.yaml` 
 files in each project. Refer to the Pulumi documentation for details on how to
-do this. The script [`startup_all.sh`](./startup_all.sh) will prompt you to add 
+do this. The script [`startup_all.sh`](./start_all.sh) will prompt you to add 
 the AWS region and profile values that will then be added to the `config/Pulumi.<stack>.yaml`
 in each project directory.
 
@@ -213,7 +213,7 @@ A version of the Google
 [_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos)
 application is contained in the [`anthos`](./anthos) directory. 
 
-Normally, the `frontend` micorservice is exposed via a load balancer for
+Normally, the `frontend` microservice is exposed via a load balancer for
 traffic management. This deployment has been modified to use the NGINX or
 NGINX Plus KIC to manage traffic to the `frontend` microservice. The NGINX
 or NGINX Plus KIC is integrated into the cluster logging system, and the 
@@ -235,15 +235,11 @@ this Issuer can be changed out by the user, for example to use the
 [ACME](https://cert-manager.io/docs/configuration/acme/) issuer. 
 
 **Note** Due to the way that Pulumi currently handles secrets, the [anthos](./anthos)
-directory contains its own configuration direcotry [anthos/config](./anthos/config).
-This directory contains an example configuration file that is merged with the base
-configuration file created for the stack under [config](./config) by the startup 
-script [start_all.sh](./start_all.sh). This merge and prompt for passwords to add to 
-the configuratoin file only occurs on the first run; if the configuration exists the 
-logic in the startup script will leave it as-is. It is possible to re-merge the files
-by deleting the stack config file under [anthos/config](./anthos/config). This is a 
-work-around that will be retired as Pulumi provides better tools for hierarchtical
-configuration files.
+directory contains its own configuration directory [anthos/config](./anthos/config).
+This directory contains an example configuration file that can be copied over
+and used. The user will be prompted to add passwords to the configuration file at the
+first run of the [start_all.sh](./start_all.sh) script. This is a work-around that 
+will be retired as Pulumi provides better tools for hierarchical configuration files.
 
 
 

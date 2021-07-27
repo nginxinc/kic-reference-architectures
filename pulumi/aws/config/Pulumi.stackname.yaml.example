@@ -72,7 +72,7 @@ config:
     kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
 
   # The parameters for the Bank of Anthos are set in a configuration directory
-  # within that project. These values will be merged with that configuration.
+  # within that project.
 
   # Cert Manager Configuration
   certmgr:chart_version: v1.4.0
