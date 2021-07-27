@@ -106,14 +106,6 @@ else
   pulumi config set --secret anthos:ledger_pwd -C ${script_dir}/anthos
 fi
 
-# Demo Account
-if pulumi config get anthos:demo_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
-  echo "Password found for anthos demo account"
-else
-  echo "Create a password for the anthos demo application; you will need this to log in"
-  pulumi config set --secret anthos:demo_pwd -C ${script_dir}/anthos
-fi
-
 # Show colorful fun headers if the right utils are installed
 function header() {
   "${script_dir}"/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/venv/bin/lolcat
