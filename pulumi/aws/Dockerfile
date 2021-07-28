@@ -28,6 +28,7 @@ RUN set -eux; \
         libreadline-dev \
         libsqlite3-dev \
         libssl-dev \
+        make \
         nano \
         vim \
         wget \
@@ -35,6 +36,7 @@ RUN set -eux; \
     su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/setup_venv.sh'; \
     echo 'source /pulumi/projects/kic-reference-architectures/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
     apt-get purge --yes \
+        build-essential \
         libbz2-dev \
         libffi-dev \
         libreadline-dev \
@@ -42,7 +44,12 @@ RUN set -eux; \
         libssl-dev \
         zlib1g-dev; \
     apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* /usr/share/man/* /root/.cache /pulumi/projects/kic-reference-architectures/.cache
+    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* /usr/share/man/* /root/.cache \
+        /pulumi/projects/kic-reference-architectures/.cache \
+        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-dotnet \
+        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-go \
+        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-nodejs; \
+    find -type d -name __pycache__ -exec rm --force --recursive  '{}' \; || true
 
 USER runner
 WORKDIR /pulumi/projects/kic-reference-architectures

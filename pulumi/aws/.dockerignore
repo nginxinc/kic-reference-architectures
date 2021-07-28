@@ -2,3 +2,4 @@
 build_dev_docker_image.sh
 Dockerfile
 venv
+__pycache__
