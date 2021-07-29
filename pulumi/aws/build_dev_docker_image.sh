@@ -6,22 +6,64 @@ set -o pipefail  # don't hide errors within pipes
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+DEFAULT_UID=1000
+DEFAULT_GID=1000
+
+# CentOS already has a Group Id (GID) assigned of 999, so we use 996 the GID that gets
+# auto-assigned when you install docker onto a fresh CentOS install.
+if [ "${1}" == "centos" ]; then
+  DEFAULT_DOCKER_GID=996
+# Otherwise, we use 999 the GID that gets auto-assigned when you install
+# docker onto a fresh Debian install.
+else
+  DEFAULT_DOCKER_GID=999
+fi
+
+# Choose a docker GID based on the owner of the Docker socket or the existing Docker group.
 if [ -S "/var/run/docker.sock" ]; then
   DOCKER_GID="$(stat --printf="%g" /var/run/docker.sock 2>/dev/null || echo 999)"
 elif command -v getent > /dev/null; then
   DOCKER_GID="$(getent group docker | cut --delimiter=: --field=3)"
 else
-  DOCKER_GID=999
+  DOCKER_GID=$DEFAULT_DOCKER_GID
 fi
 
+# If we chose a GID that conflicts with a known gid on CentOS, we use the default
+# instead.
+if [ "${1}" == "centos" ]; then
+  if [[ $DOCKER_GID -gt 996 ]] && [[ $DOCKER_GID -lt 1000 ]]; then
+    DOCKER_GID=$DEFAULT_DOCKER_GID
+  fi
+fi
+
+# If we have the id command, then we use it to get the current user's uid and gid.
+# This helps when we mount directories into a Docker image. It isn't strictly
+# necessary, but it removes a headache when using the image in a development
+# workflow.
 if command -v id > /dev/null; then
-  DOCKER_USER_UID="$(id -u || echo 1000)"
-  DOCKER_USER_GID="$(id -g || echo 1000)"
+  CURRENT_USER_UID="$(id -u || echo ${DEFAULT_UID})"
+  CURRENT_USER_GID="$(id -g || echo ${DEFAULT_GID})"
+
+  # Reject superuser UIDs
+  if [ "$CURRENT_USER_UID" -eq 0 ]; then
+    DOCKER_USER_UID=$DEFAULT_UID
+  else
+    DOCKER_USER_UID=$CURRENT_USER_UID
+  fi
+
+  # Reject superuser GIDs
+  if [ "$CURRENT_USER_GID" -eq 0 ]; then
+    DOCKER_USER_GID=$DEFAULT_GID
+  else
+    DOCKER_USER_GID=$CURRENT_USER_GID
+  fi
+# If we don't have an id command, we just use the defaults.
 else
-  DOCKER_USER_UID=1000
-  DOCKER_USER_GID=1000
+  DOCKER_USER_UID=$DEFAULT_UID
+  DOCKER_USER_GID=$DEFAULT_GID
 fi
 
+# Attempt to build the container with the same architecture as the host.
 ARCH=""
 case $(uname -m) in
     i386)    ARCH="386" ;;
@@ -32,11 +74,21 @@ case $(uname -m) in
     *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
 esac
 
-docker build \
+# Squash our image if we are running in experimental mode
+if [ "$(docker version -f '{{.Server.Experimental}}')" == 'true' ]; then
+  additional_docker_opts="--squash"
+else
+  additional_docker_opts=""
+fi
+
+docker build ${additional_docker_opts} \
   --build-arg ARCH="${ARCH}" \
   --build-arg UID="${DOCKER_USER_UID}" \
   --build-arg GID="${DOCKER_USER_GID}" \
   --build-arg DOCKER_GID="${DOCKER_GID}" \
-  -t kic-ref-arch-pulumi-aws \
-  -f "${script_dir}/Dockerfile" \
+  -t "kic-ref-arch-pulumi-aws:${1}" \
+  -f "${script_dir}/Dockerfile.${1}" \
   "${script_dir}"
+
+# Run unit tests
+docker run --interactive --tty --rm "kic-ref-arch-pulumi-aws:${1}"  venv/bin/python3 test.py

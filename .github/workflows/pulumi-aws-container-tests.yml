@@ -1,0 +1,25 @@
+name: Pulumi AWS Container Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  debian-container-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build and Test Debian Image
+      working-directory: pulumi/aws
+      run: bash build_dev_docker_image.sh debian
+
+  centos-container-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build and Test CentOS Image
+      working-directory: pulumi/aws
+      run: bash build_dev_docker_image.sh centos
