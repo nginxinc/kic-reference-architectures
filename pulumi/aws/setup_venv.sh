@@ -50,16 +50,34 @@ realpath() (
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if ! command -v git > /dev/null; then
-   >&2 echo "git must be installed to continue"
+  >&2 echo "git must be installed to continue"
   exit 1
 fi
 
 if ! command -v python3 > /dev/null; then
+  if ! command -v make > /dev/null; then
+    >&2 echo "make must be installed in order to install python with pyenv"
+    >&2 echo "Either install make or install Python 3 with the venv module"
+    exit 1
+  fi
+  if ! command -v gcc > /dev/null; then
+    >&2 echo "gcc must be installed in order to install python with pyenv"
+    >&2 echo "Either install gcc or install Python 3 with the venv module"
+    exit 1
+  fi
+
   echo "Python 3 is not installed. Adding pyenv to allow for Python installation"
   export PYENV_ROOT="${script_dir}/.pyenv"
+
   mkdir -p "${PYENV_ROOT}"
-  git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2> "${script_dir}/pyenv_git_clone.log" \
-    && rm "${script_dir}/pyenv_git_clone.log" # remove log if clone worked
+  git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
+  if git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2> "${git_clone_log}"; then
+    rm "${git_clone_log}"
+  else
+    >&2 echo "Error cloning pyenv repository:"
+    >&2 cat "${git_clone_log}"
+  fi
+
   export PATH="$PYENV_ROOT/bin:$PATH"
 fi
 
@@ -207,7 +225,7 @@ fi
 echo "Downloading Pulumi CLI into virtual environment"
 PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/requirements.txt" | cut -d '=' -f2)"
 
-if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$("${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then
+if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then
   echo "Pulumi version ${PULUMI_VERSION} is already installed"
 else
   PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"

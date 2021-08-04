@@ -12,8 +12,18 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if ! command -v pulumi > /dev/null; then
-  >&2 echo "Pulumi must be installed to continue"
-  exit 1
+  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
+    echo "Adding to [${script_dir}/venv/bin] to PATH"
+    export PATH="$PATH:${script_dir}/venv/bin"
+
+    if ! command -v pulumi > /dev/null; then
+      >&2 echo "Pulumi must be installed to continue"
+      exit 1
+    fi
+  else
+    >&2 echo "Pulumi must be installed to continue"
+    exit 1
+  fi
 fi
 
 if ! command -v python3 > /dev/null; then
@@ -22,8 +32,31 @@ if ! command -v python3 > /dev/null; then
 fi
 
 if ! command -v node > /dev/null; then
-  >&2 echo "NodeJS must be installed to continue"
+  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
+    echo "Adding to [${script_dir}/venv/bin] to PATH"
+    export PATH="$PATH:${script_dir}/venv/bin"
+
+    if ! command -v node > /dev/null; then
+      >&2 echo "NodeJS must be installed to continue"
+      exit 1
+    fi
+  else
+    >&2 echo "NodeJS must be installed to continue"
+    exit 1
+  fi
+fi
+
+if ! command -v git > /dev/null; then
+  >&2 echo "git must be installed to continue"
   exit 1
+fi
+
+if ! command -v make > /dev/null; then
+  >&2 echo "make is not installed - it must be installed if you intend to build NGINX Kubernetes Ingress Controller from source."
+fi
+
+if ! command -v docker > /dev/null; then
+  >&2 echo "docker is not installed - it must be installed if you intend to build NGINX Kubernetes Ingress Controller from source."
 fi
 
 if [ ! -f "${script_dir}/config/environment" ]; then
@@ -76,6 +109,7 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]] ; then
   fi
 else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
+  pulumi config set aws:region -C "${script_dir}/vpc" "${AWS_DEFAULT_REGION}"
 fi
 
 # The bank of anthos configuration file is stored in the ./anthos/config
