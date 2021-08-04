@@ -187,6 +187,14 @@ cd "${script_dir}/kic-image-build"
 pulumi $pulumi_args up
 
 header "KIC Image Push"
+# If we are on MacOS and the user keychain is locked, we need to prompt the
+# user to unlock it so that `docker login` will work correctly.
+if command -v security > /dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
+  if ! security show-keychain-info 2> /dev/null; then
+    echo "Enter in your system credentials in order to access the system keychain for storing secrets securely with Docker."
+    security unlock-keychain
+  fi
+fi
 cd "${script_dir}/kic-image-push"
 pulumi $pulumi_args up
 
