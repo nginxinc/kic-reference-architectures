@@ -10,67 +10,10 @@ Although Pulumi supports many programming languages, Python was chosen as
 the language for this project. The reimplementation of the deployments
 definitions here should be reproducible in other languages.
 
-## Requirements
-
-### Git
-
-The `git` command line tool is required for checking out KIC source code from
-github and for the KIC image build process.
-
-### Make / Build Essential
-
-The ``
-
-### Setup
-
-Within the project, you will need to install Python and dependent libraries 
-into the `venv` directory. To do this is to invoke the [`setup_venv.sh`](./setup_venv.sh) 
-included in the project. This script will install into the [virtual environment](https://docs.python.org/3/tutorial/venv.html)
-directory:
-
- * Python (via pyenv) if it is not already present
- * Pulumi CLI utilities
- * AWS CLI utilities 
- * `kubectl`
-
-After running [`setup_venv.sh`](./setup_venv.sh), you will need to activate 
-the newly created virtual environment by running `source venv/bin/activate`.
-This will load the virtual environment's path and other environment variables
-into the current shell.
-
-### AWS
-
-Since this project illustrates deploying to AWS, 
-[configuring Pulumi for AWS](https://www.pulumi.com/docs/intro/cloud-providers/aws/setup/)
-is necessary. If you want to avoid using environment variables, AWS profile
-and region definitions can be contained in the `config/Pulumi.<stack>.yaml` 
-files in each project. Refer to the Pulumi documentation for details on how to
-do this. The script [`startup_all.sh`](./start_all.sh) will prompt you to add 
-the AWS region and profile values that will then be added to the `config/Pulumi.<stack>.yaml`
-in each project directory.
-
-### Kubernetes
-
-Although not required, installing the [CLI tool `kubectl`](https://kubernetes.io/docs/tasks/tools/)
-will allow you to interact with the Kubernetes cluster that you have stood up
-using this project.
-
 ## Getting Started
 
-The easiest way to run the project is to run [`start_all.sh`](./start_all.sh) 
-after you have  completed the steps in [requirements](README.md#requirements).
-When doing so, be sure to choose the same 
-[Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/) 
-for all of your projects. Additionally, this script will prompt you for the
-AWS region and profile information. This information will be used to populate
-the `config/Pulumi.<stack>.yaml` files in each project directory.
-
-Alternatively, you can enter into each Pulumi
-project directory and execute each project independently by doing 
-`pulumi up`. Take a look at `start_all.sh` to get a feel for the flow.
-
-If you want to blow away the entire environment you can run 
-[`destroy.sh`](./destroy.sh).
+For instructions on running the project, refer to the 
+[Getting Started Guide](docs/getting_started.md).
 
 ## Project Structure
 
