@@ -31,21 +31,24 @@ function askYesNo {
         fi
 }
 
-# Function below is based upon code in this StackOverflow post:
-# https://stackoverflow.com/a/18443300/33611
-# CC BY-SA 3.0 License: https://creativecommons.org/licenses/by-sa/3.0/
-realpath() (
-  OURPWD=$PWD
-  cd "$(dirname "$1")"
-  LINK=$(readlink "$(basename "$1")")
-  while [ "$LINK" ]; do
-    cd "$(dirname "$LINK")"
-    LINK=$(readlink "$(basename "$1")")
-  done
-  REALPATH="$PWD/$(basename "$1")"
-  cd "$OURPWD"
-  echo "$REALPATH"
-)
+# Does basic OS distribution detection for "class" of distribution, such
+# as debian, rhel, etc
+function distro_like() {
+  local like
+  if [ "$(uname -s)" == "Darwin" ]; then
+    like="darwin"
+  elif [ -f /etc/os-release ]; then
+    if grep --quiet '^ID_LIKE=' /etc/os-release; then
+      like="$(grep '^ID_LIKE=' /etc/os-release | cut -d'=' -f2 | tr -d \")"
+    else
+      like="$(grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d \")"
+    fi
+  else
+    like="unknown"
+  fi
+
+  echo "${like}"
+}
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
