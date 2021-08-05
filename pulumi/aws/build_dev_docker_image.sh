@@ -21,7 +21,7 @@ fi
 
 # Choose a docker GID based on the owner of the Docker socket or the existing Docker group.
 if [ -S "/var/run/docker.sock" ]; then
-  DOCKER_GID="$(stat --printf="%g" /var/run/docker.sock 2>/dev/null || echo 999)"
+  DOCKER_GID="$(stat --printf="%g" /var/run/docker.sock 2>/dev/null || echo ${DEFAULT_DOCKER_GID})"
 elif command -v getent > /dev/null; then
   DOCKER_GID="$(getent group docker | cut --delimiter=: --field=3)"
 else
@@ -42,7 +42,7 @@ fi
 # workflow.
 if command -v id > /dev/null; then
   CURRENT_USER_UID="$(id -u || echo ${DEFAULT_UID})"
-  CURRENT_USER_GID="$(id -g || echo ${DEFAULT_GID})"
+  CURRENT_USER_GID="${CURRENT_USER_UID}"
 
   # Reject superuser UIDs
   if [ "$CURRENT_USER_UID" -eq 0 ]; then
@@ -73,13 +73,19 @@ case $(uname -m) in
     arm)     dpkg --print-architecture | grep -q "arm64" && ARCH="arm64v8" || ARCH="arm" ;;
     *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
 esac
+echo "Building container image with [${ARCH}] system architecture]"
 
 # Squash our image if we are running in experimental mode
 if [ "$(docker version -f '{{.Server.Experimental}}')" == 'true' ]; then
+  echo "Enabling squash mode for container image"
   additional_docker_opts="--squash"
 else
   additional_docker_opts=""
 fi
+
+echo "User id for [runner] user in container ${DOCKER_USER_UID}"
+echo "Group id for [runner] group in container ${DOCKER_USER_GID}"
+echo "Group id for [docker] group in container ${DOCKER_GID}"
 
 docker build ${additional_docker_opts} \
   --build-arg ARCH="${ARCH}" \
