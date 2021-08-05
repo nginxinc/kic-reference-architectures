@@ -70,6 +70,19 @@ if ! command -v python3 > /dev/null; then
   fi
 
   echo "Python 3 is not installed. Adding pyenv to allow for Python installation"
+  echo "If development library dependencies are not installed, Python build may fail."
+
+# Give relevant hint for the distro
+if distro_like | grep --quiet 'debian'; then
+  echo "You may need to install additional packages using a command like the following:"
+  echo "   apt-get install libbz2-dev libffi-dev libreadline-dev libsqlite3-dev libssl-dev"
+elif distro_like | grep --quiet 'rhel'; then
+  echo "You may need to install additional packages using a command like the following:"
+  echo "   yum install bzip2-devel libffi-devel readline-devel sqlite-devel openssl-devel zlib-devel"
+else
+  echo "required libraries: libbz2 libffi libreadline libsqlite3 libssl zlib1g"
+fi
+
   export PYENV_ROOT="${script_dir}/.pyenv"
 
   mkdir -p "${PYENV_ROOT}"
