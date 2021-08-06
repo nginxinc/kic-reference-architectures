@@ -14,7 +14,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 if ! command -v pulumi > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="$PATH:${script_dir}/venv/bin"
+    export PATH="${script_dir}/venv/bin:$PATH"
 
     if ! command -v pulumi > /dev/null; then
       >&2 echo "Pulumi must be installed to continue"
@@ -34,7 +34,7 @@ fi
 if ! command -v node > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="$PATH:${script_dir}/venv/bin"
+    export PATH="${script_dir}/venv/bin:$PATH"
 
     if ! command -v node > /dev/null; then
       >&2 echo "NodeJS must be installed to continue"
@@ -46,32 +46,37 @@ if ! command -v node > /dev/null; then
   fi
 fi
 
+source "${script_dir}/config/environment"
+echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
+
+pulumi_args="--emoji --stack ${PULUMI_STACK}"
+
 cd "${script_dir}/anthos"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/certmgr"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/logagent"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/logstore"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/kic-helm-chart"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/kic-image-push"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/kic-image-build"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/ecr"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/eks"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/vpc"
-pulumi --emoji destroy --yes
+pulumi ${pulumi_args} destroy

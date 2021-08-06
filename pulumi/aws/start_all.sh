@@ -14,7 +14,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 if ! command -v pulumi > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="$PATH:${script_dir}/venv/bin"
+    export PATH="${script_dir}/venv/bin:$PATH"
 
     if ! command -v pulumi > /dev/null; then
       >&2 echo "Pulumi must be installed to continue"
@@ -34,7 +34,7 @@ fi
 if ! command -v node > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="$PATH:${script_dir}/venv/bin"
+    export PATH="${script_dir}/venv/bin:$PATH"
 
     if ! command -v node > /dev/null; then
       >&2 echo "NodeJS must be installed to continue"
@@ -154,7 +154,11 @@ function add_kube_config() {
     fi
     pulumi_aws_profile="$(pulumi config get aws:profile)"
     if [ "${pulumi_aws_profile}" != "" ]; then
+      echo "Using AWS profile [${pulumi_aws_profile}] from Pulumi configuration"
       profile_arg="--profile ${pulumi_aws_profile}"
+    elif [[ -n "${AWS_PROFILE+x}" ]] ; then
+      echo "Using AWS profile [${AWS_PROFILE}] from environment"
+      profile_arg="--profile ${AWS_PROFILE}"
     else
       profile_arg=""
     fi
@@ -165,7 +169,7 @@ function add_kube_config() {
     "${script_dir}"/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
 }
 
-pulumi_args="--emoji"
+pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 header "AWS VPC"
 cd "${script_dir}/vpc"
