@@ -1,4 +1,4 @@
-awscli~=1.20.13
+awscli~=1.20.15
 fart~=0.1.5
 lolcat~=1.4
 nodeenv~=1.6.0
@@ -7,7 +7,7 @@ pulumi~=3.9.1
 pulumi-aws~=4.14.0
 pulumi-docker~=3.0.0
 pulumi-eks>=0.31.0
-pulumi-kubernetes~=3.5.1
+pulumi-kubernetes~=3.6.0
 pycryptodome~=3.10.1
 PyYAML~=5.4.1
 requests~=2.26.0
