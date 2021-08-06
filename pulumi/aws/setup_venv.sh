@@ -160,7 +160,10 @@ if [ ${has_pyenv_venv_plugin} -eq 0 ]; then
 
   if [ ! -d "${VIRTUAL_ENV}" ]; then
     echo "Creating new virtual environment: ${VIRTUAL_ENV}"
-    python3 -m venv "${VIRTUAL_ENV}"
+    if ! python3 -m venv "${VIRTUAL_ENV}"; then
+      echo "Deleting partially created virtual environment: ${VIRTUAL_ENV}"
+      rm -rf "${VIRTUAL_ENV}" || true
+    fi
   fi
 
   source "${VIRTUAL_ENV}/bin/activate"
