@@ -231,3 +231,7 @@ pulumi $pulumi_args up
 header "Bank of Anthos"
 cd "${script_dir}/anthos"
 pulumi $pulumi_args up
+app_url="$(pulumi stack output --json | python3 "${script_dir}"/anthos/verify.py)"
+
+header "Finished!"
+echo "Application can now be accessed at: ${app_url}"
