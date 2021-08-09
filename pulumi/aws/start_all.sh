@@ -59,6 +59,16 @@ if ! command -v docker > /dev/null; then
   >&2 echo "docker is not installed - it must be installed if you intend to build NGINX Kubernetes Ingress Controller from source."
 fi
 
+# Check to see if the user is logged into Pulumi
+if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+  pulumi login
+
+  if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+    >&2 echo "Unable to login to Pulumi - exiting"
+    exit 2
+  fi
+fi
+
 if [ ! -f "${script_dir}/config/environment" ]; then
   touch "${script_dir}/config/environment"
 fi

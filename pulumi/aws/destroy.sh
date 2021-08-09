@@ -46,6 +46,16 @@ if ! command -v node > /dev/null; then
   fi
 fi
 
+# Check to see if the user is logged into Pulumi
+if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+  pulumi login
+
+  if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+    >&2 echo "Unable to login to Pulumi - exiting"
+    exit 2
+  fi
+fi
+
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
