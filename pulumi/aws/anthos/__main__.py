@@ -4,6 +4,7 @@ import os
 import pulumi_kubernetes as k8s
 from Crypto.PublicKey import RSA
 from kic_util import pulumi_config
+from pulumi_kubernetes.networking.v1beta1 import IngressRuleArgs
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
 
@@ -330,3 +331,6 @@ boaingress = k8s.networking.v1beta1.Ingress("boaingress",
                                                     ),
                                                 )],
                                             ))
+
+application_url = anthos_host.apply(lambda host: f'https://{host}')
+pulumi.export('application_url', application_url)
