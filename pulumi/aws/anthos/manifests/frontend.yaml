@@ -37,8 +37,8 @@ spec:
         # - name: CYMBAL_LOGO
         #   value: "false"
         # Customize the bank name used in the header. Defaults to 'Bank of Anthos' - when CYMBAL_LOGO is true, uses 'CymbalBank'
-        # - name: BANK_NAME
-        #   value: ""
+        - name: BANK_NAME
+          value: "Northstar Financial"
         - name: DEFAULT_USERNAME
           valueFrom:
             configMapKeyRef:
