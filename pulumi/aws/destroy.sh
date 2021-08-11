@@ -70,6 +70,12 @@ pulumi ${pulumi_args} destroy
 cd "${script_dir}/prometheus"
 pulumi ${pulumi_args} destroy
 
+cd "${script_dir}/grafana"
+pulumi ${pulumi_args} destroy
+
+cd "${script_dir}/prometheus"
+pulumi ${pulumi_args} destroy
+
 cd "${script_dir}/certmgr"
 pulumi ${pulumi_args} destroy
 
