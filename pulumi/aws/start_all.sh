@@ -228,6 +228,14 @@ header "Cert Manager"
 cd "${script_dir}/certmgr"
 pulumi $pulumi_args up
 
+header "Prometheus"
+cd "${script_dir}/prometheus"
+pulumi $pulumi_args up
+
+header "Grafana"
+cd "${script_dir}/grafana"
+pulumi $pulumi_args up
+
 header "Bank of Anthos"
 cd "${script_dir}/anthos"
 pulumi $pulumi_args up
