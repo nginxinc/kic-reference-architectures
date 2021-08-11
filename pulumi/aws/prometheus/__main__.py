@@ -3,7 +3,6 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 import pulumi_kubernetes.helm.v3 as helm
-from pulumi_kubernetes.helm.v3 import FetchOpts
 from kic_util import pulumi_config
 
 
@@ -39,7 +38,7 @@ ns = k8s.core.v1.Namespace(resource_name='prometheus',
 config = pulumi.Config('prometheus')
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '14.6.0'
+    chart_version = '14.13.1'
 helm_repo_name = config.get('prometheus_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'
@@ -50,10 +49,10 @@ if not helm_repo_url:
 chart_ops = helm.ChartOpts(
     chart='prometheus',
     namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
-    version=chart_version,
-    transformations=[remove_status_field]
+    repo=helm_repo_name
+fetch_opts = FetchOpts(repo=helm_repo_url),
+             version = chart_version,
+                       transformations = [remove_status_field]
 )
 
 prometheus_chart = helm.Chart(release_name='prometheus',

@@ -98,7 +98,7 @@ config:
   # for details.
 
   # Prometheus Configuration
-  prometheus:chart_version: 14.6.0
+  prometheus:chart_version: 14.13.1
   # Chart version for the Pulumi chart for grafana
   prometheus:helm_repo_name: prometheus-community
   # Name of the repo to pull the grafana chart from

@@ -44,8 +44,8 @@ if not adminuser:
 
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
-# same time that we fix the Anthos issues.
-adminpass = config.require('adminpass')
+# same time.
+adminpass = config.require('admin_pass')
 
 chart_values = {
     'persistence': {
@@ -105,7 +105,7 @@ if not helm_repo_name:
     helm_repo_name = 'grafana'
 helm_repo_url = config.get('grafana_helm_repo_url')
 if not helm_repo_url:
-    helm_repo_url = 'https://grafana.github.io/helm-charts'
+    helm_repo_url = 'https://grafana.github.io/helm-chart'
 
 chart_ops = helm.ChartOpts(
     chart='grafana',
