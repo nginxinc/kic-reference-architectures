@@ -7,8 +7,16 @@ from kic_util import pulumi_config
 from pulumi_kubernetes.networking.v1beta1 import IngressRuleArgs
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
+import pulumi_kubernetes.helm.v3 as helm
+from pulumi_kubernetes.helm.v3 import FetchOpts
 
 import pulumi
+
+# Removes the status field from the Nginx Ingress Helm Chart, so that i#t is
+# compatible with the Pulumi Chart implementation.
+def remove_status_field(obj):
+    if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
+       del obj['status']
 
 
 def pulumi_eks_project_name():
@@ -334,3 +342,92 @@ boaingress = k8s.networking.v1beta1.Ingress("boaingress",
 
 application_url = anthos_host.apply(lambda host: f'https://{host}')
 pulumi.export('application_url', application_url)
+
+
+# Monitoring for Databases: Accounts DB
+#
+# Note that we use the credentials that we pulled
+# above when building out the DB containers
+accountsdb_chart_values = {
+   'replicaCount': 1,
+   'annotations': {
+      'prometheus.io/scrape': True,
+      'prometheus.io/port': '9187'
+   },
+   'config': {
+      'datasource': {
+         'host': 'accounts-db',
+         'user': accounts_admin,
+         'password': accounts_pwd,
+         'port': '5432',
+         'database': accounts_db,
+         'sslmode': 'disable'
+      }
+   }
+}
+
+# Monitoring for Databases: Ledger DB
+#
+# Note that we use the credentials that we pulled
+# above when building out the DB containers
+ledgerdb_chart_values = {
+   'replicaCount': 1,
+   'annotations': {
+      'prometheus.io/scrape': True,
+      'prometheus.io/port': '9187'
+   },
+   'config': {
+      'datasource': {
+         'host': 'ledger-db',
+         'user': ledger_admin,
+         'password': ledger_pwd,
+         'port': '5432',
+         'database': ledger_db,
+         'sslmode': 'disable'
+      }
+   }
+}
+
+#
+# Get the chart values for monitoring
+config = pulumi.Config('anthos')
+chart_version = config.get('chart_version')
+if not chart_version:
+    chart_version = '2.3.5'
+helm_repo_name = config.get('helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'prometheus-community'
+
+helm_repo_url = config.get('helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
+
+# 
+# Setup monitoring
+accountsdb_chart_ops = helm.ChartOpts(
+    chart='prometheus-postgres-exporter',
+    namespace=ns.metadata.name,
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
+    values=accountsdb_chart_values,
+    transformations=[remove_status_field],
+)
+
+accountsdb_mon = helm.Chart(release_name='accountsdb-mon',
+                           config=accountsdb_chart_ops,
+                           opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ns]))
+
+ledgerdb_chart_ops = helm.ChartOpts(
+    chart='prometheus-postgres-exporter',
+    namespace=ns.metadata.name,
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
+    values=ledgerdb_chart_values,
+    transformations=[remove_status_field],
+)
+
+ledgerdb_mon = helm.Chart(release_name='ledgerdb-mon',
+                           config=ledgerdb_chart_ops,
+                           opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ns]))
