@@ -37,13 +37,6 @@ spec:
             name: environment-config
         - configMapRef:
             name: accounts-db-config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 500m
-            memory: 256Mi
         readinessProbe:
           httpGet:
             path: /ready
