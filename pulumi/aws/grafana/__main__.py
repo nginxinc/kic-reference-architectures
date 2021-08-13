@@ -44,7 +44,7 @@ if not adminuser:
 
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
-# same time.
+# same time that we fix the Anthos issues.
 adminpass = config.require('adminpass')
 
 chart_values = {
