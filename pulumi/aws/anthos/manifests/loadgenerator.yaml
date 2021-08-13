@@ -21,6 +21,9 @@ spec:
       containers:
       - name: loadgenerator
         image: gcr.io/bank-of-anthos/loadgenerator:v0.4.3
+        ports: 
+          - containerPort: 8089
+        command: ["locust"]
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
@@ -28,10 +31,3 @@ spec:
           value: "5"
         - name: LOG_LEVEL
           value: "error"
-        resources:
-          requests:
-            cpu: 100m
-            memory: 512Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
