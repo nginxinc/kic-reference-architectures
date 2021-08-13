@@ -22,8 +22,8 @@ config:
   anthos:accounts_db: postgresdb
 
   # Prometheus Configuration
-  prometheus:chart_version: 2.3.5
+  anthos:chart_version: 2.3.5
   # Chart version for the Pulumi chart for prometheus
-  prometheus:helm_repo_name: prometheus-community
+  anthos:helm_repo_name: prometheus-community
   # Name of the repo to pull the prometheus chart from
-  prometheus:helm_repo_url: https://prometheus-community.github.io/helm-charts
+  anthos:helm_repo_url: https://prometheus-community.github.io/helm-charts
