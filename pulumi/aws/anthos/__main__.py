@@ -387,7 +387,7 @@ accountsdb_chart_values = {
             "password": accounts_pwd,
             "passwordSecret": {},
             "port": "5432",
-            "database": "",
+            "database": accounts_db,
             "sslmode": "disable"
         },
         "datasourceSecret": {},
@@ -465,7 +465,7 @@ ledgerdb_chart_values = {
             "password": ledger_pwd,
             "passwordSecret": {},
             "port": "5432",
-            "database": "",
+            "database": ledger_db,
             "sslmode": "disable"
         },
         "datasourceSecret": {},
