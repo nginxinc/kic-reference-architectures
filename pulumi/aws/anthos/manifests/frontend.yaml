@@ -68,13 +68,6 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 15
           timeoutSeconds: 30
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 500m
-            memory: 256Mi
       volumes:
       - name: publickey
         secret:

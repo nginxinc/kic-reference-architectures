@@ -50,13 +50,6 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 10
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 500m
-            memory: 256Mi
       volumes:
       - name: keys
         secret:
