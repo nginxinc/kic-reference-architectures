@@ -33,7 +33,7 @@ vpc - defines and installs the VPC and subnets to use with EKS
               └─certmgr - deploys the open source cert-manager.io helm chart to the EKS cluster
                 └─prometheus - deploys prometheus server and node exporter for metrics
                   └─grafana - deploys the grafana visualization platform
-                    └─anthos - deploys the google Bank of Anthos application to the EKS cluster
+                    └─sirius - deploys the Bank of Sirus application to the EKS cluster
                 
 ```
 
@@ -171,9 +171,10 @@ user either in the code, or via the standard Grafana tooling.
 
 ### Demo Application
 
-A version of the Google 
+A forked version of the Google 
 [_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos)
-application is contained in the [`anthos`](./anthos) directory. 
+application is contained in the [`sirius`](./sirius) directory. The github repository
+for this for is at [_Bank of Sirius_](https://github.com/nginxinc/bank-of-sirius). 
 
 Normally, the `frontend` microservice is exposed via a load balancer for
 traffic management. This deployment has been modified to use the NGINX or
@@ -189,7 +190,7 @@ set, by demonstrating the process of creating and deploying an RSA key pair
 at deployment time and using the project configuration file to set config
 variables, including secrets.
 
-As part of the Bank of Anthos deployment, we deploy a cluster-wide 
+As part of the Bank of Sirius deployment, we deploy a cluster-wide 
 [self-signed](https://cert-manager.io/docs/configuration/selfsigned/)
 issuer using the cert-manager deployed above. This is then used by the 
 Ingress object created to enable TLS access to the application. Note that
@@ -201,8 +202,8 @@ of the application, the Prometheus Postgres data exporter will be deployed into
 the same namespace as the application and will be configured to be scraped by the 
 prometheus server installed earlier.
 
-**Note** Due to the way that Pulumi currently handles secrets, the [anthos](./anthos)
-directory contains its own configuration directory [anthos/config](./anthos/config).
+**Note** Due to the way that Pulumi currently handles secrets, the [sirius](./sirius)
+directory contains its own configuration directory [sirius/config](./sirius/config).
 This directory contains an example configuration file that can be copied over
 and used. The user will be prompted to add passwords to the configuration file at the
 first run of the [start_all.sh](./start_all.sh) script. This is a work-around that 
