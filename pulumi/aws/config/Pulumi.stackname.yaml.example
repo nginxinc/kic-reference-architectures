@@ -71,7 +71,7 @@ config:
     # Path on the executing system's filesystem of the NGINX repository certificate.
     kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
 
-  # The parameters for the Bank of Anthos are set in a configuration directory
+  # The parameters for the Bank of Sirius are set in a configuration directory
   # within that project.
 
   # Cert Manager Configuration

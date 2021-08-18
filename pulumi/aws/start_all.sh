@@ -122,7 +122,7 @@ else
   pulumi config set aws:region -C "${script_dir}/vpc" "${AWS_DEFAULT_REGION}"
 fi
 
-# The bank of anthos configuration file is stored in the ./anthos/config
+# The bank of sirius configuration file is stored in the ./sirius/config
 # directory. This is because we cannot pull secrets from different project
 # directories.
 #
@@ -134,20 +134,20 @@ fi
 #
 echo "Checking for required secrets"
 
-# Anthos Accounts Database
-if pulumi config get anthos:accounts_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
-  echo "Password found for the anthos accounts database"
+# Sirius Accounts Database
+if pulumi config get sirius:accounts_pwd -C ${script_dir}/sirius > /dev/null 2>&1; then
+  echo "Password found for the sirius accounts database"
 else
-  echo "Create a password for the anthos accounts database"
-  pulumi config set --secret anthos:accounts_pwd -C ${script_dir}/anthos
+  echo "Create a password for the sirius accounts database"
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/sirius
 fi
 
-# Anthos Ledger Database
-if pulumi config get anthos:ledger_pwd -C ${script_dir}/anthos > /dev/null 2>&1; then
-  echo "Password found for anthos ledger database"
+# Sirius Ledger Database
+if pulumi config get sirius:ledger_pwd -C ${script_dir}/sirius > /dev/null 2>&1; then
+  echo "Password found for sirius ledger database"
 else
-  echo "Create a password for the anthos ledger database"
-  pulumi config set --secret anthos:ledger_pwd -C ${script_dir}/anthos
+  echo "Create a password for the sirius ledger database"
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/sirius
 fi
 
 # Show colorful fun headers if the right utils are installed
@@ -236,10 +236,10 @@ header "Grafana"
 cd "${script_dir}/grafana"
 pulumi $pulumi_args up
 
-header "Bank of Anthos"
-cd "${script_dir}/anthos"
+header "Bank of Sirius"
+cd "${script_dir}/sirius"
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/anthos/verify.py)"
+app_url="$(pulumi stack output --json | python3 "${script_dir}"/sirius/verify.py)"
 
 header "Finished!"
 echo "Application can now be accessed at: ${app_url}"
