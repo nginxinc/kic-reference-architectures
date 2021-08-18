@@ -30,10 +30,10 @@ def pulumi_ingress_project_name():
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 
-def anthos_manifests_location():
+def sirius_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    anthos_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
-    return anthos_manifests_path
+    sirius_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
+    return sirius_manifests_path
 
 
 # We will only want to be deploying one type of cerficate issuer
@@ -59,7 +59,7 @@ def create_pg_uri(password_object):
 
 
 def add_namespace(obj):
-    obj['metadata']['namespace'] = 'boa'
+    obj['metadata']['namespace'] = 'bos'
 
 
 stack_name = pulumi.get_stack()
@@ -81,12 +81,12 @@ ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
 ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
 lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
 
-# Create the namespace for Bank of Anthos
-ns = k8s.core.v1.Namespace(resource_name='boa',
-                           metadata={'name': 'boa'},
+# Create the namespace for Bank of Sirius
+ns = k8s.core.v1.Namespace(resource_name='bos',
+                           metadata={'name': 'bos'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-# Add Config Maps for Bank of Anthos; these are built in
+# Add Config Maps for Bank of Sirius; these are built in
 # Pulumi in order to manage secrets and provide the option
 # for users to override defaults in the configuration file.
 #
@@ -99,8 +99,8 @@ ns = k8s.core.v1.Namespace(resource_name='boa',
 
 # Configuration Values are stored in the configuration:
 #  ./config/Pulumi.STACKNAME.yaml
-# Note this config is speciic to the anthos code!
-config = pulumi.Config('anthos')
+# Note this config is specific to the sirius code!
+config = pulumi.Config('sirius')
 accounts_pwd = config.require_secret('accounts_pwd')
 
 accounts_admin = config.get('accounts_admin')
@@ -161,7 +161,7 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                       })
 
 # Demo data is hardcoded in the current incarnation of the bank of
-# anthos project, so we go along with that for now.
+# sirius project, so we go along with that for now.
 
 demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -179,7 +179,7 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
 
 # Configuration Values are stored in the configuration:
 #  ./config/Pulumi.STACKNAME.yaml
-config = pulumi.Config('anthos')
+config = pulumi.Config('sirius')
 ledger_pwd = config.require_secret('ledger_pwd')
 
 ledger_admin = config.get('ledger_admin')
@@ -235,7 +235,7 @@ jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
                                         "jwtRS256.key.pub": str(encode_public, "utf-8")
                                     })
 
-# Create resources for the Bank of Anthos using the
+# Create resources for the Bank of Sirius using the
 # Kubernetes YAML manifests which have been pulled from
 # the google repository.
 #
@@ -244,11 +244,11 @@ jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
 # `frontend` service has been updated to use a ClusterIP
 # rather than the external load balancer, as that interaction
 # is now handled by the NGNIX KIC.
-anthos_manifests = anthos_manifests_location()
+sirius_manifests = sirius_manifests_location()
 
-boa = ConfigGroup(
-    'boa',
-    files=[anthos_manifests],
+bos = ConfigGroup(
+    'bos',
+    files=[sirius_manifests],
     transformations=[add_namespace],
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
@@ -264,7 +264,7 @@ selfissuer = ConfigFile(
     transformations=[add_namespace],
     file=k8_manifest)
 
-# Add the Ingress controller for the Bank of Anthos
+# Add the Ingress controller for the Bank of Sirius
 # application. This uses the NGINX KIC that is installed
 # as part of this Pulumi stack.
 #
@@ -276,15 +276,15 @@ selfissuer = ConfigFile(
 #
 # Configuration Values are stored in the configuration:
 #  ./config/Pulumi.STACKNAME.yaml
-config = pulumi.Config('anthos')
-anthos_host = config.get('hostname')
+config = pulumi.Config('sirius')
+sirius_host = config.get('hostname')
 
 # If we have not defined a hostname in our config, we use the  hostname of the load
 # balancer. The default TLS uses self-signed certificates, so no hostname validation
 # is required. However, if the user makes use of ACME or other certificate authorities
 # the hostname chosen will need to resolve appropriately.
-if not anthos_host:
-    anthos_host = lb_ingress_hostname
+if not sirius_host:
+    sirius_host = lb_ingress_hostname
 
 # This block is responsible for creating the Ingress object for the application. This object
 # is deployed into the same namespace as the application and requires that an IngressClass
@@ -292,11 +292,11 @@ if not anthos_host:
 #
 # Note that we are using an older version of the API (v1beta1) in order to accomodate older builds
 # of the KIC. This will be changed in the future and is being tracked by Issue #26
-boaingress = k8s.networking.v1beta1.Ingress("boaingress",
+bosingress = k8s.networking.v1beta1.Ingress("bosingress",
                                             api_version="networking.k8s.io/v1beta1",
                                             kind="Ingress",
                                             metadata=k8s.meta.v1.ObjectMetaArgs(
-                                                name="boaingress",
+                                                name="bosingress",
                                                 namespace=ns,
                                                 # This annotation is used to request a certificate from the cert
                                                 # manager. The manager watches for ingress objects with this
@@ -316,7 +316,7 @@ boaingress = k8s.networking.v1beta1.Ingress("boaingress",
                                                 # to store the generated certificate.
                                                 tls=[k8s.networking.v1beta1.IngressTLSArgs(
                                                     hosts=[lb_ingress_hostname],
-                                                    secret_name="anthos-secret",
+                                                    secret_name="sirius-secret",
                                                 )],
                                                 # The block below defines the rules for traffic coming into the KIC.
                                                 # In the example below, we take any traffic on the host for path /
@@ -339,7 +339,7 @@ boaingress = k8s.networking.v1beta1.Ingress("boaingress",
                                                 )],
                                             ))
 
-application_url = anthos_host.apply(lambda host: f'https://{host}')
+application_url = sirius_host.apply(lambda host: f'https://{host}')
 pulumi.export('application_url', application_url)
 
 # Monitoring for Databases: Accounts DB
@@ -500,7 +500,7 @@ ledgerdb_chart_values = {
 
 #
 # Get the chart values for monitoring
-config = pulumi.Config('anthos')
+config = pulumi.Config('sirius')
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = '2.3.5'

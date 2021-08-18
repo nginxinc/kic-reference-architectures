@@ -61,7 +61,7 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
-cd "${script_dir}/anthos"
+cd "${script_dir}/sirius"
 pulumi ${pulumi_args} destroy
 
 cd "${script_dir}/grafana"
