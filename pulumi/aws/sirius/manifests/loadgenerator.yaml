@@ -20,8 +20,8 @@ spec:
       restartPolicy: Always
       containers:
       - name: loadgenerator
-        image: qdzlug/boa-loadgenerator:latest
-        ports: 
+        image: ghcr.io/nginxinc/loadgenerator:latest
+        ports:
           - containerPort: 8089
         command: ["locust"]
         env:
