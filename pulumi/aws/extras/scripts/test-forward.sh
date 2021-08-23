@@ -55,7 +55,7 @@ kubectl port-forward service/grafana --namespace grafana 3000:80 &
 echo $! > $PID02
 
 ## Loadgenerator Tunnel
-kubectl port-forward service/loadgenerator --namespace boa 8089:8089 &
+kubectl port-forward service/loadgenerator --namespace bos 8089:8089 &
 echo $! > $PID03
 
 ## Prometheus Tunnel
