@@ -22,7 +22,7 @@ spec:
       serviceAccountName: default
       containers:
       - name: accounts-db
-        image: gcr.io/bank-of-anthos/accounts-db:v0.4.3
+        image: ghcr.io/nginxinc/accounts-db:latest
         envFrom:
           - configMapRef:
               name: environment-config
