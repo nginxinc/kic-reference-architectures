@@ -11,7 +11,7 @@ We define modern app architectures as those driven by four characteristics: *sca
 and *agility*. While of course there are many different aspects of a modern architecture, these are fundamental.
 
 This diagram is an example of what we mean by a modern app architecture:
- ![Modern Apps Architecture Example Diagram] (DIAG-NGINX-ModernAppsRefArch-04-web-1024x776.svg)
+ ![Modern Apps Architecture Example Diagram](DIAG-NGINX-ModernAppsRefArch-04-web-1024x776.svg)
 
 To satisfy the four key characteristics, many modern app architectures employ:
 * platform agnosticism,
