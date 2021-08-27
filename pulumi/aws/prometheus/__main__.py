@@ -38,6 +38,9 @@ ns = k8s.core.v1.Namespace(resource_name='prometheus',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 config = pulumi.Config('prometheus')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'prometheus'
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = '14.6.0'
@@ -49,7 +52,7 @@ if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
 
 chart_ops = helm.ChartOpts(
-    chart='prometheus',
+    chart=chart_name,
     namespace=ns.metadata.name,
     repo=helm_repo_name,
     fetch_opts=FetchOpts(repo=helm_repo_url),
