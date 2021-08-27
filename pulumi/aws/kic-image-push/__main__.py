@@ -1,12 +1,11 @@
-import asyncio
 import base64
 import os
 
 import pulumi
 from pulumi_aws import ecr
-from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 from kic_util import pulumi_config
+from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 
 def project_name_from_project_dir(dirname: str):
