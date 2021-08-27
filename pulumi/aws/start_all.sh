@@ -150,6 +150,16 @@ else
   pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/sirius
 fi
 
+# Admin password for grafana (see note in __main__.py in grafana project as to why not encrypted)
+# We run in the vpc project directory because we need the pulumi yaml to point us to the correct
+# configuration.
+if pulumi config get grafana:adminpass -C ${script_dir}/vpc > /dev/null 2>&1; then
+  echo "Password found for grafana admin account"
+else
+  echo "Create a password for the grafana admin user"
+  pulumi config set grafana:adminpass -C ${script_dir}/vpc
+fi
+
 # Show colorful fun headers if the right utils are installed
 function header() {
   "${script_dir}"/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/venv/bin/lolcat
