@@ -9,8 +9,19 @@ from pulumi_kubernetes.helm.v3 import FetchOpts
 
 from kic_util import pulumi_config
 
-NGINX_HELM_REPO_NAME = 'nginx-stable'
-NGINX_HELM_REPO_URL = 'https://helm.nginx.com/stable'
+config = pulumi.Config('kic-helm')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'nginx-ingress'
+chart_version = config.get('chart_version')
+if not chart_version:
+    chart_version = '0.10.0'
+helm_repo_name = config.get('helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'nginx-stable'
+helm_repo_url = config.get('helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://helm.nginx.com/stable'
 
 
 # Removes the status field from the Nginx Ingress Helm Chart, so that it is
@@ -101,11 +112,11 @@ ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
 chart_values = ecr_repository.apply(build_chart_values)
 
 chart_ops = helm.ChartOpts(
-    chart='nginx-ingress',
+    chart=chart_name,
     namespace=ns.metadata.name,
-    repo=NGINX_HELM_REPO_NAME,
-    fetch_opts=FetchOpts(repo=NGINX_HELM_REPO_URL),
-    version='0.9.1',
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
     values=chart_values,
     transformations=[remove_status_field]
 )

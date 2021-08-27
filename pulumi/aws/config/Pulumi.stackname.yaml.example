@@ -71,6 +71,17 @@ config:
     # Path on the executing system's filesystem of the NGINX repository certificate.
     kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
 
+
+  # NGINX Kubernetes Ingress Controller (KIC) Configuration
+  kic-helm:chart_version: 0.10.0
+  # Chart version for the Pulumi chart for kic
+  kic-helm:chart_name: nginx-ingress
+  # Chart name for the Pulumi chart for kic
+  kic-helm:helm_repo_name: nginx-stable
+  # Name of the repo to pull the kic chart from
+  kic-helm:helm_repo_url: https://helm.nginx.com/stable
+  # URL of the chart repo to pull kic from
+
   # The parameters for the Bank of Sirius are set in a configuration directory
   # within that project.
 
