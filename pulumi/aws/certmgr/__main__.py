@@ -42,6 +42,9 @@ chart_values = {
 }
 
 config = pulumi.Config('certmgr')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'cert-manager'
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = 'v1.4.0'
@@ -54,7 +57,7 @@ if not helm_repo_url:
     helm_repo_url = 'https://charts.jetstack.io'
 
 chart_ops = helm.ChartOpts(
-    chart='cert-manager',
+    chart=chart_name,
     namespace=ns.metadata.name,
     repo=helm_repo_name,
     fetch_opts=FetchOpts(repo=helm_repo_url),

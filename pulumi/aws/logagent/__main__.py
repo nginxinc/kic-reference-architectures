@@ -7,9 +7,19 @@ from pulumi_kubernetes.helm.v3 import FetchOpts
 
 from kic_util import pulumi_config
 
-FILEBEAT_HELM_REPO_NAME = 'elastic'
-FILEBEAT_HELM_REPO_URL = 'https://helm.elastic.co'
-
+config = pulumi.Config('logagent')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'filebeat'
+chart_version = config.get('chart_version')
+if not chart_version:
+    chart_version = '7.13.2'
+helm_repo_name = config.get('helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'elastic'
+helm_repo_url = config.get('helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://helm.elastic.co'
 
 # Removes the status field from the Helm Chart, so that it is
 # compatible with the Pulumi Chart implementation.
@@ -50,11 +60,11 @@ chart_values = {
 }
 
 chart_ops = helm.ChartOpts(
-    chart='filebeat',
+    chart=chart_name,
     namespace=ns.metadata.name,
-    repo=FILEBEAT_HELM_REPO_NAME,
-    fetch_opts=FetchOpts(repo=FILEBEAT_HELM_REPO_URL),
-    version='7.13.1',
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
     values=chart_values,
     transformations=[remove_status_field]
 )

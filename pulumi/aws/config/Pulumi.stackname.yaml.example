@@ -73,29 +73,52 @@ config:
 
 
   # NGINX Kubernetes Ingress Controller (KIC) Configuration
-  kic-helm:chart_version: 0.10.0
-  # Chart version for the Pulumi chart for kic
   kic-helm:chart_name: nginx-ingress
-  # Chart name for the Pulumi chart for kic
+  # Chart name for the helm chart for kic
+  kic-helm:chart_version: 0.10.0
+  # Chart version for the helm chart for kic
   kic-helm:helm_repo_name: nginx-stable
   # Name of the repo to pull the kic chart from
   kic-helm:helm_repo_url: https://helm.nginx.com/stable
   # URL of the chart repo to pull kic from
 
+  # Logagent Configuration
+  kic-helm:chart_name: filebeat
+  # Chart name for the helm chart for the logagent
+  kic-helm:chart_version: 7.13.2
+  # Chart version for the helm chart for the logagent
+  kic-helm:helm_repo_name: elastic
+  # Name of the repo to pull the logagent from
+  kic-helm:helm_repo_url: https://helm.elastic.co
+  # URL of the chart repo to pull the logagent from
+
+  # Logstore Configuration
+  kic-helm:chart_name: elasticsearch
+  # Chart name for the helm chart for the logstore
+  kic-helm:chart_version: 15.9.0
+  # Chart version for the helm chart for the logstore
+  kic-helm:helm_repo_name: bitnami
+  # Name of the repo to pull the logstore from
+  kic-helm:helm_repo_url: https://charts.bitnami.com/bitnami
+
   # The parameters for the Bank of Sirius are set in a configuration directory
   # within that project.
 
   # Cert Manager Configuration
+  certmgr:chart_name: cert-manager
+  # Chart hame for the helm chart for certmanager
   certmgr:chart_version: v1.4.0
-  # Chart version for the Pulumi chart for certmanager
+  # Chart version for the helm chart for certmanager
   certmgr:certmgr_helm_repo_name: jetstack
   # Name of the repo to pull the certmanager chart from
   certmgr:certmgr_helm_repo_url: https://charts.jetstack.io
   # URL of the chart repo to pull certmanager from
 
   # Grafana Configuration
+  grafana:chart_name: grafana
+  # Chart name for the helm chart for grafana
   grafana:chart_version: 6.13.7
-  # Chart version for the Pulumi chart for grafana
+  # Chart version for the helm chart for grafana
   grafana:helm_repo_name: grafana
   # Name of the repo to pull the grafana chart from
   grafana:helm_repo_url: https://grafana.github.io/helm-charts
@@ -109,8 +132,10 @@ config:
   # for details.
 
   # Prometheus Configuration
+  prometheus:chart_name: prometheus
+  # Chart name for the helm chart for prometheus
   prometheus:chart_version: 14.6.0
-  # Chart version for the Pulumi chart for grafana
+  # Chart version for the helm chart for prometheus
   prometheus:helm_repo_name: prometheus-community
-  # Name of the repo to pull the grafana chart from
+  # Name of the repo to pull the prometheus chart from
   prometheus:helm_repo_url: https://https://prometheus-community.github.io/helm-charts

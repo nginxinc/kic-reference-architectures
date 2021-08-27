@@ -7,9 +7,19 @@ from pulumi_kubernetes.helm.v3 import FetchOpts
 
 from kic_util import pulumi_config
 
-ELASTIC_HELM_REPO_NAME = 'bitnami'
-ELASTIC_HELM_REPO_URL = 'https://charts.bitnami.com/bitnami'
-
+config = pulumi.Config('logstore')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'elasticsearch'
+chart_version = config.get('chart_version')
+if not chart_version:
+    chart_version = '15.9.0'
+helm_repo_name = config.get('helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'bitnami'
+helm_repo_url = config.get('helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://charts.bitnami.com/bitnami'
 
 # Removes the status field from the Helm Chart, so that it is
 # compatible with the Pulumi Chart implementation.
@@ -50,11 +60,11 @@ chart_values = {
 }
 
 chart_ops = helm.ChartOpts(
-    chart='elasticsearch',
+    chart=chart_name,
     namespace=ns.metadata.name,
-    repo=ELASTIC_HELM_REPO_NAME,
-    fetch_opts=FetchOpts(repo=ELASTIC_HELM_REPO_URL),
-    version='15.3.1',
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=chart_version,
     values=chart_values,
     transformations=[remove_status_field]
 )
