@@ -16,7 +16,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: front
-        image: ghcr.io/nginxinc/frontend:latest
+        image: ghcr.io/nginxinc/bos-frontend:latest
         volumeMounts:
         - name: publickey
           mountPath: "/root/.ssh"

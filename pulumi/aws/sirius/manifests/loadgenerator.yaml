@@ -20,7 +20,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: loadgenerator
-        image: ghcr.io/nginxinc/loadgenerator:latest
+        image: ghcr.io/nginxinc/bos-loadgenerator:latest
         ports:
           - containerPort: 8089
         command: ["locust"]
