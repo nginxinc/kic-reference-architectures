@@ -40,8 +40,6 @@ ns = k8s.core.v1.Namespace(resource_name='cert-manager',
 chart_values = {
     "installCRDs": True
 }
-helm_repo_name = 'jetstack'
-helm_repo_url = 'https://charts.jetstack.io'
 
 config = pulumi.Config('certmgr')
 chart_version = config.get('chart_version')
