@@ -16,7 +16,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: userservice
-        image: ghcr.io/nginxinc/userservice:latest
+        image: ghcr.io/nginxinc/bos-userservice:latest
         volumeMounts:
         - name: keys
           mountPath: "/root/.ssh"

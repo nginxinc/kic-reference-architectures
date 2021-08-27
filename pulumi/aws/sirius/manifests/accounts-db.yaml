@@ -22,7 +22,7 @@ spec:
       serviceAccountName: default
       containers:
       - name: accounts-db
-        image: ghcr.io/nginxinc/accounts-db:latest
+        image: ghcr.io/nginxinc/bos-accounts-db:latest
         envFrom:
           - configMapRef:
               name: environment-config

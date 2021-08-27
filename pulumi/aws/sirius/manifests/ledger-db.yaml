@@ -17,7 +17,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: postgres
-          image: ghcr.io/nginxinc/ledger-db:latest
+          image: ghcr.io/nginxinc/bos-ledger-db:latest
           ports:
             - containerPort: 5432
           envFrom:
