@@ -1,4 +1,5 @@
 import pulumi
+
 from ingress_controller_image import IngressControllerImage, IngressControllerImageArgs, NginxPlusArgs
 
 stack_name = pulumi.get_stack()
