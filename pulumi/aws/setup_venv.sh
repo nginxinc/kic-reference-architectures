@@ -1,34 +1,34 @@
 #!/usr/bin/env bash
 
-set -o errexit   # abort on nonzero exit status
-set -o pipefail  # don't hide errors within pipes
+set -o errexit  # abort on nonzero exit status
+set -o pipefail # don't hide errors within pipes
 
 # Function below is based upon code in this StackOverflow post:
 # https://stackoverflow.com/a/31939275/33611
 # CC BY-SA 3.0 License: https://creativecommons.org/licenses/by-sa/3.0/
-function askYesNo {
-        QUESTION=$1
-        DEFAULT=$2
-        if [ "$DEFAULT" = true ]; then
-                OPTIONS="[Y/n]"
-                DEFAULT="y"
-            else
-                OPTIONS="[y/N]"
-                DEFAULT="n"
-        fi
-        if [ "${DEBIAN_FRONTEND}" != "noninteractive" ]; then
-          read -p "$QUESTION $OPTIONS " -n 1 -s -r INPUT
-          INPUT=${INPUT:-${DEFAULT}}
-          echo "${INPUT}"
-        fi
+function askYesNo() {
+  QUESTION=$1
+  DEFAULT=$2
+  if [ "$DEFAULT" = true ]; then
+    OPTIONS="[Y/n]"
+    DEFAULT="y"
+  else
+    OPTIONS="[y/N]"
+    DEFAULT="n"
+  fi
+  if [ "${DEBIAN_FRONTEND}" != "noninteractive" ]; then
+    read -p "$QUESTION $OPTIONS " -n 1 -s -r INPUT
+    INPUT=${INPUT:-${DEFAULT}}
+    echo "${INPUT}"
+  fi
 
-        if [ "${DEBIAN_FRONTEND}" == "noninteractive" ]; then
-            ANSWER=$DEFAULT
-        elif [[ "$INPUT" =~ ^[yY]$ ]]; then
-            ANSWER=true
-        else
-            ANSWER=false
-        fi
+  if [ "${DEBIAN_FRONTEND}" == "noninteractive" ]; then
+    ANSWER=$DEFAULT
+  elif [[ "$INPUT" =~ ^[yY]$ ]]; then
+    ANSWER=true
+  else
+    ANSWER=false
+  fi
 }
 
 # Does basic OS distribution detection for "class" of distribution, such
@@ -50,58 +50,58 @@ function distro_like() {
   echo "${like}"
 }
 
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-if ! command -v git > /dev/null; then
-  >&2 echo "git must be installed to continue"
+if ! command -v git >/dev/null; then
+  echo >&2 "git must be installed to continue"
   exit 1
 fi
 
-if ! command -v python3 > /dev/null; then
-  if ! command -v make > /dev/null; then
-    >&2 echo "make must be installed in order to install python with pyenv"
-    >&2 echo "Either install make or install Python 3 with the venv module"
+if ! command -v python3 >/dev/null; then
+  if ! command -v make >/dev/null; then
+    echo >&2 "make must be installed in order to install python with pyenv"
+    echo >&2 "Either install make or install Python 3 with the venv module"
     exit 1
   fi
-  if ! command -v gcc > /dev/null; then
-    >&2 echo "gcc must be installed in order to install python with pyenv"
-    >&2 echo "Either install gcc or install Python 3 with the venv module"
+  if ! command -v gcc >/dev/null; then
+    echo >&2 "gcc must be installed in order to install python with pyenv"
+    echo >&2 "Either install gcc or install Python 3 with the venv module"
     exit 1
   fi
 
   echo "Python 3 is not installed. Adding pyenv to allow for Python installation"
   echo "If development library dependencies are not installed, Python build may fail."
 
-# Give relevant hint for the distro
-if distro_like | grep --quiet 'debian'; then
-  echo "You may need to install additional packages using a command like the following:"
-  echo "   apt-get install libbz2-dev libffi-dev libreadline-dev libsqlite3-dev libssl-dev"
-elif distro_like | grep --quiet 'rhel'; then
-  echo "You may need to install additional packages using a command like the following:"
-  echo "   yum install bzip2-devel libffi-devel readline-devel sqlite-devel openssl-devel zlib-devel"
-else
-  echo "required libraries: libbz2 libffi libreadline libsqlite3 libssl zlib1g"
-fi
+  # Give relevant hint for the distro
+  if distro_like | grep --quiet 'debian'; then
+    echo "You may need to install additional packages using a command like the following:"
+    echo "   apt-get install libbz2-dev libffi-dev libreadline-dev libsqlite3-dev libssl-dev"
+  elif distro_like | grep --quiet 'rhel'; then
+    echo "You may need to install additional packages using a command like the following:"
+    echo "   yum install bzip2-devel libffi-devel readline-devel sqlite-devel openssl-devel zlib-devel"
+  else
+    echo "required libraries: libbz2 libffi libreadline libsqlite3 libssl zlib1g"
+  fi
 
   export PYENV_ROOT="${script_dir}/.pyenv"
 
   mkdir -p "${PYENV_ROOT}"
   git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
-  if git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2> "${git_clone_log}"; then
+  if git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2>"${git_clone_log}"; then
     rm "${git_clone_log}"
   else
-    >&2 echo "Error cloning pyenv repository:"
-    >&2 cat "${git_clone_log}"
+    echo >&2 "Error cloning pyenv repository:"
+    cat >&2 "${git_clone_log}"
   fi
 
   export PATH="$PYENV_ROOT/bin:$PATH"
 fi
 
 # If pyenv is available we use a hardcoded python version
-if command -v pyenv > /dev/null; then
+if command -v pyenv >/dev/null; then
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
-  pyenv install --skip-existing < "${script_dir}/.python-version"
+  pyenv install --skip-existing <"${script_dir}/.python-version"
 
   # If the pyenv-virtualenv tools are installed, prompt the user if they want to
   # use them.
@@ -141,8 +141,8 @@ if [ ${has_pyenv_venv_plugin} -eq 1 ]; then
       echo "Deleting ${script_dir}/venv"
       rm -rf "${script_dir}/venv"
     else
-      >&2 echo "The path ${script_dir}/venv must not be a virtual environment directory when using pyenv-virtualenv"
-      >&2 echo "Exiting. Please manually remove the directory"
+      echo >&2 "The path ${script_dir}/venv must not be a virtual environment directory when using pyenv-virtualenv"
+      echo >&2 "Exiting. Please manually remove the directory"
       exit 1
     fi
   fi
@@ -171,7 +171,7 @@ fi
 
 source "${VIRTUAL_ENV}/bin/activate"
 
-set -o nounset   # abort on unbound variable
+set -o nounset # abort on unbound variable
 
 # Use the latest version of pip
 pip3 install --upgrade pip
@@ -194,37 +194,40 @@ fi
 # Install general package requirements
 pip3 install --requirement "${script_dir}/requirements.txt"
 # Install local common utilities module
-pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" && \
+pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" &&
   rm -rf "${script_dir}/kic-pulumi-utils/.eggs" \
-         "${script_dir}/kic-pulumi-utils/build" \
-         "${script_dir}/kic-pulumi-utils/kic_pulumi_utils.egg-info"
+    "${script_dir}/kic-pulumi-utils/build" \
+    "${script_dir}/kic-pulumi-utils/kic_pulumi_utils.egg-info"
 
 ARCH=""
 case $(uname -m) in
-    i386)    ARCH="386" ;;
-    i686)    ARCH="386" ;;
-    x86_64)  ARCH="amd64" ;;
-    aarch64) ARCH="arm64" ;;
-    arm)     dpkg --print-architecture | grep -q "arm64" && ARCH="arm64" || ARCH="arm" ;;
-    *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
+i386) ARCH="386" ;;
+i686) ARCH="386" ;;
+x86_64) ARCH="amd64" ;;
+aarch64) ARCH="arm64" ;;
+arm) dpkg --print-architecture | grep -q "arm64" && ARCH="arm64" || ARCH="arm" ;;
+*)
+  echo >&2 "Unable to determine system architecture."
+  exit 1
+  ;;
 esac
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 
-if command -v wget > /dev/null; then
+if command -v wget >/dev/null; then
   download_cmd="wget --quiet --max-redirect=12 --output-document -"
-elif command -v curl > /dev/null; then
+elif command -v curl >/dev/null; then
   download_cmd="curl --fail --silent --location"
 else
-  >&2 echo "either wget or curl must be installed"
+  echo >&2 "either wget or curl must be installed"
   exit 1
 fi
 
-if command -v sha256sum > /dev/null; then
+if command -v sha256sum >/dev/null; then
   sha256sum_cmd="sha256sum --check"
-elif command -v shasum > /dev/null; then
+elif command -v shasum >/dev/null; then
   sha256sum_cmd="shasum --algorithm 256 --check"
 else
-  >&2 echo "either sha256sum or shasum must be installed"
+  echo >&2 "either sha256sum or shasum must be installed"
   exit 1
 fi
 
@@ -232,7 +235,7 @@ fi
 if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
   echo "Downloading kubectl into virtual environment"
   KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
-  ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" > "${VIRTUAL_ENV}/bin/kubectl"
+  ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
   KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
   echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
   chmod +x "${VIRTUAL_ENV}/bin/kubectl"
@@ -249,7 +252,7 @@ if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "
 else
   PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
   PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
-  ${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  ${download_cmd} "${PULUMI_TARBALL_URL}" >"${PULUMI_TARBALL_DESTTARBALL_DEST}"
   tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
   rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
 fi

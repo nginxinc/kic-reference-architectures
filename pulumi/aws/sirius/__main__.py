@@ -5,10 +5,11 @@ import pulumi
 import pulumi_kubernetes as k8s
 import pulumi_kubernetes.helm.v3 as helm
 from Crypto.PublicKey import RSA
-from kic_util import pulumi_config
 from pulumi_kubernetes.helm.v3 import FetchOpts
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
+
+from kic_util import pulumi_config
 
 
 # Removes the status field from the Nginx Ingress Helm Chart, so that i#t is

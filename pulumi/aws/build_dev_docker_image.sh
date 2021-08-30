@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-set -o errexit   # abort on nonzero exit status
-set -o nounset   # abort on unbound variable
-set -o pipefail  # don't hide errors within pipes
+set -o errexit  # abort on nonzero exit status
+set -o nounset  # abort on unbound variable
+set -o pipefail # don't hide errors within pipes
 
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 DEFAULT_UID=1000
 DEFAULT_GID=1000
@@ -22,7 +22,7 @@ fi
 # Choose a docker GID based on the owner of the Docker socket or the existing Docker group.
 if [ -S "/var/run/docker.sock" ]; then
   DOCKER_GID="$(stat --printf="%g" /var/run/docker.sock 2>/dev/null || echo ${DEFAULT_DOCKER_GID})"
-elif command -v getent > /dev/null; then
+elif command -v getent >/dev/null; then
   DOCKER_GID="$(getent group docker | cut --delimiter=: --field=3)"
 else
   DOCKER_GID=$DEFAULT_DOCKER_GID
@@ -40,7 +40,7 @@ fi
 # This helps when we mount directories into a Docker image. It isn't strictly
 # necessary, but it removes a headache when using the image in a development
 # workflow.
-if command -v id > /dev/null; then
+if command -v id >/dev/null; then
   CURRENT_USER_UID="$(id -u || echo ${DEFAULT_UID})"
   CURRENT_USER_GID="${CURRENT_USER_UID}"
 
@@ -66,12 +66,15 @@ fi
 # Attempt to build the container with the same architecture as the host.
 ARCH=""
 case $(uname -m) in
-    i386)    ARCH="386" ;;
-    i686)    ARCH="386" ;;
-    x86_64)  ARCH="amd64" ;;
-    aarch64) ARCH="arm64v8" ;;
-    arm)     dpkg --print-architecture | grep -q "arm64" && ARCH="arm64v8" || ARCH="arm" ;;
-    *)   >&2 echo "Unable to determine system architecture."; exit 1 ;;
+i386) ARCH="386" ;;
+i686) ARCH="386" ;;
+x86_64) ARCH="amd64" ;;
+aarch64) ARCH="arm64v8" ;;
+arm) dpkg --print-architecture | grep -q "arm64" && ARCH="arm64v8" || ARCH="arm" ;;
+*)
+  echo >&2 "Unable to determine system architecture."
+  exit 1
+  ;;
 esac
 echo "Building container image with [${ARCH}] system architecture]"
 
@@ -97,4 +100,4 @@ docker build ${additional_docker_opts} \
   "${script_dir}"
 
 # Run unit tests
-docker run --interactive --tty --rm "kic-ref-arch-pulumi-aws:${1}"  venv/bin/python3 test.py
+docker run --interactive --tty --rm "kic-ref-arch-pulumi-aws:${1}" venv/bin/python3 test.py

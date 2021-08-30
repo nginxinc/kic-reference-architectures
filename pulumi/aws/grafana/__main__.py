@@ -3,8 +3,9 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 import pulumi_kubernetes.helm.v3 as helm
-from kic_util import pulumi_config
 from pulumi_kubernetes.helm.v3 import FetchOpts
+
+from kic_util import pulumi_config
 
 
 # Removes the status field from the Helm Chart, so that it is
@@ -97,6 +98,9 @@ chart_values = {
 }
 
 config = pulumi.Config('grafana')
+chart_name = config.get('chart_name')
+if not chart_name:
+    chart_name = 'grafana'
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = '6.13.7'
@@ -108,7 +112,7 @@ if not helm_repo_url:
     helm_repo_url = 'https://grafana.github.io/helm-charts'
 
 chart_ops = helm.ChartOpts(
-    chart='grafana',
+    chart=chart_name,
     namespace=ns.metadata.name,
     repo=helm_repo_name,
     fetch_opts=FetchOpts(repo=helm_repo_url),
