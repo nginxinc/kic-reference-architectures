@@ -9,14 +9,14 @@ export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
 export PULUMI_SKIP_CONFIRMATIONS=true
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 
-if ! command -v pulumi >/dev/null; then
+if ! command -v pulumi > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
     export PATH="${script_dir}/venv/bin:$PATH"
 
-    if ! command -v pulumi >/dev/null; then
+    if ! command -v pulumi > /dev/null; then
       echo >&2 "Pulumi must be installed to continue"
       exit 1
     fi
@@ -26,17 +26,17 @@ if ! command -v pulumi >/dev/null; then
   fi
 fi
 
-if ! command -v python3 >/dev/null; then
+if ! command -v python3 > /dev/null; then
   echo >&2 "Python 3 must be installed to continue"
   exit 1
 fi
 
-if ! command -v node >/dev/null; then
+if ! command -v node > /dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
     export PATH="${script_dir}/venv/bin:$PATH"
 
-    if ! command -v node >/dev/null; then
+    if ! command -v node > /dev/null; then
       echo >&2 "NodeJS must be installed to continue"
       exit 1
     fi
@@ -47,10 +47,10 @@ if ! command -v node >/dev/null; then
 fi
 
 # Check to see if the user is logged into Pulumi
-if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
+if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
   pulumi login
 
-  if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
+  if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
     echo >&2 "Unable to login to Pulumi - exiting"
     exit 2
   fi
@@ -59,46 +59,20 @@ fi
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
-pulumi_args="--emoji --stack ${PULUMI_STACK}"
+function destroy_project() {
+  local project_dir="${script_dir}/$1"
+  local pulumi_args="--cwd ${project_dir} --emoji --stack ${PULUMI_STACK}"
 
-cd "${script_dir}/sirius"
-pulumi ${pulumi_args} destroy
+  if [ -f "${project_dir}/Pulumi.yaml" ]; then
+    pulumi ${pulumi_args} destroy
+  else
+    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${project_dir}"
+  fi
+}
 
-cd "${script_dir}/grafana"
-pulumi ${pulumi_args} destroy
+projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart
+          kic-image-push kic-image-build ecr eks vpc)
 
-cd "${script_dir}/prometheus"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/grafana"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/prometheus"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/certmgr"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/logagent"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/logstore"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/kic-helm-chart"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/kic-image-push"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/kic-image-build"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/ecr"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/eks"
-pulumi ${pulumi_args} destroy
-
-cd "${script_dir}/vpc"
-pulumi ${pulumi_args} destroy
+for project in "${projects[@]}"; do
+  destroy_project "${project}"
+done
