@@ -202,6 +202,22 @@ function validate_aws_credentials() {
   "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null
 }
 
+function retry() {
+    local -r -i max_attempts="$1"; shift
+    local -i attempt_num=1
+    until "$@"
+    do
+        if ((attempt_num==max_attempts))
+        then
+            echo "Attempt ${attempt_num} failed and there are no more attempts left!"
+            return 1
+        else
+            echo "Attempt ${attempt_num} failed! Trying again in $attempt_num seconds..."
+            sleep $((attempt_num++))
+        fi
+    done
+}
+
 validate_aws_credentials
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
@@ -216,6 +232,9 @@ pulumi $pulumi_args up
 
 # pulumi stack output cluster_name
 add_kube_config
+
+echo "attempting to connect to newly create kubernetes cluster"
+retry 30 "${script_dir}"/venv/bin/kubectl version > /dev/null
 
 header "AWS ECR"
 cd "${script_dir}/ecr"
