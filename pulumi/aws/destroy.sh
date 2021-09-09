@@ -59,6 +59,20 @@ fi
 source "${script_dir}/config/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
+function validate_aws_credentials() {
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/vpc" config get aws:profile)"
+  if [ "${pulumi_aws_profile}" != "" ]; then
+    profile_arg="--profile ${pulumi_aws_profile}"
+  elif [[ -n "${AWS_PROFILE+x}" ]]; then
+    profile_arg="--profile ${AWS_PROFILE}"
+  else
+    profile_arg=""
+  fi
+
+  echo "Validating AWS credentials"
+  "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null
+}
+
 function destroy_project() {
   local project_dir="${script_dir}/$1"
   local pulumi_args="--cwd ${project_dir} --emoji --stack ${PULUMI_STACK}"
@@ -69,6 +83,8 @@ function destroy_project() {
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${project_dir}"
   fi
 }
+
+validate_aws_credentials
 
 projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart
           kic-image-push kic-image-build ecr eks vpc)

@@ -189,6 +189,21 @@ function add_kube_config() {
   "${script_dir}"/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
 }
 
+function validate_aws_credentials() {
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/vpc" config get aws:profile)"
+  if [ "${pulumi_aws_profile}" != "" ]; then
+    profile_arg="--profile ${pulumi_aws_profile}"
+  elif [[ -n "${AWS_PROFILE+x}" ]]; then
+    profile_arg="--profile ${AWS_PROFILE}"
+  else
+    profile_arg=""
+  fi
+
+  "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null
+}
+
+validate_aws_credentials
+
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 header "AWS VPC"
