@@ -4,6 +4,21 @@ config:
   # Your AWS region can be configured here instead of using an environment variable.
   aws:region: us-east-1
 
+  ############################################################################
+  # VPC Settings
+  ############################################################################
+
+  # An optional array of availability zone ids to create subnets for can be
+  # specified here. The default value is all the availability zones associated
+  # with a region.
+  vpc:azs:
+    - us-west-1a
+    - us-west-1b
+
+  ############################################################################
+  # AWS Elastic Kubernetes Service (EKS) Settings
+  ############################################################################
+
   # This is the Kubernetes version to install using EKS. Changing this value may result in bugs in the behavior
   # of the reference architecture because it is designed around the APIs for 1.19.
   eks:k8s_version: 1.19
