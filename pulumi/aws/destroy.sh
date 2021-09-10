@@ -70,7 +70,10 @@ function validate_aws_credentials() {
   fi
 
   echo "Validating AWS credentials"
-  "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null
+  if ! "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null; then
+    echo >&2 "AWS credentials have expired or are not valid"
+    exit 2
+  fi
 }
 
 function destroy_project() {
