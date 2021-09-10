@@ -89,9 +89,30 @@ function destroy_project() {
 
 validate_aws_credentials
 
-projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart
-          kic-image-push kic-image-build ecr eks vpc)
+k8s_projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart)
+if pulumi --cwd "${script_dir}/eks" stack | grep -q 'Current stack resources (0)'; then
+  echo "Pulumi does not know about an EKS instance running"
 
-for project in "${projects[@]}"; do
-  destroy_project "${project}"
-done
+  for project in "${k8s_projects[@]}"; do
+    if pulumi --cwd "${script_dir}/${project}" stack | grep -q 'Current stack resources (0)'; then
+      echo "kubernetes project [${project}] has an empty stack - doing nothing"
+    else
+      echo "kubernetes project [${project}] has references in Pulumi - cleaning"
+      stack_name="$(pulumi stack --cwd "${script_dir}/${project}" --show-name)"
+      pulumi stack rm --cwd "${script_dir}/${project}" --force --yes "${stack_name}"
+      pulumi stack init --cwd "${script_dir}/${project}" "${stack_name}"
+      pulumi stack select --cwd "${script_dir}/${project}" "${stack_name}"
+    fi
+  done
+else
+  for project in "${k8s_projects[@]}"; do
+    destroy_project "${project}"
+  done
+fi
+
+if [[ -n "${1:-}" ]] && [[ "${1}" == "k8s" ]]; then
+  echo "destroyed only kubernetes resources"
+  exit 0
+fi
+
+projects=(kic-image-push kic-image-build ecr eks vpc)
