@@ -100,20 +100,23 @@ else
 fi
 
 # Check for default region in environment; set if not found
-
-# First, check the config file for our current profile. If there
-# is no AWS command we assume that there is no config file, which
-# may not always be a valid assumption.
-if "${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE} >/dev/null; then
-  AWS_DEFAULT_REGION=$("${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE})
-  echo $AWS_DEFAULT_REGION
-fi
+# The region is set by checking the following in the order below:
+# * AWS_DEFAULT_REGION environment variable
+# * config/environment values of AWS_DEFAULT_REGION
+# * prompt the user for a region
 
 if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
   echo "AWS_DEFAULT_REGION not set"
   if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
-    read -r -e -p "Enter the name of the AWS Region to use in all projects: " AWS_DEFAULT_REGION
-    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >>"${script_dir}/config/environment"
+    # First, check the config file for our current profile. If there
+    # is no AWS command we assume that there is no config file, which
+    # may not always be a valid assumption.
+    if "${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE} >/dev/null; then
+      AWS_CLI_DEFAULT_REGION=$("${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE})
+    fi
+
+    read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
+    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/config/environment"
     source "${script_dir}/config/environment"
     find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
   fi
@@ -251,7 +254,7 @@ pulumi $pulumi_args up
 header "KIC Image Push"
 # If we are on MacOS and the user keychain is locked, we need to prompt the
 # user to unlock it so that `docker login` will work correctly.
-if command -v security >/dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
+if command -v security > /dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
   if ! security show-keychain-info 2>/dev/null; then
     echo "Enter in your system credentials in order to access the system keychain for storing secrets securely with Docker."
     security unlock-keychain
