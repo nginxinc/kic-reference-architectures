@@ -1,12 +1,14 @@
 import os
 import unittest
-import ingress_controller_image as kic_image
+import ingress_controller_image_builder_provider as image_builder
+
+from kic_util.docker_image_name import DockerImageName
 
 
-class TestKICImage(unittest.TestCase):
+class TestIngressControllerImageBuilderProvider(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.kic_image_provider = kic_image.IngressControllerImageProvider()
+        self.provider = image_builder.IngressControllerImageBuilderProvider()
 
     def assertStrEqual(self, first, second, msg=None):
         self.assertEqual(first=str(first), second=str(second), msg=msg)
@@ -16,8 +18,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  '-t 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_inconsistent_spacing(self):
@@ -25,8 +27,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker    build  --build-arg IC_VERSION=1.11.1-    --build-arg GIT_COMMIT= ' + \
                  '--build-arg   VERSION=1.11.1 --tar get container   -f   build/Dockerfile ' + \
                  '  -t  2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_continuations(self):
@@ -34,8 +36,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + '\\' + os.linesep + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + '\\' + os.linesep + \
                  '-t 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_tag(self):
@@ -43,8 +45,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  '--tag 2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('2423423422.dkr.ecr.us-west-9.amazonaws.com/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_multiple_slashes(self):
@@ -52,8 +54,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  '-t myregistryhost:5000/fedora/nginx-kic:1.11.1 . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_single_quotes(self):
@@ -61,8 +63,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  "-t 'myregistryhost:5000/fedora/nginx-kic:1.11.1' . --build-arg BUILD_OS=debian"
-        expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_with_double_quotes(self):
@@ -70,8 +72,8 @@ class TestKICImage(unittest.TestCase):
                  '    docker build --build-arg IC_VERSION=1.11.1- --build-arg GIT_COMMIT= ' + \
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  '-t "myregistryhost:5000/fedora/nginx-kic:1.11.1" . --build-arg BUILD_OS=debian'
-        expected = kic_image.DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        expected = DockerImageName('myregistryhost:5000/fedora/nginx-kic', '1.11.1')
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertStrEqual(expected, actual)
 
     def test_parse_image_name_from_output_without_tag(self):
@@ -80,18 +82,18 @@ class TestKICImage(unittest.TestCase):
                  '--build-arg VERSION=1.11.1 --tar get container -f build/Dockerfile ' + \
                  '. --build-arg BUILD_OS=debian'
         expected = None
-        actual = self.kic_image_provider.parse_image_name_from_output(stdout)
+        actual = self.provider.parse_image_name_from_output(stdout)
         self.assertEqual(expected, actual)
 
     def test_parse_image_id_from_output_matching_line(self):
         stderr = '    #19 writing image sha256:9358beb5cb1c6d6a9c005b18bdad08b0f2259b82d32687b03334256cbd500997 0.0s done'
         expected = 'sha256:9358beb5cb1c6d6a9c005b18bdad08b0f2259b82d32687b03334256cbd500997'
-        actual = self.kic_image_provider.parse_image_id_from_output(stderr)
+        actual = self.provider.parse_image_id_from_output(stderr)
         self.assertEqual(expected, actual)
 
     def test_parse_image_id_from_output_non_matching_line(self):
         stderr = '    #19 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00'
-        actual = self.kic_image_provider.parse_image_id_from_output(stderr)
+        actual = self.provider.parse_image_id_from_output(stderr)
         self.assertEqual(None, actual)
 
     def test_parse_image_id_from_output_matching_line_in_multiple_lines(self):
@@ -180,5 +182,5 @@ class TestKICImage(unittest.TestCase):
     #19 naming to 369313531325.dkr.ecr.us-west-2.amazonaws.com/nginx-kic:1.11.1 done
     #19 DONE 0.2s'''
         expected = 'sha256:9358beb5cb1c6d6a9c005b18bdad08b0f2259b82d32687b03334256cbd500997'
-        actual = self.kic_image_provider.parse_image_id_from_output(stderr)
+        actual = self.provider.parse_image_id_from_output(stderr)
         self.assertEqual(expected, actual)

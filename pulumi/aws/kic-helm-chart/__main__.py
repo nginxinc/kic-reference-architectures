@@ -67,9 +67,14 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
         }
     }
 
-    if 'repository_url' in repository and 'image_tag_alias' in repository:
+    has_image_tag = 'image_tag' in repository or 'image_tag_alias' in repository
+
+    if 'repository_url' in repository and has_image_tag:
         repository_url = repository['repository_url']
-        image_tag = repository['image_tag_alias']
+        if 'image_tag_alias' in repository:
+            image_tag = repository['image_tag_alias']
+        elif 'image_tag' in repository:
+            image_tag = repository['image_tag']
 
         if 'image' not in values['controller']:
             values['controller']['image'] = {}

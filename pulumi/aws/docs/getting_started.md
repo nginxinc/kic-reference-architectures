@@ -81,7 +81,9 @@ github and for the KIC image build process.
 #### Make
 
 In order to build the Ingress Controller from source, GNU `make` is required
-to be installed on the running system.
+to be installed on the running system. If you are not building from source,
+you do not need to install `make`. By default, the build script looks for
+`gmake` and then `make`.
 
 #### Docker
 
