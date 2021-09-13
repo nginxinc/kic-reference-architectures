@@ -111,8 +111,12 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     # First, check the config file for our current profile. If there
     # is no AWS command we assume that there is no config file, which
     # may not always be a valid assumption.
-    if "${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE} >/dev/null; then
-      AWS_CLI_DEFAULT_REGION=$("${script_dir}"/venv/bin/aws configure get region --profile ${AWS_PROFILE})
+    if ! command -v aws > /dev/null; then
+      AWS_CLI_DEFAULT_REGION="us-east-1"
+    elif aws configure get region --profile "${AWS_PROFILE}" >/dev/null; then
+      AWS_CLI_DEFAULT_REGION="$(aws configure get region --profile "${AWS_PROFILE}")"
+    else
+      AWS_CLI_DEFAULT_REGION="us-east-1"
     fi
 
     read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
