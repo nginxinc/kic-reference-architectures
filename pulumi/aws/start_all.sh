@@ -203,7 +203,7 @@ function validate_aws_credentials() {
   fi
 
   echo "Validating AWS credentials"
-  if ! "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null; then
+  if ! aws ${profile_arg} sts get-caller-identity > /dev/null; then
     echo >&2 "AWS credentials have expired or are not valid"
     exit 2
   fi
@@ -225,7 +225,9 @@ function retry() {
     done
 }
 
-validate_aws_credentials
+if command -v aws > /dev/null; then
+  validate_aws_credentials
+fi
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
@@ -240,8 +242,10 @@ pulumi $pulumi_args up
 # pulumi stack output cluster_name
 add_kube_config
 
-echo "attempting to connect to newly create kubernetes cluster"
-retry 30 "${script_dir}"/venv/bin/kubectl version > /dev/null
+if command -v kubectl > /dev/null; then
+  echo "attempting to connect to newly create kubernetes cluster"
+  retry 30 kubectl version > /dev/null
+fi
 
 header "AWS ECR"
 cd "${script_dir}/ecr"

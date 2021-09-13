@@ -87,7 +87,9 @@ function destroy_project() {
   fi
 }
 
-validate_aws_credentials
+if command -v aws > /dev/null; then
+  validate_aws_credentials
+fi
 
 k8s_projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart)
 if pulumi --cwd "${script_dir}/eks" stack | grep -q 'Current stack resources (0)'; then
