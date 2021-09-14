@@ -69,6 +69,7 @@ config:
   #
   # The following are all valid image names:
   # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:1.12.1
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:1.12.1-ot
   # kic:image_name: docker.io/nginx/nginx-ingress:1.12.1
   # kic:image_name: nginx/nginx-ingress:1.12.1
   # kic:image_name: nginx/nginx-ingress:1.12.1-alpine
