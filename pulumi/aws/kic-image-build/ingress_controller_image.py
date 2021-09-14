@@ -56,6 +56,8 @@ class IngressControllerImage(Resource):
                 image_name = f'{repository}:{latest}'
                 pulumi.log.info(f'kic:image_name was not specified, defaulting to: {image_name}', self)
                 props['image_name'] = image_name
+            props['image_id'] = None
+            props['image_tag'] = None
 
             provider = IngressControllerImagePullerProvider(self)
         else:
