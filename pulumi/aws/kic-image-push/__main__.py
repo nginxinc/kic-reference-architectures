@@ -58,16 +58,30 @@ def select_image_tag_alias(image):
         return ''
 
 
+def select_image_id(image):
+    if 'image_id' not in image or not image['image_id']:
+        raise ValueError(f'no image id found in kic-image-build-stack: {image}')
+    return image['image_id']
+
+
+def select_image_tag(image):
+    if 'image_tag' not in image or not image['image_tag']:
+        raise ValueError(f'no image tag found in kic-image-build-stack: {image}')
+    return image['image_tag']
+
+
 # We default to using the image name alias because it is a more precise definition
 # of the image type when we build from source.
 image_name = ingress_image.apply(select_image_name)
 image_tag_alias = ingress_image.apply(select_image_tag_alias)
+image_id = ingress_image.apply(select_image_id)
+image_tag = ingress_image.apply(select_image_tag)
 
 repo_args = RepositoryPushArgs(repository_url=ecr_repository_url,
                                credentials=ecr_credentials,
-                               image_id=ingress_image['image_id'],
+                               image_id=image_id,
                                image_name=image_name,
-                               image_tag=ingress_image['image_tag'],
+                               image_tag=image_tag,
                                image_tag_alias=image_tag_alias)
 
 # Push the images to the ECR repo
