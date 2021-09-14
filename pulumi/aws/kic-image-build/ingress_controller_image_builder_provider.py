@@ -14,7 +14,7 @@ from pulumi.dynamic import CreateResult, CheckResult, ReadResult, CheckFailure, 
     UpdateResult, DiffResult
 
 from nginx_plus_args import NginxPlusArgs
-from ingress_controller_image_base_provider import IngressControllerBaseProvider
+from ingress_controller_image_base_provider import IngressControllerBaseProvider as BaseProvider
 from kic_util.docker_image_name import DockerImageName
 from kic_util import external_process, archive_download
 from kic_util.url_type import URLType
@@ -29,7 +29,7 @@ class ImageBuildOutputParseError(RuntimeError):
     pass
 
 
-class IngressControllerImageBuilderProvider(IngressControllerBaseProvider):
+class IngressControllerImageBuilderProvider(BaseProvider):
     """Pulumi dynamic provider that downloads NGINX Kubernetes Ingress Controller source
        code and builds a container image"""
     MAKE_TARGET = 'debian-image'
@@ -183,6 +183,7 @@ class IngressControllerImageBuilderProvider(IngressControllerBaseProvider):
         raise ImageBuildStateError('unable to find `make` or `gmake` in the system PATH')
 
     def build_image(self, props: Any) -> Dict[str, str]:
+        pulumi.log.info('building from source', self.resource)
         kic_src_url = props['kic_src_url']
         make_target = props['make_target']
 
@@ -233,14 +234,7 @@ class IngressControllerImageBuilderProvider(IngressControllerBaseProvider):
                 'kic_src_url': kic_src_url}
 
     def check(self, _olds: Any, news: Any) -> CheckResult:
-        failures: List[CheckFailure] = []
-
-        def check_for_param(param: str):
-            if param not in news:
-                failures.append(CheckFailure(property_=param, reason=f'{param} must be specified'))
-
-        for p in self.REQUIRED_PROPS:
-            check_for_param(p)
+        failures = BaseProvider._check_for_required_params(news, IngressControllerImageBuilderProvider.REQUIRED_PROPS)
 
         parse_result = parse.urlparse(news['kic_src_url'])
         url_type = URLType.from_parsed_url(parse_result)
@@ -279,20 +273,8 @@ class IngressControllerImageBuilderProvider(IngressControllerBaseProvider):
             pulumi.log.debug('always_rebuild is set to true - rebuilding image', self.resource)
             return DiffResult(changes=True)
 
-        def is_key_defined(key: str, props: dict) -> bool:
-            return key in props and props[key]
-
-        def new_and_old_val_equal(key: str) -> bool:
-            in_news = is_key_defined(key, _news)
-            in_olds = is_key_defined(key, _olds)
-
-            if in_news and in_olds:
-                return _news[key] == _olds[key]
-            else:
-                return False
-
-        olds_make_target_defined = is_key_defined('make_target', _olds)
-        olds_image_name_alias_defined = is_key_defined('image_name_alias', _olds)
+        olds_make_target_defined = BaseProvider._is_key_defined('make_target', _olds)
+        olds_image_name_alias_defined = BaseProvider._is_key_defined('image_name_alias', _olds)
 
         # Derive the make_target from the already existing image_name_alias
         if not olds_make_target_defined and olds_image_name_alias_defined:
@@ -303,7 +285,8 @@ class IngressControllerImageBuilderProvider(IngressControllerBaseProvider):
         elif not olds_make_target_defined and not olds_image_name_alias_defined:
             _olds['make_target'] = IngressControllerImageBuilderProvider.MAKE_TARGET
 
-        changed = not new_and_old_val_equal('kic_src_url') or not new_and_old_val_equal('make_target')
+        changed = not BaseProvider._new_and_old_val_equal('kic_src_url', _news, _olds) \
+            or not BaseProvider._new_and_old_val_equal('make_target', _news, _olds)
 
         if not changed:
             pulumi.log.info('image definition not changed - skipping rebuild', self.resource)

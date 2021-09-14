@@ -33,7 +33,6 @@ else:
 # be configured before this script is ran.
 
 if image_origin == 'source':
-    pulumi.log.info('building from source')
     image_args = IngressControllerImageBuilderArgs(make_target=make_target,
                                                    kic_src_url=kic_src_url,
                                                    always_rebuild=always_rebuild,
@@ -43,7 +42,6 @@ if image_origin == 'source':
     ingress_image = IngressControllerImage(name='nginx-ingress-controller',
                                            kic_image_args=image_args)
 elif image_origin == 'registry':
-    pulumi.log.info(f'pulling image from repository')
     image_args = IngressControllerImagePullerArgs(image_name=config.get('image_name'))
     ingress_image = IngressControllerImage(name='nginx-ingress-controller',
                                            kic_image_args=image_args)

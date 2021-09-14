@@ -3,7 +3,7 @@ from typing import Optional, Dict, List, Any
 
 import pulumi
 from pulumi import Resource
-from pulumi.dynamic import ResourceProvider
+from pulumi.dynamic import ResourceProvider, CheckFailure
 
 from kic_util import external_process
 
@@ -90,3 +90,27 @@ class IngressControllerBaseProvider(ResourceProvider):
                     output[key].append(val)
 
         return output
+
+    @staticmethod
+    def _is_key_defined(key: str, props: dict) -> bool:
+        return key in props and props[key]
+
+    @staticmethod
+    def _new_and_old_val_equal(key: str, _news: Any, _olds: Any) -> bool:
+        in_news = IngressControllerBaseProvider._is_key_defined(key, _news)
+        in_olds = IngressControllerBaseProvider._is_key_defined(key, _olds)
+
+        if in_news and in_olds:
+            return _news[key] == _olds[key]
+        else:
+            return False
+
+    @staticmethod
+    def _check_for_required_params(news: Any, required: List[str]) -> List[CheckFailure]:
+        failures: List[CheckFailure] = []
+
+        for param in required:
+            if param not in news:
+                failures.append(CheckFailure(property_=param, reason=f'{param} must be specified'))
+
+        return failures
