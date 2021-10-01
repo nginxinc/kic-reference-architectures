@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: transactionhistory
+  name: balancereader
 spec:
   selector:
     matchLabels:
-      app: transactionhistory
+      app: balancereader
   template:
     metadata:
       labels:
-        app: transactionhistory
+        app: balancereader
     spec:
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
       containers:
-      - name: transactionhistory
-        image: gcr.io/bank-of-anthos/transactionhistory:v0.4.3
+      - name: balancereader
+        image: ghcr.io/nginxinc/bos-balancereader:latest
         volumeMounts:
         - name: publickey
           mountPath: "/root/.ssh"
@@ -26,6 +26,7 @@ spec:
           value: "v0.4.3"
         - name: PORT
           value: "8080"
+        # toggle Cloud Trace export
         - name: ENABLE_TRACING
           value: "false"
         - name: ENABLE_METRICS
@@ -33,16 +34,10 @@ spec:
         - name: POLL_MS
           value: "100"
         - name: CACHE_SIZE
-          value: "1000"
-        - name: CACHE_MINUTES
-          value: "60"
-        - name: HISTORY_LIMIT
-          value: "100"
-          # tell Java to obey container memory limits
+          value: "1000000"
+        # tell Java to obey container memory limits
         - name: JVM_OPTS
           value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
-        #- name: EXTRA_LATENCY_MILLIS
-        #  value: "5000"
         # Valid levels are debug, info, warn, error, fatal.
         # If no valid level is set, will default to info.
         - name: LOG_LEVEL
@@ -57,13 +52,6 @@ spec:
         # add ledger-db credentials from ConfigMap
         - configMapRef:
             name: ledger-db-config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 512Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
         readinessProbe:
           httpGet:
             path: /ready
@@ -89,11 +77,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: transactionhistory
+  name: balancereader
 spec:
   type: ClusterIP
   selector:
-    app: transactionhistory
+    app: balancereader
   ports:
   - name: http
     port: 8080

@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: contacts
+  name: ledgerwriter
 spec:
   selector:
     matchLabels:
-      app: contacts
+      app: ledgerwriter
   template:
     metadata:
       labels:
-        app: contacts
+        app: ledgerwriter
     spec:
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
       containers:
-      - name: contacts
-        image: gcr.io/bank-of-anthos/contacts:v0.4.3
+      - name: ledgerwriter
+        image: ghcr.io/nginxinc/bos-ledgerwriter:latest
         volumeMounts:
         - name: publickey
           mountPath: "/root/.ssh"
@@ -28,27 +28,31 @@ spec:
           value: "8080"
         - name: ENABLE_TRACING
           value: "false"
-        # Valid levels are debug, info, warning, error, critical.
-        # If no valid level is set, will default to info.
+        - name: ENABLE_METRICS
+          value: "false"
+         # tell Java to obey container memory limits
+        - name: JVM_OPTS
+          value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+        # service level override of log level
         - name: LOG_LEVEL
           value: "info"
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         envFrom:
         - configMapRef:
             name: environment-config
         - configMapRef:
-            name: accounts-db-config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 500m
-            memory: 256Mi
+            name: service-api-config
+        # add ledger-db credentials from ConfigMap
+        - configMapRef:
+            name: ledger-db-config
         readinessProbe:
           httpGet:
             path: /ready
             port: 8080
-          initialDelaySeconds: 10
+          initialDelaySeconds: 60
           periodSeconds: 5
           timeoutSeconds: 10
       volumes:
@@ -62,11 +66,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: contacts
+  name: ledgerwriter
 spec:
   type: ClusterIP
   selector:
-    app: contacts
+    app: ledgerwriter
   ports:
   - name: http
     port: 8080

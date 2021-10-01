@@ -1,12 +1,12 @@
-import os
 import collections
+import os
 
 import pulumi
 import pulumi_aws as aws
 import pulumi_eks as eks
 
-from kic_util import pulumi_config
 import iam
+from kic_util import pulumi_config
 
 VPCDefinition = collections.namedtuple('VPCDefinition', ['vpc_id', 'public_subnet_ids', 'private_subnet_ids'])
 

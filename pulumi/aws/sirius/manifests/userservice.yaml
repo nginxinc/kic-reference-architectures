@@ -2,25 +2,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ledgerwriter
+  name: userservice
 spec:
   selector:
     matchLabels:
-      app: ledgerwriter
+      app: userservice
   template:
     metadata:
       labels:
-        app: ledgerwriter
+        app: userservice
     spec:
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
       containers:
-      - name: ledgerwriter
-        image: gcr.io/bank-of-anthos/ledgerwriter:v0.4.3
+      - name: userservice
+        image: ghcr.io/nginxinc/bos-userservice:latest
         volumeMounts:
-        - name: publickey
+        - name: keys
           mountPath: "/root/.ssh"
           readOnly: true
+        ports:
+        - name: http-server
+          containerPort: 8080
         env:
         - name: VERSION
           value: "v0.4.3"
@@ -28,56 +31,45 @@ spec:
           value: "8080"
         - name: ENABLE_TRACING
           value: "false"
-        - name: ENABLE_METRICS
-          value: "false"
-         # tell Java to obey container memory limits
-        - name: JVM_OPTS
-          value: "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
-        # service level override of log level
+        - name: TOKEN_EXPIRY_SECONDS
+          value: "3600"
+        - name: PRIV_KEY_PATH
+          value: "/root/.ssh/privatekey"
+         # Valid levels are debug, info, warning, error, critical. If no valid level is set, defaults to info.
         - name: LOG_LEVEL
           value: "info"
-        - name: NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         envFrom:
         - configMapRef:
             name: environment-config
         - configMapRef:
-            name: service-api-config
-        # add ledger-db credentials from ConfigMap
-        - configMapRef:
-            name: ledger-db-config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 512Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
+            name: accounts-db-config
         readinessProbe:
           httpGet:
             path: /ready
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 10
       volumes:
-      - name: publickey
+      - name: keys
         secret:
           secretName: jwt-key
           items:
+          - key: jwtRS256.key
+            path: privatekey
           - key: jwtRS256.key.pub
             path: publickey
+
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ledgerwriter
+  name: userservice
 spec:
   type: ClusterIP
   selector:
-    app: ledgerwriter
+    app: userservice
   ports:
   - name: http
     port: 8080

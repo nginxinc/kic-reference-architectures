@@ -1,12 +1,11 @@
-import asyncio
 import base64
 import os
 
 import pulumi
 from pulumi_aws import ecr
-from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 from kic_util import pulumi_config
+from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 
 def project_name_from_project_dir(dirname: str):
@@ -44,12 +43,46 @@ kic_image_build_stack_ref_id = f"{pulumi_user}/{kic_image_build_project_name}/{s
 kick_image_build_stack_ref = pulumi.StackReference(kic_image_build_stack_ref_id)
 ingress_image = kick_image_build_stack_ref.require_output('ingress_image')
 
+
+def select_image_name(image):
+    if 'image_name_alias' in image:
+        return image['image_name_alias']
+    else:
+        return image['image_name']
+
+
+def select_image_tag_alias(image):
+    if 'image_tag_alias' in image:
+        return image['image_tag_alias']
+    else:
+        return ''
+
+
+def select_image_id(image):
+    if 'image_id' not in image or not image['image_id']:
+        raise ValueError(f'no image id found in kic-image-build-stack: {image}')
+    return image['image_id']
+
+
+def select_image_tag(image):
+    if 'image_tag' not in image or not image['image_tag']:
+        raise ValueError(f'no image tag found in kic-image-build-stack: {image}')
+    return image['image_tag']
+
+
+# We default to using the image name alias because it is a more precise definition
+# of the image type when we build from source.
+image_name = ingress_image.apply(select_image_name)
+image_tag_alias = ingress_image.apply(select_image_tag_alias)
+image_id = ingress_image.apply(select_image_id)
+image_tag = ingress_image.apply(select_image_tag)
+
 repo_args = RepositoryPushArgs(repository_url=ecr_repository_url,
                                credentials=ecr_credentials,
-                               image_id=ingress_image['image_id'],
-                               image_name_alias=ingress_image['image_name_alias'],
-                               image_tag=ingress_image['image_tag'],
-                               image_tag_alias=ingress_image['image_tag_alias'])
+                               image_id=image_id,
+                               image_name=image_name,
+                               image_tag=image_tag,
+                               image_tag_alias=image_tag_alias)
 
 # Push the images to the ECR repo
 ecr_repo_push = RepositoryPush(name='ingress-controller-repository-push',

@@ -22,7 +22,7 @@ spec:
       serviceAccountName: default
       containers:
       - name: accounts-db
-        image: gcr.io/bank-of-anthos/accounts-db:v0.4.3
+        image: ghcr.io/nginxinc/bos-accounts-db:latest
         envFrom:
           - configMapRef:
               name: environment-config
@@ -33,13 +33,6 @@ spec:
         ports:
           - containerPort: 5432
             name: postgredb
-        resources:
-          requests:
-            cpu: 100m
-            memory: 128Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
         volumeMounts:
         - name: postgresdb
           mountPath: /var/lib/postgresql/data
