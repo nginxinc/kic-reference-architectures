@@ -33,7 +33,7 @@ def pulumi_ingress_project_name():
 
 def sirius_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    sirius_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
+    sirius_manifests_path = os.path.join(script_dir, 'src', 'kubernetes-manifests', '*.yaml')
     return sirius_manifests_path
 
 
