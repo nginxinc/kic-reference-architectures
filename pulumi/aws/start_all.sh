@@ -297,6 +297,7 @@ pulumi $pulumi_args up
 
 header "Bank of Sirius"
 cd "${script_dir}/sirius"
+
 pulumi $pulumi_args up
 app_url="$(pulumi stack output --json | python3 "${script_dir}"/sirius/verify.py)"
 
