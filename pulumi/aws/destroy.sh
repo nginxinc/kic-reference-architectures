@@ -92,6 +92,10 @@ if command -v aws > /dev/null; then
 fi
 
 k8s_projects=(sirius grafana prometheus certmgr logagent logstore kic-helm-chart)
+
+# Test to see if EKS has been destroy AND there are still Kubernetes resources
+# that are being managed by Pulumi. If so, we have to destroy the stack for
+# each Pulumi project in order to properly remove them from Pulumi's data store.
 if pulumi --cwd "${script_dir}/eks" stack | grep -q 'Current stack resources (0)'; then
   echo "Pulumi does not know about an EKS instance running"
 
@@ -100,12 +104,13 @@ if pulumi --cwd "${script_dir}/eks" stack | grep -q 'Current stack resources (0)
       echo "kubernetes project [${project}] has an empty stack - doing nothing"
     else
       echo "kubernetes project [${project}] has references in Pulumi - cleaning"
-      stack_name="$(pulumi stack --cwd "${script_dir}/${project}" --show-name)"
-      pulumi stack rm --cwd "${script_dir}/${project}" --force --yes "${stack_name}"
-      pulumi stack init --cwd "${script_dir}/${project}" "${stack_name}"
-      pulumi stack select --cwd "${script_dir}/${project}" "${stack_name}"
+      pulumi stack rm --cwd "${script_dir}/${project}" --force --yes "${PULUMI_STACK}"
+      pulumi stack init --cwd "${script_dir}/${project}" "${PULUMI_STACK}"
+      pulumi stack select --cwd "${script_dir}/${project}" "${PULUMI_STACK}"
     fi
   done
+# If EKS hasn't been destroyed yet, we can go ahead and destroy the Kubernetes
+# resources in the normal way.
 else
   for project in "${k8s_projects[@]}"; do
     destroy_project "${project}"
@@ -118,3 +123,6 @@ if [[ -n "${1:-}" ]] && [[ "${1}" == "k8s" ]]; then
 fi
 
 projects=(kic-image-push kic-image-build ecr eks vpc)
+for project in "${projects[@]}"; do
+  destroy_project "${project}"
+done
