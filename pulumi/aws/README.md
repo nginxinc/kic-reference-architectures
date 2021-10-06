@@ -31,7 +31,7 @@ vpc - defines and installs the VPC and subnets to use with EKS
           └─logstore - deploys a logstore (elasticsearch) to the EKS cluster 
             └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
               └─certmgr - deploys the open source cert-manager.io helm chart to the EKS cluster
-                └─prometheus - deploys prometheus server and node exporter for metrics
+                └─prometheus - deploys prometheus server, node exporter, and statsd collector for metrics
                   └─grafana - deploys the grafana visualization platform
                     └─sirius - deploys the Bank of Sirus application to the EKS cluster
                 
