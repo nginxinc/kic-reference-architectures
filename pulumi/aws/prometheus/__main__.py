@@ -63,3 +63,105 @@ chart_ops = helm.ChartOpts(
 prometheus_chart = helm.Chart(release_name='prometheus',
                               config=chart_ops,
                               opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+#
+# Deploy the statsd collector
+#
+
+statsd_chart_values = {
+    "replicaCount": 1,
+    "image": {
+        "repository": "prom/statsd-exporter",
+        "pullPolicy": "IfNotPresent",
+        "tag": "v0.20.0"
+    },
+    "imagePullSecrets": [],
+    "nameOverride": "",
+    "fullnameOverride": "",
+    "statsd": {
+        "udpPort": 9125,
+        "tcpPort": 9125,
+        "cacheSize": 1000,
+        "eventQueueSize": 10000,
+        "eventFlushThreshold": 1000,
+        "eventFlushInterval": "200ms"
+    },
+    "serviceMonitor": {
+        "enabled": False,
+        "interval": "30s",
+        "scrapeTimeout": "10s",
+        "namespace": "monitoring",
+        "honorLabels": False,
+        "additionalLabels": {}
+    },
+    "serviceAccount": {
+        "create": True,
+        "annotations": {},
+        "name": ""
+    },
+    "podAnnotations": {
+        "prometheus.io/scrape": "true",
+        "prometheus.io/port": "9102"
+    },
+    "podSecurityContext": {},
+    "securityContext": {},
+    "service": {
+        "type": "ClusterIP",
+        "port": 9102,
+        "path": "/metrics",
+        "annotations": {}
+    },
+    "ingress": {
+        "enabled": False,
+        "annotations": {},
+        "hosts": [
+            {
+                "host": "chart-example.local",
+                "paths": []
+            }
+        ],
+        "tls": []
+    },
+    "resources": {},
+    "autoscaling": {
+        "enabled": False,
+        "minReplicas": 1,
+        "maxReplicas": 100,
+        "targetCPUUtilizationPercentage": 80
+    },
+    "nodeSelector": {},
+    "tolerations": [],
+    "affinity": {},
+    "annotations": {
+        "prometheus.io/scrape": "true",
+        "prometheus.io/port": "9102"
+    }
+}
+
+config = pulumi.Config('prometheus')
+statsd_chart_name = config.get('statsd_chart_name')
+if not statsd_chart_name:
+    statsd_chart_name = 'prometheus-statsd-exporter'
+statsd_chart_version = config.get('statsd_chart_version')
+if not statsd_chart_version:
+    statsd_chart_version = '0.3.1'
+helm_repo_name = config.get('prometheus_helm_repo_name')
+if not helm_repo_name:
+    helm_repo_name = 'prometheus-community'
+helm_repo_url = config.get('prometheus_helm_repo_url')
+if not helm_repo_url:
+    helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
+
+statsd_chart_ops = helm.ChartOpts(
+    chart=statsd_chart_name,
+    namespace=ns.metadata.name,
+    repo=helm_repo_name,
+    fetch_opts=FetchOpts(repo=helm_repo_url),
+    version=statsd_chart_version,
+    values=statsd_chart_values,
+    transformations=[remove_status_field]
+)
+
+statsd_chart = helm.Chart(release_name='statsd',
+                              config=statsd_chart_ops,
+                              opts=pulumi.ResourceOptions(provider=k8s_provider))
