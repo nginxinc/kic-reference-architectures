@@ -204,6 +204,10 @@ config:
   prometheus:helm_repo_name: prometheus-community
   # Name of the repo to pull the prometheus chart from
   prometheus:helm_repo_url: https://https://prometheus-community.github.io/helm-charts
+  # Name of the statsd chart (uses the same repo as the prom chart)
+  prometheus:statsd_chart_name: prometheus-statsd-exporter
+  # Version of the statsd chart (uses the same repo as the prom chart)
+  prometheus.statsd_chart_version: 0.3.1
 
   ############################################################################
 
