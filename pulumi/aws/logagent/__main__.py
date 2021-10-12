@@ -54,7 +54,7 @@ chart_values = {
     "daemonset": {
         "enabled": True,
         "filebeatConfig": {
-            "filebeat.yml": "filebeat.autodiscover:\n  providers:\n    - type: kubernetes\n      hints.enabled: true\n      hints.default_config:\n        type: container\n        paths:\n          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n  host: '${NODE_NAME}'\n  hosts: 'elastic-coordinating-only.logstore.svc.cluster.local:9200'\n"
+            "filebeat.yml": "setup.kibana.host: 'http://elastic-kibana.logstore.svc.cluster.local:5601'\nsetup.dashboards.enabled: true\nfilebeat.autodiscover:\n  providers:\n    - type: kubernetes\n      hints.enabled: true\n      hints.default_config:\n        type: container\n        paths:\n          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n  host: '${NODE_NAME}'\n  hosts: 'elastic-coordinating-only.logstore.svc.cluster.local:9200'\n"
         }
     }
 }
