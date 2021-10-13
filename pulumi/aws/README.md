@@ -79,6 +79,8 @@ deploying different versions of KIC.
 A sample config-map is provided in the Pulumi deployment code; this code will adjust the logging format to approximate
 the upstream NGINX KIC project which will allow for easier injestion into log storage and processing systems.
 
+Note that this deployment uses the GA Ingress APIs; this has been tested with helm chart version 0.11.1 and NGINX KIC versions 12.2.2 and 2.0.1. 
+
 ### Log Store
 
 In the [`logstore`](./logstore) directory, you will find the Pulumi project reponsible for installing your log store.
