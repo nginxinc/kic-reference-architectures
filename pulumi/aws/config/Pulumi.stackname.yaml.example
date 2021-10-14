@@ -68,12 +68,12 @@ config:
   # https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/
   #
   # The following are all valid image names:
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.1
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.1-ot
-  # kic:image_name: docker.io/nginx/nginx-ingress:2.0.1
-  # kic:image_name: nginx/nginx-ingress:2.0.1
-  # kic:image_name: nginx/nginx-ingress:2.0.1-alpine
-  kic:image_name: nginx/nginx-ingress:2.0.1
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.2
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.2-ot
+  # kic:image_name: docker.io/nginx/nginx-ingress:2.0.2
+  # kic:image_name: nginx/nginx-ingress:2.0.2
+  # kic:image_name: nginx/nginx-ingress:2.0.2-alpine
+  kic:image_name: nginx/nginx-ingress:2.0.2
 
 
   ############################################################################
@@ -124,10 +124,10 @@ config:
   # ssh://git@github.com:nginxinc/kubernetes-ingress.git
   #
   # Github URL with a tag specified:
-  # https://github.com/nginxinc/kubernetes-ingress.git#v2.0.1
-  # git@github.com:nginxinc/kubernetes-ingress.git#v2.0.1
-  # ssh://git@github.com:nginxinc/kubernetes-ingress.git#v2.0.1
-  kic:src_url: https://github.com/nginxinc/kubernetes-ingress.git#v2.0.1
+  # https://github.com/nginxinc/kubernetes-ingress.git#v2.0.2
+  # git@github.com:nginxinc/kubernetes-ingress.git#v2.0.2
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git#v2.0.2
+  kic:src_url: https://github.com/nginxinc/kubernetes-ingress.git#v2.0.2
 
   # When set to true, Pulumi's diff logic is circumvented and the image will always be
   # rebuilt regardless of the input variables to Pulumi being the same or not.
