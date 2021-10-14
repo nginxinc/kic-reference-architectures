@@ -79,6 +79,21 @@ deploying different versions of KIC.
 A sample config-map is provided in the Pulumi deployment code; this code will adjust the logging format to approximate
 the upstream NGINX KIC project which will allow for easier injestion into log storage and processing systems.
 
+Note that this deployment uses the GA Ingress APIs; this has been tested with helm chart version 0.11.1 and NGINX KIC 2.0.2. 
+Older versions of the KIC and helm charts can be used, but care should be taken to ensure that the helm chart version used
+is compatible with the KIC version. This information can be found in the 
+[NGINX KIC Release Notes](https://docs.nginx.com/nginx-ingress-controller/releases/) for each release.
+
+#### Ingress API Versions and NGINX KIC
+
+Starting with Kubernetes version 1.22, support for the Ingress Beta API `networking.k8s.io/v1beta` will be dropped requiring
+use of the GA Ingress API `networking.k8s.io/v1`. However, Kubernetes versions 1.19 through 1.21 allows these two API versions 
+to coexist and maintains compatibility for consumers of the API, meaning that the API will respond correctly to calls to either
+the `v1beta` and/or `v1` routes.
+
+This project uses the NGINX KIC v2.x releases which includes full support for the GA APIs.
+do not use the 
+
 ### Log Store
 
 In the [`logstore`](./logstore) directory, you will find the Pulumi project reponsible for installing your log store.
