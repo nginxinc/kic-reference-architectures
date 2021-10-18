@@ -11,6 +11,8 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+
+
 if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
@@ -76,6 +78,24 @@ fi
 if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
   read -r -e -p "Enter the name of the Pulumi stack to use in all projects: " PULUMI_STACK
   echo "PULUMI_STACK=${PULUMI_STACK}" >>"${script_dir}/config/environment"
+fi
+
+# Do we have the submodule source....
+if [[ -d "${script_dir}/sirius/src/.git" ]]; then
+    echo "Submodule source found"
+else
+    # Init the module
+    echo "Checking out required submodule"
+    GIT="git --git-dir=${script_dir}/../../.git "
+    $GIT submodule update --init --recursive
+fi
+
+# Validate it exists....
+if [[ -d "${script_dir}/../../.git" ]]; then
+    echo "Submodule source found"
+else
+    echo >&2 "Unable to find submodule - exiting"
+    exit 3
 fi
 
 source "${script_dir}/config/environment"
