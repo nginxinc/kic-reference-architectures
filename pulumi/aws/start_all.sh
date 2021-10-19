@@ -11,6 +11,8 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+
+
 if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
@@ -76,6 +78,26 @@ fi
 if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
   read -r -e -p "Enter the name of the Pulumi stack to use in all projects: " PULUMI_STACK
   echo "PULUMI_STACK=${PULUMI_STACK}" >>"${script_dir}/config/environment"
+fi
+
+# Do we have the submodule source....
+#
+# Note: We had been checking for .git, but this is not guaranteed to be 
+# there if we build the docker image or use a tarball. So now we look
+# for the src subdirectory which should always be there.
+#
+if [[ -d "${script_dir}/sirius/src/src" ]]; then
+    echo "Submodule source found"
+else
+    # Error out with instructions.
+    echo "Bank of Sirius submodule not found"
+    echo " "
+    echo "Please run:"
+    echo "    git submodule update --init --recursive --remote"
+    echo "Inside your git directory and re-run this script"
+    echo ""
+    echo >&2 "Unable to find submodule - exiting"
+    exit 3
 fi
 
 source "${script_dir}/config/environment"

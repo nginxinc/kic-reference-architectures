@@ -6,7 +6,8 @@ the project can be run in a Docker container that you have built.
 
 Here is a rough outline of the steps to get started:
 
- 1. Clone git repository.
+ 1. Clone git repository, including the Bank of Sirius submodule. This can be done 
+    by running `git clone --recurse-submodules https://github.com/nginxinc/kic-reference-architectures`
  2. Install dependencies (install section below - python3, python venv module, 
     git, docker, make).
  3. Setup AWS credentials.
