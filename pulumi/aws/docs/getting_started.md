@@ -178,3 +178,10 @@ docker run --interactive --tty \
 ```
 
 Replace `<distro>` with either `centos` or `debian`.
+
+### Cleaning Up
+
+If you want to completely remove all the resources you have provisioned, run the
+script: [`destroy.sh`](../destroy.sh).
+
+Be careful because this will **DELETE ALL** the resources you have provisioned.
