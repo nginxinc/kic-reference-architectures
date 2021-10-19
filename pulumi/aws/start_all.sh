@@ -81,7 +81,12 @@ if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
 fi
 
 # Do we have the submodule source....
-if [[ -d "${script_dir}/sirius/src/.git" ]]; then
+#
+# Note: We had been checking for .git, but this is not guaranteed to be 
+# there if we build the docker image or use a tarball. So now we look
+# for the src subdirectory which should always be there.
+#
+if [[ -d "${script_dir}/sirius/src/src" ]]; then
     echo "Submodule source found"
 else
     # Error out with instructions.
