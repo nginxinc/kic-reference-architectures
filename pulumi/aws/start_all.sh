@@ -84,16 +84,13 @@ fi
 if [[ -d "${script_dir}/sirius/src/.git" ]]; then
     echo "Submodule source found"
 else
-    # Init the module
-    echo "Checking out required submodule"
-    GIT="git --git-dir=${script_dir}/../../.git "
-    $GIT submodule update --init --recursive
-fi
-
-# Validate it exists....
-if [[ -d "${script_dir}/../../.git" ]]; then
-    echo "Submodule source found"
-else
+    # Error out with instructions.
+    echo "Bank of Sirius submodule not found"
+    echo " "
+    echo "Please run:"
+    echo "    git submodule update --init --recursive --remote"
+    echo "Inside your git directory and re-run this script"
+    echo ""
     echo >&2 "Unable to find submodule - exiting"
     exit 3
 fi
