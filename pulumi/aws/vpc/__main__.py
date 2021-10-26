@@ -37,14 +37,29 @@ else:
 public_subnets = []
 private_subnets = []
 
-for i, az in enumerate(azs):
+# If you wanted to double the number of subnets because you have few
+# availability zones, you can redefine the variable below to something
+# like: list(itertools.chain(azs, azs)) which would just repeat the
+# same list of AZs twice. The iteration logic will pick it up for
+# subnet creation and create unique names.
+azs_for_subnets = list(azs)
+
+if len(azs) <= 0:
+    raise ValueError("There are no usable availability zones")
+if len(azs) == 1:
+    pulumi.log.warn("There is only a single usable availability zone")
+elif len(azs) == 2:
+    pulumi.log.warn("There are only two usable availability zones")
+
+for i, az in enumerate(azs_for_subnets):
     if not isinstance(az, str):
         raise f'availability zone specified [{i}] is not a valid string value: [{az}]'
     if az.strip() == "":
         raise f'availability zone specified [{i}] is an empty string'
 
     public_subnet_addr = i
-    subnet = ec2.Subnet(resource_name=f'{az}-k8s-public-{project_name}-{stack_name}',
+    resource_name = f'{az}-k8s-public-{project_name}-{stack_name}-{i}'
+    subnet = ec2.Subnet(resource_name=resource_name,
                         availability_zone=az,
                         vpc_id=vpc.id,
                         cidr_block=f"10.100.{public_subnet_addr}.0/24",
@@ -52,14 +67,15 @@ for i, az in enumerate(azs):
                         tags={"Project": project_name,
                               "Stack": stack_name,
                               "kubernetes.io/role/elb": "1"})
-    ec2.RouteTableAssociation(f"route-table-assoc-public-{az}",
+    ec2.RouteTableAssociation(f"route-table-assoc-public-{az}-{i}",
                               route_table_id=route_table.id,
                               subnet_id=subnet.id)
     public_subnets.append(subnet)
 
-for i, az in enumerate(azs):
+for i, az in enumerate(azs_for_subnets):
     private_subnet_addr = (i + 1) * 16
-    subnet = ec2.Subnet(resource_name=f"{az}-k8s-private-{project_name}-{stack_name}",
+    resource_name = f"{az}-k8s-private-{project_name}-{stack_name}-{i}"
+    subnet = ec2.Subnet(resource_name=resource_name,
                         availability_zone=az,
                         vpc_id=vpc.id,
                         cidr_block=f"10.100.{private_subnet_addr}.0/20",
@@ -67,7 +83,7 @@ for i, az in enumerate(azs):
                               "Stack": stack_name,
                               "kubernetes.io/role/internal-elb": "1"},
                         map_public_ip_on_launch=False)
-    ec2.RouteTableAssociation(resource_name=f"route-table-assoc-private-{az}-{project_name}-{stack_name}",
+    ec2.RouteTableAssociation(resource_name=f"route-table-assoc-private-{az}-{project_name}-{stack_name}-{i}",
                               route_table_id=route_table.id,
                               subnet_id=subnet.id)
     private_subnets.append(subnet)
