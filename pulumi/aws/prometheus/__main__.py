@@ -2,17 +2,9 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
-import pulumi_kubernetes.helm.v3 as helm
-from pulumi_kubernetes.helm.v3 import FetchOpts
+from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
-
-
-# Removes the status field from the Helm Chart, so that it is
-# compatible with the Pulumi Chart implementation.
-def remove_status_field(obj):
-    if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-        del obj['status']
 
 
 def project_name_from_project_dir(dirname: str):
@@ -51,92 +43,30 @@ helm_repo_url = config.get('prometheus_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
 
-chart_ops = helm.ChartOpts(
+prometheus_release_args = ReleaseArgs(
     chart=chart_name,
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
+    ),
     version=chart_version,
-    transformations=[remove_status_field]
-)
+    namespace=ns.metadata.name,
 
-prometheus_chart = helm.Chart(release_name='prometheus',
-                              config=chart_ops,
-                              opts=pulumi.ResourceOptions(provider=k8s_provider))
+    # Values from Chart's parameters specified hierarchically,
+    values={
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False)
+
+prometheus_release = Release("prometheus", args=prometheus_release_args)
+
+prom_status = prometheus_release.status
 
 #
 # Deploy the statsd collector
 #
 
-statsd_chart_values = {
-    "replicaCount": 1,
-    "image": {
-        "repository": "prom/statsd-exporter",
-        "pullPolicy": "IfNotPresent",
-        "tag": "v0.20.0"
-    },
-    "imagePullSecrets": [],
-    "nameOverride": "",
-    "fullnameOverride": "",
-    "statsd": {
-        "udpPort": 9125,
-        "tcpPort": 9125,
-        "cacheSize": 1000,
-        "eventQueueSize": 10000,
-        "eventFlushThreshold": 1000,
-        "eventFlushInterval": "200ms"
-    },
-    "serviceMonitor": {
-        "enabled": False,
-        "interval": "30s",
-        "scrapeTimeout": "10s",
-        "namespace": "monitoring",
-        "honorLabels": False,
-        "additionalLabels": {}
-    },
-    "serviceAccount": {
-        "create": True,
-        "annotations": {},
-        "name": ""
-    },
-    "podAnnotations": {
-        "prometheus.io/scrape": "true",
-        "prometheus.io/port": "9102"
-    },
-    "podSecurityContext": {},
-    "securityContext": {},
-    "service": {
-        "type": "ClusterIP",
-        "port": 9102,
-        "path": "/metrics",
-        "annotations": {}
-    },
-    "ingress": {
-        "enabled": False,
-        "annotations": {},
-        "hosts": [
-            {
-                "host": "chart-example.local",
-                "paths": []
-            }
-        ],
-        "tls": []
-    },
-    "resources": {},
-    "autoscaling": {
-        "enabled": False,
-        "minReplicas": 1,
-        "maxReplicas": 100,
-        "targetCPUUtilizationPercentage": 80
-    },
-    "nodeSelector": {},
-    "tolerations": [],
-    "affinity": {},
-    "annotations": {
-        "prometheus.io/scrape": "true",
-        "prometheus.io/port": "9102"
-    }
-}
 
 config = pulumi.Config('prometheus')
 statsd_chart_name = config.get('statsd_chart_name')
@@ -152,16 +82,39 @@ helm_repo_url = config.get('prometheus_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
 
-statsd_chart_ops = helm.ChartOpts(
+statsd_release_args = ReleaseArgs(
     chart=statsd_chart_name,
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
+    ),
     version=statsd_chart_version,
-    values=statsd_chart_values,
-    transformations=[remove_status_field]
-)
+    namespace=ns.metadata.name,
 
-statsd_chart = helm.Chart(release_name='statsd',
-                              config=statsd_chart_ops,
-                              opts=pulumi.ResourceOptions(provider=k8s_provider))
+    # Values from Chart's parameters specified hierarchically,
+    values={
+        "serviceAccount": {
+            "create": True,
+            "annotations": {},
+            "name": ""
+        },
+        "podAnnotations": {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "9102"
+        },
+        "annotations": {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "9102"
+        }
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False)
+
+statsd_release = Release("statsd", args=statsd_release_args)
+
+statsd_status = statsd_release.status
+
+# Print out our status
+pulumi.export("Prometheus Status", prom_status)
+pulumi.export("Statsd Status", statsd_status)
