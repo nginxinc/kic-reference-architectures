@@ -2,8 +2,7 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
-import pulumi_kubernetes.helm.v3 as helm
-from pulumi_kubernetes.helm.v3 import FetchOpts
+from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
 
@@ -20,12 +19,6 @@ if not helm_repo_name:
 helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://charts.bitnami.com/bitnami'
-
-# Removes the status field from the Helm Chart, so that it is
-# compatible with the Pulumi Chart implementation.
-def remove_status_field(obj):
-    if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-        del obj['status']
 
 
 def project_name_from_project_dir(dirname: str):
@@ -50,25 +43,26 @@ ns = k8s.core.v1.Namespace(resource_name='logstore',
                            metadata={'name': 'logstore'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-chart_values = {
-    "global": {
-        "kibanaEnabled": True
-    },
-    "ingest": {
-        "enabled": True
-    }
-}
-
-chart_ops = helm.ChartOpts(
+elastic_release_args = ReleaseArgs(
     chart=chart_name,
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
+    ),
     version=chart_version,
-    values=chart_values,
-    transformations=[remove_status_field]
-)
+    namespace=ns.metadata.name,
 
-elastic_chart = helm.Chart(release_name='elastic',
-                           config=chart_ops,
-                           opts=pulumi.ResourceOptions(provider=k8s_provider))
+    # Values from Chart's parameters specified hierarchically,
+    values={
+        "global": {
+            "kibanaEnabled": True
+        },
+        "ingest": {
+            "enabled": True
+        }
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False)
+
+elastic_release = Release("elastic", args=elastic_release_args)
