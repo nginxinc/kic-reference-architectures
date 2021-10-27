@@ -66,3 +66,6 @@ elastic_release_args = ReleaseArgs(
     skip_await=False)
 
 elastic_release = Release("elastic", args=elastic_release_args)
+
+status = elastic_release.status
+pulumi.export("Status", status)
