@@ -1,4 +1,5 @@
 import os
+from pulumi import Output
 
 import pulumi
 import pulumi_kubernetes as k8s
@@ -26,6 +27,11 @@ def project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+def pulumi_logstore_project_name():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logstore_project_path = os.path.join(script_dir, '..', 'logstore')
+    return pulumi_config.get_pulumi_project_name(logstore_project_path)
+
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -43,6 +49,20 @@ ns = k8s.core.v1.Namespace(resource_name='logagent',
                            metadata={'name': 'logagent'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
+# Logic to extract the FQDN of logstore
+logstore_project_name = pulumi_logstore_project_name()
+logstore_stack_ref_id = f"{pulumi_user}/{logstore_project_name}/{stack_name}"
+logstore_stack_ref = pulumi.StackReference(logstore_stack_ref_id)
+elastic_hostname = logstore_stack_ref.get_output('elastic_hostname')
+kibana_hostname = logstore_stack_ref.get_output('kibana_hostname')
+
+filebeat_yaml = Output.concat("setup.kibana.host: 'http://", kibana_hostname, ":5601'\nsetup.dashboards.enabled: true\nfilebeat.autodiscover:\n",
+                              "  providers:\n    - type: kubernetes\n      hints.enabled: true\n",
+                              "      hints.default_config:\n        type: container\n        paths:\n",
+                              "          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n",
+                              "  host: '${NODE_NAME}'\n  hosts: '", elastic_hostname, ":9200'\n")
+
+
 filebeat_release_args = ReleaseArgs(
     chart=chart_name,
     repository_opts=RepositoryOptsArgs(
@@ -56,7 +76,7 @@ filebeat_release_args = ReleaseArgs(
         "daemonset": {
             "enabled": True,
             "filebeatConfig": {
-                "filebeat.yml": "setup.kibana.host: 'http://elastic-kibana.logstore.svc.cluster.local:5601'\nsetup.dashboards.enabled: true\nfilebeat.autodiscover:\n  providers:\n    - type: kubernetes\n      hints.enabled: true\n      hints.default_config:\n        type: container\n        paths:\n          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n  host: '${NODE_NAME}'\n  hosts: 'elastic-coordinating-only.logstore.svc.cluster.local:9200'\n"
+                "filebeat.yml": filebeat_yaml
             }
         }
     },

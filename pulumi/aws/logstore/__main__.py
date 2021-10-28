@@ -2,6 +2,8 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
+from pulumi import Output
+from pulumi_kubernetes.core.v1 import Namespace, Service
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
@@ -67,5 +69,11 @@ elastic_release_args = ReleaseArgs(
 
 elastic_release = Release("elastic", args=elastic_release_args)
 
-status = elastic_release.status
-pulumi.export("Status", status)
+elastic_rname = elastic_release.status.name
+
+elastic_fqdn = Output.concat(elastic_rname, "-coordinating-only.logstore.svc.cluster.local")
+kibana_fqdn = Output.concat(elastic_rname, "-kibana.logstore.svc.cluster.local")
+
+pulumi.export('elastic_hostname', pulumi.Output.unsecret(elastic_fqdn))
+pulumi.export('kibana_hostname', pulumi.Output.unsecret(kibana_fqdn))
+
