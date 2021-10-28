@@ -3,9 +3,12 @@ import typing
 from typing import Dict
 
 import pulumi
+from pulumi import Output
 import pulumi_kubernetes as k8s
+from pulumi_kubernetes.core.v1 import Namespace, Service
 import pulumi_kubernetes.helm.v3 as helm
-from pulumi_kubernetes.helm.v3 import FetchOpts
+# from pulumi_kubernetes.helm.v3 import FetchOpts
+from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
 
@@ -26,9 +29,9 @@ if not helm_repo_url:
 
 # Removes the status field from the Nginx Ingress Helm Chart, so that it is
 # compatible with the Pulumi Chart implementation.
-def remove_status_field(obj):
-    if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-        del obj['status']
+# def remove_status_field(obj):
+# if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
+# del obj['status']
 
 
 def project_name_from_project_dir(dirname: str):
@@ -116,20 +119,43 @@ ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
 
 chart_values = ecr_repository.apply(build_chart_values)
 
-chart_ops = helm.ChartOpts(
+# chart_ops = helm.ChartOpts(
+# chart=chart_name,
+# namespace=ns.metadata.name,
+# repo=helm_repo_name,
+# fetch_opts=FetchOpts(repo=helm_repo_url),
+# version=chart_version,
+# values=chart_values,
+# transformations=[remove_status_field]
+# )
+
+# kic_chart = helm.Chart(release_name='kic',
+# config=chart_ops,
+# opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+kic_release_args = ReleaseArgs(
     chart=chart_name,
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
+    ),
     version=chart_version,
+    namespace=ns.metadata.name,
+
+    # Values from Chart's parameters specified hierarchically,
     values=chart_values,
-    transformations=[remove_status_field]
-)
 
-kic_chart = helm.Chart(release_name='kic',
-                       config=chart_ops,
-                       opts=pulumi.ResourceOptions(provider=k8s_provider))
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False)
 
-ingress_service = kic_chart.resources['v1/Service:nginx-ingress/kic-nginx-ingress']
-pulumi.export('ingress_service', pulumi.Output.unsecret(ingress_service))
-pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.status.load_balancer.ingress[0].hostname))
+kic_chart = Release("kic", args=kic_release_args)
+
+pstatus = kic_chart.status
+
+srv = Service.get("nginx-ingress",
+                  Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress"))
+
+ingress_service = srv.status
+
+pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
