@@ -3,6 +3,7 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
+from pulumi import Output
 
 from kic_util import pulumi_config
 
@@ -118,3 +119,9 @@ statsd_status = statsd_release.status
 # Print out our status
 pulumi.export("Prometheus Status", prom_status)
 pulumi.export("Statsd Status", statsd_status)
+
+prom_rname = prometheus_release.status.name
+
+prom_fqdn = Output.concat(prom_rname, "-prometheus-server.prometheus.svc.cluster.local")
+
+pulumi.export('prom_hostname', pulumi.Output.unsecret(prom_fqdn))
