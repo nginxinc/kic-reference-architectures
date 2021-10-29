@@ -3,7 +3,6 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi import Output
-from pulumi_kubernetes.core.v1 import Namespace, Service
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
@@ -65,7 +64,15 @@ elastic_release_args = ReleaseArgs(
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
-    skip_await=False)
+    skip_await=False,
+    # If we fail, clean up 
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="elastic",
+    # Lint the chart before installing
+    lint=True,
+    # Force update if required
+    force_update=True)
 
 elastic_release = Release("elastic", args=elastic_release_args)
 
@@ -77,3 +84,6 @@ kibana_fqdn = Output.concat(elastic_rname, "-kibana.logstore.svc.cluster.local")
 pulumi.export('elastic_hostname', pulumi.Output.unsecret(elastic_fqdn))
 pulumi.export('kibana_hostname', pulumi.Output.unsecret(kibana_fqdn))
 
+# Print out our status
+estatus = elastic_release.status
+pulumi.export("Logstore Status", estatus)

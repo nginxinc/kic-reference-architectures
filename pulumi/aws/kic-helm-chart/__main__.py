@@ -5,9 +5,8 @@ from typing import Dict
 import pulumi
 from pulumi import Output
 import pulumi_kubernetes as k8s
-from pulumi_kubernetes.core.v1 import Namespace, Service
+from pulumi_kubernetes.core.v1 import Service
 import pulumi_kubernetes.helm.v3 as helm
-# from pulumi_kubernetes.helm.v3 import FetchOpts
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
@@ -27,13 +26,6 @@ if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
 
 
-# Removes the status field from the Nginx Ingress Helm Chart, so that it is
-# compatible with the Pulumi Chart implementation.
-# def remove_status_field(obj):
-# if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-# del obj['status']
-
-
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', dirname)
@@ -50,7 +42,10 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
             'config': {
                 'name': 'nginx-config',
                 'entries': {
-                    'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status \"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr $upstream_bytes_sent $upstream_response_time $upstream_status $request_id'
+                    'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent '
+                                  '\"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status '
+                                  '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
+                                  '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
                 }
             },
             'service': {
@@ -119,20 +114,6 @@ ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
 
 chart_values = ecr_repository.apply(build_chart_values)
 
-# chart_ops = helm.ChartOpts(
-# chart=chart_name,
-# namespace=ns.metadata.name,
-# repo=helm_repo_name,
-# fetch_opts=FetchOpts(repo=helm_repo_url),
-# version=chart_version,
-# values=chart_values,
-# transformations=[remove_status_field]
-# )
-
-# kic_chart = helm.Chart(release_name='kic',
-# config=chart_ops,
-# opts=pulumi.ResourceOptions(provider=k8s_provider))
-
 kic_release_args = ReleaseArgs(
     chart=chart_name,
     repository_opts=RepositoryOptsArgs(
@@ -147,7 +128,15 @@ kic_release_args = ReleaseArgs(
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
-    skip_await=False)
+    skip_await=False,
+    # If we fail, clean up 
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="kic",
+    # Lint the chart before installing
+    lint=True,
+    # Force update if required
+    force_update=True)
 
 kic_chart = Release("kic", args=kic_release_args)
 
@@ -159,3 +148,5 @@ srv = Service.get("nginx-ingress",
 ingress_service = srv.status
 
 pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
+# Print out our status
+pulumi.export("KIC Status", pstatus)

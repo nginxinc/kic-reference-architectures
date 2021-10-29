@@ -27,6 +27,7 @@ def project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+
 def pulumi_logstore_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     logstore_project_path = os.path.join(script_dir, '..', 'logstore')
@@ -56,12 +57,12 @@ logstore_stack_ref = pulumi.StackReference(logstore_stack_ref_id)
 elastic_hostname = logstore_stack_ref.get_output('elastic_hostname')
 kibana_hostname = logstore_stack_ref.get_output('kibana_hostname')
 
-filebeat_yaml = Output.concat("setup.kibana.host: 'http://", kibana_hostname, ":5601'\nsetup.dashboards.enabled: true\nfilebeat.autodiscover:\n",
+filebeat_yaml = Output.concat("setup.kibana.host: 'http://", kibana_hostname,
+                              ":5601'\nsetup.dashboards.enabled: true\nfilebeat.autodiscover:\n",
                               "  providers:\n    - type: kubernetes\n      hints.enabled: true\n",
                               "      hints.default_config:\n        type: container\n        paths:\n",
                               "          - /var/lib/docker/containers/${data.kubernetes.container.id}/*.log\noutput.elasticsearch:\n",
                               "  host: '${NODE_NAME}'\n  hosts: '", elastic_hostname, ":9200'\n")
-
 
 filebeat_release_args = ReleaseArgs(
     chart=chart_name,
@@ -83,9 +84,16 @@ filebeat_release_args = ReleaseArgs(
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
-    skip_await=False)
-
+    skip_await=False,
+    # If we fail, clean up 
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="filebeat",
+    # Lint the chart before installing
+    lint=True,
+    # Force update if required
+    force_update=True)
 filebeat_release = Release("filebeat", args=filebeat_release_args)
 
 status = filebeat_release.status
-pulumi.export("Status", status)
+pulumi.export("Logagent Status", status)
