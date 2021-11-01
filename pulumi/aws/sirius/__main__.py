@@ -3,9 +3,8 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
-import pulumi_kubernetes.helm.v3 as helm
+from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from Crypto.PublicKey import RSA
-from pulumi_kubernetes.helm.v3 import FetchOpts
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
 
@@ -313,7 +312,7 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                            # controller. The secret defined here will be used by the issuer
                                            # to store the generated certificate.
                                            tls=[k8s.networking.v1.IngressTLSArgs(
-                                               hosts=[lb_ingress_hostname],
+                                               hosts=[sirius_host],
                                                secret_name="sirius-secret",
                                            )],
                                            # The block below defines the rules for traffic coming into the KIC.
@@ -324,7 +323,7 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                            # to this same KIC along with a separate tls and host rule to direct
                                            # traffic to a different backend.
                                            rules=[k8s.networking.v1.IngressRuleArgs(
-                                               host=lb_ingress_hostname,
+                                               host=sirius_host,
                                                http=k8s.networking.v1.HTTPIngressRuleValueArgs(
                                                    paths=[k8s.networking.v1.HTTPIngressPathArgs(
                                                        path="/",
@@ -345,202 +344,164 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
 application_url = sirius_host.apply(lambda host: f'https://{host}')
 pulumi.export('application_url', application_url)
 
-# Monitoring for Databases: Accounts DB
 #
-# Note that we use the credentials that we pulled
-# above when building out the DB containers
-accountsdb_chart_values = {
-    "replicaCount": 1,
-    "image": {
-        "repository": "quay.io/prometheuscommunity/postgres-exporter",
-        "tag": "v0.9.0",
-        "pullPolicy": "IfNotPresent"
-    },
-    "service": {
-        "type": "ClusterIP",
-        "port": 80,
-        "targetPort": 9187,
-        "name": "http",
-        "labels": {},
-        "annotations": {}
-    },
-    "serviceMonitor": {
-        "enabled": False
-    },
-    "prometheusRule": {
-        "enabled": False,
-        "additionalLabels": {},
-        "namespace": "",
-        "rules": []
-    },
-    "resources": {},
-    "rbac": {
-        "create": True,
-        "pspEnabled": True
-    },
-    "serviceAccount": {
-        "create": True,
-        "annotations": {}
-    },
-    "securityContext": {},
-    "config": {
-        "datasource": {
-            "host": "accounts-db",
-            "user": accounts_admin,
-            "password": accounts_pwd,
-            "passwordSecret": {},
-            "port": "5432",
-            "database": accounts_db,
-            "sslmode": "disable"
-        },
-        "datasourceSecret": {},
-        "disableDefaultMetrics": False,
-        "disableSettingsMetrics": False,
-        "autoDiscoverDatabases": False,
-        "excludeDatabases": [],
-        "includeDatabases": [],
-        "constantLabels": {},
-        "logLevel": ""
-    },
-    "nodeSelector": {},
-    "tolerations": [],
-    "affinity": {},
-    "annotations": {
-        "prometheus.io/scrape": "true",
-        "prometheus.io/port": "9187"},
-    "podLabels": {},
-    "livenessProbe": {
-        "initialDelaySeconds": 0,
-        "timeoutSeconds": 1
-    },
-    "readinessProbe": {
-        "initialDelaySeconds": 0,
-        "timeoutSeconds": 1
-    },
-    "initContainers": [],
-    "extraContainers": [],
-    "extraVolumes": [],
-    "extraVolumeMounts": []
-}
-
-# Monitoring for Databases: Ledger DB
-#
-# Note that we use the credentials that we pulled
-# above when building out the DB containers
-ledgerdb_chart_values = {
-    "replicaCount": 1,
-    "image": {
-        "repository": "quay.io/prometheuscommunity/postgres-exporter",
-        "tag": "v0.9.0",
-        "pullPolicy": "IfNotPresent"
-    },
-    "service": {
-        "type": "ClusterIP",
-        "port": 80,
-        "targetPort": 9187,
-        "name": "http",
-        "labels": {},
-        "annotations": {}
-    },
-    "serviceMonitor": {
-        "enabled": False
-    },
-    "prometheusRule": {
-        "enabled": False,
-        "additionalLabels": {},
-        "namespace": "",
-        "rules": []
-    },
-    "resources": {},
-    "rbac": {
-        "create": True,
-        "pspEnabled": True
-    },
-    "serviceAccount": {
-        "create": True,
-        "annotations": {}
-    },
-    "securityContext": {},
-    "config": {
-        "datasource": {
-            "host": "ledger-db",
-            "user": ledger_admin,
-            "password": ledger_pwd,
-            "passwordSecret": {},
-            "port": "5432",
-            "database": ledger_db,
-            "sslmode": "disable"
-        },
-        "datasourceSecret": {},
-        "disableDefaultMetrics": False,
-        "disableSettingsMetrics": False,
-        "autoDiscoverDatabases": False,
-        "excludeDatabases": [],
-        "includeDatabases": [],
-        "constantLabels": {},
-        "logLevel": ""
-    },
-    "nodeSelector": {},
-    "tolerations": [],
-    "affinity": {},
-    "annotations": {
-        "prometheus.io/scrape": "true",
-        "prometheus.io/port": "9187"},
-    "podLabels": {},
-    "livenessProbe": {
-        "initialDelaySeconds": 0,
-        "timeoutSeconds": 1
-    },
-    "readinessProbe": {
-        "initialDelaySeconds": 0,
-        "timeoutSeconds": 1
-    },
-    "initContainers": [],
-    "extraContainers": [],
-    "extraVolumes": [],
-    "extraVolumeMounts": []
-}
-
-#
-# Get the chart values for monitoring
+# Get the chart values for both monitoring charts
 config = pulumi.Config('sirius')
+chart = config.get('chart')
+if not chart:
+    chart = 'prometheus-postgres-exporter'
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = '2.3.5'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'
-
 helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
 
-# Setup monitoring (accountsdb)
-accountsdb_chart_ops = helm.ChartOpts(
-    chart='prometheus-postgres-exporter',
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
-    version=chart_version,
-    values=accountsdb_chart_values,
-    transformations=[remove_status_field],
-)
+# Monitoring for Databases: Accounts DB
+accountsdb_release_args = ReleaseArgs(
+    chart = chart,
+    repository_opts = RepositoryOptsArgs(
+        repo = helm_repo_url
+    ),
+    version = chart_version,
+    namespace= ns,
 
-accountsdbmon = helm.Chart(release_name='accountsdbmon',
-                           config=accountsdb_chart_ops,
-                           opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ns]))
+    # Values from Chart's parameters specified hierarchically,
+    values={
+        "config": {
+            "datasource": {
+                "host": "accounts-db",
+                "user": accounts_admin,
+                "password": accounts_pwd,
+                "passwordSecret": {},
+                "port": "5432",
+                "database": accounts_db,
+                "sslmode": "disable"
+            }
+        },
+        "annotations": {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "9187"}
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False,
+    # If we fail, clean up
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="accountsdbmon",
+    # Lint the chart before installing
+    #lint=True,
+    # Force update if required
+    force_update=True)
 
-# Setup monitoring (ledgerdb)
-ledgerdb_chart_ops = helm.ChartOpts(
-    chart='prometheus-postgres-exporter',
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
-    version=chart_version,
-    values=ledgerdb_chart_values,
-    transformations=[remove_status_field],
-)
+accountsdb_release = Release("accountsdbmon", args=accountsdb_release_args)
 
-ledgerdbmon = helm.Chart(release_name='ledgerdbmon',
-                         config=ledgerdb_chart_ops,
-                         opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ns]))
+accountsdb_status = accountsdb_release.status
+
+# Monitoring for Databases: Ledger DB
+ledgerdb_release_args = ReleaseArgs(
+    chart = chart,
+    repository_opts = RepositoryOptsArgs(
+        repo = helm_repo_url
+    ),
+    version = chart_version,
+    namespace = ns,
+
+    # Values from Chart's parameters specified hierarchically,
+    values={
+        "replicaCount": 1,
+        "image": {
+            "repository": "quay.io/prometheuscommunity/postgres-exporter",
+            "tag": "v0.9.0",
+            "pullPolicy": "IfNotPresent"
+        },
+        "service": {
+            "type": "ClusterIP",
+            "port": 80,
+            "targetPort": 9187,
+            "name": "http",
+            "labels": {},
+            "annotations": {}
+        },
+        "serviceMonitor": {
+            "enabled": False
+        },
+        "prometheusRule": {
+            "enabled": False,
+            "additionalLabels": {},
+            "namespace": "",
+            "rules": []
+        },
+        "resources": {},
+        "rbac": {
+            "create": True,
+            "pspEnabled": True
+        },
+        "serviceAccount": {
+            "create": True,
+            "annotations": {}
+        },
+        "securityContext": {},
+        "config": {
+            "datasource": {
+                "host": "ledger-db",
+                "user": ledger_admin,
+                "password": ledger_pwd,
+                "passwordSecret": {},
+                "port": "5432",
+                "database": ledger_db,
+                "sslmode": "disable"
+            },
+            "datasourceSecret": {},
+            "disableDefaultMetrics": False,
+            "disableSettingsMetrics": False,
+            "autoDiscoverDatabases": False,
+            "excludeDatabases": [],
+            "includeDatabases": [],
+            "constantLabels": {},
+            "logLevel": ""
+        },
+        "nodeSelector": {},
+        "tolerations": [],
+        "affinity": {},
+        "annotations": {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "9187"},
+        "podLabels": {},
+        "livenessProbe": {
+            "initialDelaySeconds": 0,
+            "timeoutSeconds": 1
+        },
+        "readinessProbe": {
+            "initialDelaySeconds": 0,
+            "timeoutSeconds": 1
+        },
+        "initContainers": [],
+        "extraContainers": [],
+        "extraVolumes": [],
+        "extraVolumeMounts": []
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False,
+    # If we fail, clean up
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="ledgerdbmon",
+    # Lint the chart before installing
+    lint=True,
+    # Force update if required
+    force_update=True)
+
+ledgerdb_release = Release("ledgerdb", args=ledgerdb_release_args)
+
+ledgerdb_status = ledgerdb_release.status
+
+pulumi.export("Ledgerdb PromMon Status", accountsdb_status)
+pulumi.export("Accountsdb PromMon Status", ledgerdb_status)
