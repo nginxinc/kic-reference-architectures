@@ -414,39 +414,6 @@ ledgerdb_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values={
-        "replicaCount": 1,
-        "image": {
-            "repository": "quay.io/prometheuscommunity/postgres-exporter",
-            "tag": "v0.9.0",
-            "pullPolicy": "IfNotPresent"
-        },
-        "service": {
-            "type": "ClusterIP",
-            "port": 80,
-            "targetPort": 9187,
-            "name": "http",
-            "labels": {},
-            "annotations": {}
-        },
-        "serviceMonitor": {
-            "enabled": False
-        },
-        "prometheusRule": {
-            "enabled": False,
-            "additionalLabels": {},
-            "namespace": "",
-            "rules": []
-        },
-        "resources": {},
-        "rbac": {
-            "create": True,
-            "pspEnabled": True
-        },
-        "serviceAccount": {
-            "create": True,
-            "annotations": {}
-        },
-        "securityContext": {},
         "config": {
             "datasource": {
                 "host": "ledger-db",
@@ -456,35 +423,11 @@ ledgerdb_release_args = ReleaseArgs(
                 "port": "5432",
                 "database": ledger_db,
                 "sslmode": "disable"
-            },
-            "datasourceSecret": {},
-            "disableDefaultMetrics": False,
-            "disableSettingsMetrics": False,
-            "autoDiscoverDatabases": False,
-            "excludeDatabases": [],
-            "includeDatabases": [],
-            "constantLabels": {},
-            "logLevel": ""
+            }
         },
-        "nodeSelector": {},
-        "tolerations": [],
-        "affinity": {},
         "annotations": {
             "prometheus.io/scrape": "true",
-            "prometheus.io/port": "9187"},
-        "podLabels": {},
-        "livenessProbe": {
-            "initialDelaySeconds": 0,
-            "timeoutSeconds": 1
-        },
-        "readinessProbe": {
-            "initialDelaySeconds": 0,
-            "timeoutSeconds": 1
-        },
-        "initContainers": [],
-        "extraContainers": [],
-        "extraVolumes": [],
-        "extraVolumeMounts": []
+            "prometheus.io/port": "9187"}
     },
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
