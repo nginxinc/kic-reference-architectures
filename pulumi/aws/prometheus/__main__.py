@@ -132,8 +132,8 @@ statsd_release = Release("statsd", args=statsd_release_args)
 statsd_status = statsd_release.status
 
 # Print out our status
-pulumi.export("Prometheus Status", prom_status)
-pulumi.export("Statsd Status", statsd_status)
+pulumi.export("prom_status", prom_status)
+pulumi.export("statsd_status", statsd_status)
 
 prom_rname = prometheus_release.status.name
 

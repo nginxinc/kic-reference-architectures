@@ -446,5 +446,5 @@ ledgerdb_release = Release("ledgerdb", args=ledgerdb_release_args)
 
 ledgerdb_status = ledgerdb_release.status
 
-pulumi.export("Ledgerdb PromMon Status", accountsdb_status)
-pulumi.export("Accountsdb PromMon Status", ledgerdb_status)
+pulumi.export("ledgerdbmon_status", accountsdb_status)
+pulumi.export("accountsdbmon_status", ledgerdb_status)

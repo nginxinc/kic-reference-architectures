@@ -96,4 +96,4 @@ filebeat_release_args = ReleaseArgs(
 filebeat_release = Release("filebeat", args=filebeat_release_args)
 
 status = filebeat_release.status
-pulumi.export("Logagent Status", status)
+pulumi.export("logagent_status", status)

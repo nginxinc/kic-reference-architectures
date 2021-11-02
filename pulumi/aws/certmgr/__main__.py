@@ -71,4 +71,4 @@ certmgr_release_args = ReleaseArgs(
 certmgr_release = Release("certmgr", args=certmgr_release_args)
 
 status = certmgr_release.status
-pulumi.export("Certmgr Status", status)
+pulumi.export("certmgr_status", status)

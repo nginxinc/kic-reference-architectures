@@ -149,4 +149,4 @@ ingress_service = srv.status
 
 pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
 # Print out our status
-pulumi.export("KIC Status", pstatus)
+pulumi.export("kic_status", pstatus)

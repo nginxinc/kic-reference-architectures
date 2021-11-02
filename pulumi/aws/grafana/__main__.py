@@ -136,4 +136,4 @@ grafana_release_args = ReleaseArgs(
 grafana_release = Release("grafana", args=grafana_release_args)
 
 status = grafana_release.status
-pulumi.export("Grafana Status", status)
+pulumi.export("grafana_status", status)

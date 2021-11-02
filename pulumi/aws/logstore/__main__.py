@@ -86,4 +86,4 @@ pulumi.export('kibana_hostname', pulumi.Output.unsecret(kibana_fqdn))
 
 # Print out our status
 estatus = elastic_release.status
-pulumi.export("Logstore Status", estatus)
+pulumi.export("logstat_status", estatus)
