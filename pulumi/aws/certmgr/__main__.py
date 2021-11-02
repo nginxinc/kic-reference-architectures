@@ -2,17 +2,9 @@ import os
 
 import pulumi
 import pulumi_kubernetes as k8s
-import pulumi_kubernetes.helm.v3 as helm
-from pulumi_kubernetes.helm.v3 import FetchOpts
+from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
-
-
-# Removes the status field from the Nginx Ingress Helm Chart, so that i#t is
-# compatible with the Pulumi Chart implementation.
-def remove_status_field(obj):
-    if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-        del obj['status']
 
 
 def project_name_from_project_dir(dirname: str):
@@ -37,10 +29,6 @@ ns = k8s.core.v1.Namespace(resource_name='cert-manager',
                            metadata={'name': 'cert-manager'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-chart_values = {
-    "installCRDs": True
-}
-
 config = pulumi.Config('certmgr')
 chart_name = config.get('chart_name')
 if not chart_name:
@@ -56,16 +44,31 @@ helm_repo_url = config.get('certmgr_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://charts.jetstack.io'
 
-chart_ops = helm.ChartOpts(
+certmgr_release_args = ReleaseArgs(
     chart=chart_name,
-    namespace=ns.metadata.name,
-    repo=helm_repo_name,
-    fetch_opts=FetchOpts(repo=helm_repo_url),
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
+    ),
     version=chart_version,
-    values=chart_values,
-    transformations=[remove_status_field],
-)
+    namespace=ns.metadata.name,
 
-certmgr_chart = helm.Chart(release_name='certmgr',
-                           config=chart_ops,
-                           opts=pulumi.ResourceOptions(provider=k8s_provider, depends_on=[ns]))
+    # Values from Chart's parameters specified hierarchically,
+    values={
+        "installCRDs": True
+    },
+    # By default Release resource will wait till all created resources
+    # are available. Set this to true to skip waiting on resources being
+    # available.
+    skip_await=False,
+    # If we fail, clean up 
+    cleanup_on_fail=True,
+    # Provide a name for our release
+    name="certmgr",
+    # Lint the chart before installing
+    lint=True,
+    # Force update if required
+    force_update=True)
+certmgr_release = Release("certmgr", args=certmgr_release_args)
+
+status = certmgr_release.status
+pulumi.export("certmgr_status", status)
