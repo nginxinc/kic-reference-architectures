@@ -1,0 +1,69 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: simplest
+  namespace: observability
+spec:
+  config: |
+    extensions:
+      health_check:
+      pprof:
+        endpoint: 0.0.0.0:1777
+      zpages:
+        endpoint: 0.0.0.0:55679
+    
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:9978
+          http:
+            endpoint: 0.0.0.0:9979
+      opencensus:
+      jaeger:
+        protocols:
+          grpc:
+          thrift_binary:
+          thrift_compact:
+          thrift_http:
+      zipkin:
+    
+      # Collect own metrics
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'otel-collector'
+              scrape_interval: 120s
+              static_configs:
+                - targets: [ '0.0.0.0:8080']
+              metrics_path: '/z/prometheus'
+    
+    processors:
+      batch:
+    
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+    
+      logging:
+        logLevel: debug
+    
+      jaeger:
+        endpoint: "0.0.0.0:14250"
+     
+      otlp:
+        endpoint: ingest.lightstep.com:443
+        headers: {"lightstep-access-token":"YOURTOKEN"}
+    
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp, opencensus, jaeger, zipkin]
+          processors: [batch]
+          exporters: [logging, jaeger, otlp]
+        metrics:
+          receivers: [otlp, opencensus, prometheus]
+          processors: [batch]
+          exporters: [logging, otlp]
+    
+      extensions: [health_check, pprof, zpages]

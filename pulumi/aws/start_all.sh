@@ -317,6 +317,10 @@ header "Grafana"
 cd "${script_dir}/grafana"
 pulumi $pulumi_args up
 
+header "Observability"
+cd "${script_dir}/observability"
+pulumi $pulumi_args up
+
 header "Bank of Sirius"
 cd "${script_dir}/sirius"
 
