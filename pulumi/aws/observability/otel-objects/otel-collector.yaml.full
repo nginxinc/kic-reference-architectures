@@ -51,19 +51,15 @@ spec:
       jaeger:
         endpoint: "0.0.0.0:14250"
      
-      otlp:
-        endpoint: ingest.lightstep.com:443
-        headers: {"lightstep-access-token":"YOURTOKEN"}
-    
     service:
       pipelines:
         traces:
           receivers: [otlp, opencensus, jaeger, zipkin]
           processors: [batch]
-          exporters: [logging, jaeger, otlp]
+          exporters: [logging, jaeger]
         metrics:
           receivers: [otlp, opencensus, prometheus]
           processors: [batch]
-          exporters: [logging, otlp]
+          exporters: [logging]
     
       extensions: [health_check, pprof, zpages]

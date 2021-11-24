@@ -1,0 +1,35 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: simplest
+  namespace: observability
+spec:
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:9978
+          http:
+            endpoint: 0.0.0.0:9979
+
+    exporters:
+      logging:
+      otlp:
+        endpoint: ingest.lightstep.com:443
+        headers:
+          "lightstep-access-token":"YOURTOKEN"
+
+    processors:
+      batch:
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging, otlp]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging, otlp]
