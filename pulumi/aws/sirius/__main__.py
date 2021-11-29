@@ -141,8 +141,21 @@ environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigM
                                                       ),
                                                       data={
                                                           "LOCAL_ROUTING_NUM": "883745000",
-                                                          "PUB_KEY_PATH": "/root/.ssh/publickey",
+                                                          "PUB_KEY_PATH": "/root/.ssh/publickey"
                                                       })
+tracing_config_config_map = k8s.core.v1.ConfigMap("tracing_configConfigMap",
+                                                  opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                  api_version="v1",
+                                                  kind="ConfigMap",
+                                                  metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                      name="tracing-config",
+                                                      namespace=ns
+                                                  ),
+                                                  data={
+                                                      "OTEL_EXPORTER_OTLP_ENDPOINT": "http://simplest-collector.observability.svc.cluster.local:9978",
+                                                      "ENABLE_TRACING": "true",
+                                                      "ENABLE_METRICS": "true"
+                                                  })
 
 service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigMap",
                                                       opts=pulumi.ResourceOptions(depends_on=[ns]),
@@ -250,7 +263,7 @@ bos = ConfigGroup(
     'bos',
     files=[sirius_manifests],
     transformations=[add_namespace],
-    opts=pulumi.ResourceOptions(depends_on=[ns])
+    opts=pulumi.ResourceOptions(depends_on=[tracing_config_config_map])
 )
 
 # We need to create an issuer for the cert-manager (which is installed in a
@@ -362,12 +375,12 @@ if not helm_repo_url:
 
 # Monitoring for Databases: Accounts DB
 accountsdb_release_args = ReleaseArgs(
-    chart = chart,
-    repository_opts = RepositoryOptsArgs(
-        repo = helm_repo_url
+    chart=chart,
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
     ),
-    version = chart_version,
-    namespace= ns,
+    version=chart_version,
+    namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
     values={
@@ -395,7 +408,7 @@ accountsdb_release_args = ReleaseArgs(
     # Provide a name for our release
     name="accountsdbmon",
     # Lint the chart before installing
-    #lint=True,
+    # lint=True,
     # Force update if required
     force_update=True)
 
@@ -405,12 +418,12 @@ accountsdb_status = accountsdb_release.status
 
 # Monitoring for Databases: Ledger DB
 ledgerdb_release_args = ReleaseArgs(
-    chart = chart,
-    repository_opts = RepositoryOptsArgs(
-        repo = helm_repo_url
+    chart=chart,
+    repository_opts=RepositoryOptsArgs(
+        repo=helm_repo_url
     ),
-    version = chart_version,
-    namespace = ns,
+    version=chart_version,
+    namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
     values={

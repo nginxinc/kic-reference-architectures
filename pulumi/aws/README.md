@@ -29,7 +29,8 @@ vpc - defines and installs the VPC and subnets to use with EKS
               └─certmgr - deploys the open source cert-manager.io helm chart to the EKS cluster
                 └─prometheus - deploys prometheus server, node exporter, and statsd collector for metrics
                   └─grafana - deploys the grafana visualization platform
-                    └─sirius - deploys the Bank of Sirus application to the EKS cluster
+                    └─observability - deploys the OTEL operator and instantiates a simple collector
+                      └─sirius - deploys the Bank of Sirus application to the EKS cluster
                 
 ```
 
@@ -157,6 +158,14 @@ default).
 Grafana is deployed and configured with a connection to the prometheus datasource installed above. At the time of this
 writing, the NGINX Plus KIC dashboard is installed as part of the initial setup. Additional datasources and dashboards
 can be added by the user either in the code, or via the standard Grafana tooling.
+
+### Observability
+
+We deploy the [OTEL Collector Operator](https://github.com/open-telemetry/opentelemetry-collector) along with a simple
+collector. There are several other configurations in the [observability/otel-objects](./observability/otel-objects) 
+directory. See the [README.md](./observability/otel-objects/README.md) file in the 
+[observability/otel-objects](./observability/otel-objects) for more information, including an explaination of the
+default configuration.
 
 ### Demo Application
 
