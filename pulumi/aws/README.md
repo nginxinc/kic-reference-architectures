@@ -28,9 +28,8 @@ vpc - defines and installs the VPC and subnets to use with EKS
             └─logagent - deploys a logging agent (filebeat) to the EKS cluster 
               └─certmgr - deploys the open source cert-manager.io helm chart to the EKS cluster
                 └─prometheus - deploys prometheus server, node exporter, and statsd collector for metrics
-                  └─grafana - deploys the grafana visualization platform
-                    └─observability - deploys the OTEL operator and instantiates a simple collector
-                      └─sirius - deploys the Bank of Sirus application to the EKS cluster
+                  └─observability - deploys the OTEL operator and instantiates a simple collector
+                    └─sirius - deploys the Bank of Sirus application to the EKS cluster
                 
 ```
 
@@ -146,14 +145,36 @@ deployment.
 ### Prometheus
 
 Prometheus is deployed and configured to enable the collection of metrics for all components that have
-properties `prometheus.io:scrape: true` set in the annotations
-(along with any other connection information). This includes the prometheus `node-exporter`
-daemonset which is deployed in this step as well.
+a defined service monitor. At installation time, the deployment will instantiate:
+- Node Exporters
+- Kubernetes Service Monitors
+- Grafana preloaded with dashboards and datasources for Kubernetes management
+- The NGINX Ingress Controller
+- Statsd receiver
 
-This also pulls data from the NGINX KIC, provided the KIC is configured to allow prometheus access (which is enabled by
-default).
+The former behavior of using the `prometheus.io:scrape: true` property set in the annotations
+indicating pods where metrics should be scraped has been deprecated, and these annotations will
+be removed in the near future.
+
+Also, the standalone Grafana deployment has been removed from the standard deployment scripts, but has been left as 
+a project in the event someone wishes to run this standalone.
+
+Finally, this namespace will hold service monitors created by other projects, for example the Bank of Sirius
+deployment currently deploys a service monitor for each of the postgres monitors that are deployed.
+
+Notes: 
+1. The NGINX IC needs to be configured to expose prometheus metrics; this is currently done by default.
+2. The default address binding of the `kube-proxy` component is set to `127.0.0.1` and as such will cause errors when the 
+canned prometheus scrape configurations are run. The fix is to set this address to `0.0.0.0`. An example manifest
+has been provided in [prometheus/extras](./prometheus/extras) that can be applied against your installation with 
+`kubectl apply -f ./filename`. Please only apply this change once you have verified that it will work with your 
+version of Kubernetes.
+
 
 ### Grafana
+
+**NOTE:** This deployment has been deprecated but the project has been left as an example on how to deploy Grafana in this 
+architecture. 
 
 Grafana is deployed and configured with a connection to the prometheus datasource installed above. At the time of this
 writing, the NGINX Plus KIC dashboard is installed as part of the initial setup. Additional datasources and dashboards
@@ -188,7 +209,10 @@ As part of the Bank of Sirius deployment, we deploy a cluster-wide
 [self-signed](https://cert-manager.io/docs/configuration/selfsigned/)
 issuer using the cert-manager deployed above. This is then used by the Ingress object created to enable TLS access to
 the application. Note that this Issuer can be changed out by the user, for example to use the
-[ACME](https://cert-manager.io/docs/configuration/acme/) issuer.
+[ACME](https://cert-manager.io/docs/configuration/acme/) issuer. The use of the ACME issuer has been tested and works 
+without issues, provided the FQDN meets the length requirements. As of this writing the AWS ELB hostname is too long
+to work with the ACME server. Additional work in this area will be undertaken to provide dynamic DNS record creation
+as part of this process so legitimate certificates can be issued.
 
 In order to provide visibility into the Postgres databases that are running as part of the application, the Prometheus
 Postgres data exporter will be deployed into the same namespace as the application and will be configured to be scraped
@@ -205,3 +229,5 @@ provides better tools for hierarchical configuration files.
 In order to help enable simple load testing, a script has been provided that uses the
 `kubectl` command to port-forward monitoring and management connections to the local workstation. This command
 is [`test-foward.sh`](./extras/test-forward.sh) and is located in the [`extras`](./extras) directory. 
+
+**NOTE:** This script has been modified to use the new Prometheus Operator based deployment.
