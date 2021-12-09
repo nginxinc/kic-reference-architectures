@@ -169,6 +169,9 @@ canned prometheus scrape configurations are run. The fix is to set this address 
 has been provided in [prometheus/extras](./prometheus/extras) that can be applied against your installation with 
 `kubectl apply -f ./filename`. Please only apply this change once you have verified that it will work with your 
 version of Kubernetes.
+3. The _grafana_ namespace has been maintained in the conifugration file to be used by the prometheus operator deployed
+version of Grafana. This version only accepts a password; you can still specify a username for the admin account but it 
+will be silently ignored.
 
 
 ### Grafana
