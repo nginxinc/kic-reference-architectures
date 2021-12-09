@@ -383,7 +383,11 @@ accountsdb_release_args = ReleaseArgs(
     namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
-    values={
+    values = {
+        "serviceMonitor": {
+            "enabled": True,
+            "namespace": "prometheus"
+            },
         "config": {
             "datasource": {
                 "host": "accounts-db",
@@ -426,7 +430,11 @@ ledgerdb_release_args = ReleaseArgs(
     namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
-    values={
+    values = {
+        "serviceMonitor": {
+            "enabled": True,
+            "namespace": "prometheus"
+            },
         "config": {
             "datasource": {
                 "host": "ledger-db",
