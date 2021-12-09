@@ -4,6 +4,8 @@ import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from pulumi import Output
+from pulumi_kubernetes.yaml import ConfigFile
+from pulumi_kubernetes.yaml import ConfigGroup
 
 from kic_util import pulumi_config
 
@@ -12,6 +14,12 @@ def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
+
+
+def servicemon_manifests_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    servicemon_manifests_path = os.path.join(script_dir, 'manifests', '*.yaml')
+    return servicemon_manifests_path
 
 
 stack_name = pulumi.get_stack()
@@ -30,10 +38,12 @@ ns = k8s.core.v1.Namespace(resource_name='prometheus',
                            metadata={'name': 'prometheus'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
+
+
 config = pulumi.Config('prometheus')
 chart_name = config.get('chart_name')
 if not chart_name:
-    chart_name = 'prometheus'
+    chart_name = 'kube-prometheus-stack'
 chart_version = config.get('chart_version')
 if not chart_version:
     chart_version = '14.6.0'
@@ -43,6 +53,12 @@ if not helm_repo_name:
 helm_repo_url = config.get('prometheus_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
+    
+grafana_config = pulumi.Config('grafana')
+# Require an admin password, but do not encrypt it due to the
+# issues we experienced with Anthos; this can be adjusted at the
+# same time that we fix the Anthos issues.
+adminpass = grafana_config.require('adminpass')
 
 prometheus_release_args = ReleaseArgs(
     chart=chart_name,
@@ -54,6 +70,75 @@ prometheus_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values={
+        "prometheus": {
+            "serviceAccount": {
+                "create": True,
+                "name": "prometheus",
+                "annotations": {}
+            },
+            "prometheusSpec": {
+                "podMonitorSelectorNilUsesHelmValues": False,
+                "serviceMonitorSelectorNilUsesHelmValues": False,
+                "serviceMonitorSelector": {},
+                "serviceMonitorNamespaceSelector ": {
+                        "matchLabels": {
+                            "prometheus": True
+                        }
+                },
+                "storageSpec": {
+                    "volumeClaimTemplate": {
+                        "spec": {
+                            "accessModes": [
+                                "ReadWriteOnce"
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "storage": "5Gi"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "grafana": {
+            "serviceAccount": {
+                "create": False,
+                "name": "prometheus",
+                "annotations": {}
+            },
+            "adminPassword": adminpass,
+            "persistence": {
+                "enabled": True,
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "size": "5Gi"
+            }
+        },
+        "alertmanager": {
+            "serviceAccount": {
+                "create": False,
+                "name": "prometheus",
+                "annotations": {}
+            },
+            "alertmanagerSpec": {
+                "storage": {
+                    "volumeClaimTemplate": {
+                        "spec": {
+                            "accessModes": [
+                                "ReadWriteOnce"
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "storage": "5Gi"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     },
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
@@ -71,10 +156,17 @@ prometheus_release = Release("prometheus", args=prometheus_release_args)
 
 prom_status = prometheus_release.status
 
+servicemon_manifests = servicemon_manifests_location()
+
+servicemon = ConfigGroup(
+    'servicemon',
+    files=[servicemon_manifests],
+    opts=pulumi.ResourceOptions(depends_on=[prometheus_release])
+)
+
 #
 # Deploy the statsd collector
 #
-
 
 config = pulumi.Config('prometheus')
 statsd_chart_name = config.get('statsd_chart_name')
@@ -100,6 +192,10 @@ statsd_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values={
+        "serviceMonitor": {
+            "enabled": True,
+            "namespace": "prometheus"
+        },
         "serviceAccount": {
             "create": True,
             "annotations": {},

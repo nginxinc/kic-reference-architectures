@@ -1,0 +1,21 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    # needs to match above matchLabels
+    prometheus: nginx-monitor
+  name: nginx-monitor
+  namespace: nginx-ingress
+spec:
+  endpoints:
+  - interval: 15s
+    port: prometheus
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app: kic-nginx-ingress
+  namespaceSelector:
+    any: true
+
