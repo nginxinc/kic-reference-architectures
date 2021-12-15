@@ -1,19 +1,29 @@
 # NGINX Kubernetes Ingress Controller Automation
 
-This project illustrates the end-to-end stand up of an AWS VPC cluster, Elastic Kubernetes Service (EKS), NGINX Kubernetes Ingress Controller (KIC), and a sample application using [Pulumi](https://www.pulumi.com/). It is intended to be used as a reference when building your own infrastructure as code deployments. As such, each discrete stage of deployment is defined as a separate Pulumi project that can be independently deployed. 
+This project illustrates the end-to-end stand up of an AWS VPC cluster, 
+Elastic Kubernetes Service (EKS), NGINX Kubernetes Ingress Controller (KIC), 
+and a sample application using [Pulumi](https://www.pulumi.com/). It is 
+intended to be used as a reference when building your own Infrastructure 
+as Code (IaC) deployments. As such, each discrete stage of deployment is 
+defined as a separate Pulumi project that can be independently deployed. 
 
-While Pulumi supports many programming languages, Python was chosen as the language for this project. Reimplementation of the deployment definitions here should be reproducible in other languages.
+While Pulumi supports many programming languages, Python was chosen as the 
+language for this project. Reimplementation of the deployment definitions 
+here should be reproducible in other languages.
+
+
 
 ## Getting Started
 
-
-For instructions and an outline on running the project, refer to the [Getting Started Guide](docs/getting_started.md).
+For instructions and an outline on running the project, refer to 
+the [Getting Started Guide](docs/getting_started.md).
 
 
 ## Project Structure
 
-To deploy our sample application, the following Pulumi projects are executed in the order shown below. 
-Each project name maps to a directory name relative to the root directory of this repository.
+To deploy our sample application, the following Pulumi projects are 
+executed in the order shown below. Each project name maps to a directory 
+name relative to the root directory of this repository.
 
 
 ```
@@ -33,72 +43,105 @@ vpc - defines and installs the VPC and subnets to use with EKS
                 
 ```
 
+
 ## Configuration
 
-The Pulumi configuration files are in the [config](./config) directory. Pulumi's configuration files use the following
-naming convention:
-`Pulumi.<stackname>.yaml`. To make a new configuration file for your Pulumi stack, create a new file with a name that includes the stack name. Then, refer to the sample [configuration file](./config/Pulumi.stackname.yaml.example)
-for configuration entries that you want to customize and copy over the entries that you want to modify from their defaults.
+The Pulumi configuration files are in the [`config`](./config) directory. 
+Pulumi's configuration files use the following naming convention: 
+`Pulumi.<stackname>.yaml`. To make a new configuration file for your 
+Pulumi stack, create a new file with a name that includes the stack name. 
+Then, refer to the sample [configuration 
+file](./config/Pulumi.stackname.yaml.example) for configuration 
+entries that you want to customize and copy over the entries 
+that you want to modify from their defaults.
+
 
 ### VPC
 
-Contained within the [`vpc`](./vpc) directory is the first Pulumi project, which is responsible for setting up the VPC and subnets used by EKS. The project is built to attempt creation of a subnet for each availability zone within the running region. You may want to customize this behavior or the IP addressing scheme used.
+Contained within the [`vpc`](./vpc) directory is the first Pulumi project, 
+which is responsible for setting up the VPC and subnets used by EKS. 
+The project is built to attempt creation of a subnet for each availability 
+zone within the running region. You may want to customize this behavior 
+or the IP addressing scheme used.
+
 
 ### Elastic Kubernetes Service (EKS)
 
-Located within the [`eks`](./eks) directory is a project used to stand up a new EKS cluster on AWS. This project reads data from the previously executed VPC project using its VPC ID and subnets. In this project, you may want to customize the `instance_type`, `min_size`, or `max_size` parameters provided to the cluster.
+Located within the [`eks`](./eks) directory is a project used to stand up 
+a new EKS cluster on AWS. This project reads data from the previously 
+executed VPC project using its VPC ID and subnets. In this project, you may 
+want to customize the `instance_type`, `min_size`, or `max_size` 
+parameters provided to the cluster.
+
 
 ### Elastic Container Registry (ECR)
 
-The [`ecr`](./ecr) project is responsible for installing and configuring ECR for use with the previously created EKS cluster.
+The [`ecr`](./ecr) project is responsible for installing and configuring 
+ECR for use with the previously created EKS cluster.
+
 
 ### NGINX Ingress Controller Docker Image Build
 
-Within the [`kic-image-build`](./kic-image-build) directory, there is a Pulumi project that will allow you to build a new NGINX Kubernetes Ingress Controller from source. Downloading of source, compilation, and image creation are fully automated. This project can be customized to build different flavors of KIC.
+Within the [`kic-image-build`](./kic-image-build) directory, there is 
+a Pulumi project that will allow you to build a new NGINX KIC from source. 
+Downloading of source, compilation, and image creation are fully automated. 
+This project can be customized to build different flavors of KIC.
 
 
 ### NGINX Ingress Controller Docker Image Push
 
-Within the [`kic-image-push`](./kic-image-push) directory, there is a Pulumi project that will allow you to push the previously created KIC Docker image to ECR in a fully automated manner.
+Within the [`kic-image-push`](./kic-image-push) directory, there is a 
+Pulumi project that will allow you to push the previously created 
+KIC Docker image to ECR in a fully automated manner.
 
 
 ### NGINX Ingress Controller Helm Chart
 
-In the [`kic-helm-chart`](./kic-helm-chart) directory, you will find the Pulumi project responsible for installing the
-NGINX Ingress Controller on the previously deployed EKS cluster. You may want to customize this project to allow for
-deploying different versions of KIC.
+In the [`kic-helm-chart`](./kic-helm-chart) directory, you will find 
+the Pulumi project responsible for installing the NGINX Ingress Controller 
+on the previously deployed EKS cluster. You may want to customize this 
+project to allow for deploying different versions of KIC.
 
-A sample config-map is provided in the Pulumi deployment code. This code will adjust the logging format to approximate the upstream NGINX KIC project, which will allow for easier ingestion into log storage and processing systems.
+A sample config-map is provided in the Pulumi deployment code. This code 
+will adjust the logging format to approximate the upstream NGINX KIC project, 
+which will allow for easier ingestion into log storage and processing systems.
 
-Note that this deployment uses the GA Ingress APIs. This has been tested with helm chart version 0.11.1 and NGINX KIC 2.0.2. 
-Older versions of the KIC and helm charts can be used, but care should be taken to ensure that the helm chart version used
-is compatible with the KIC version. This information can be found in the 
-[NGINX KIC Release Notes](https://docs.nginx.com/nginx-ingress-controller/releases/) for each release.
+Note that this deployment uses the GA Ingress APIs. This has been tested 
+with helm chart version 0.11.1 and NGINX KIC 2.0.2. Older versions of the KIC 
+and helm charts can be used, but care should be taken to ensure that the helm 
+chart version used is compatible with the KIC version. This information can be 
+found in the [NGINX KIC 
+Release Notes](https://docs.nginx.com/nginx-ingress-controller/releases/) 
+for each release.
+
 
 #### Ingress API Versions and NGINX KIC
 
-Starting with Kubernetes version 1.22, support for the Ingress Beta API `networking.k8s.io/v1beta` will be dropped requiring
-use of the GA Ingress API `networking.k8s.io/v1`. However, Kubernetes versions 1.19 through 1.21 allows these two API versions 
-to coexist and maintains compatibility for consumers of the API, meaning that the API will respond correctly to calls to either
+Starting with Kubernetes version 1.22, support for the Ingress Beta API 
+`networking.k8s.io/v1beta` will be dropped requiring use of the GA Ingress API 
+`networking.k8s.io/v1`. However, Kubernetes versions 1.19 through 1.21 allows 
+these two API versions to coexist and maintains compatibility for consumers of 
+the API, meaning that the API will respond correctly to calls to either 
 the `v1beta` and/or `v1` routes.
 
-This project uses the NGINX KIC v2.x releases which includes full support for the GA APIs.
+This project uses the NGINX KIC v2.x releases which includes full 
+support for the GA APIs.
 
 
 ### Log Store
 
-In the [`logstore`](./logstore) directory, you will find the Pulumi project reponsible for installing your log store.
-The current solution deploys
-[Elasticsearch and Kibana](https://www.elastic.co/elastic-stack)
-using the
-[Bitnami Elasticsearch](https://bitnami.com/stack/elasticsearch/helm)
-chart. This solution can be swapped for other options as desired. This application is deployed to the `logstore`
-namespace.
+In the [`logstore`](./logstore) directory, you will find the Pulumi 
+project reponsible for installing your log store. The current solution deploys 
+[Elasticsearch and Kibana](https://www.elastic.co/elastic-stack) using the 
+[Bitnami Elasticsearch](https://bitnami.com/stack/elasticsearch/helm) 
+chart. This solution can be swapped for other options as desired. 
+This application is deployed to the `logstore` namespace.
 
-#### Notes
+**Notes**
 
-In order to access the Kibana dashboard via your web browser, you will need to set up port forwarding for the kibana pod.
-This can be accomplished using the `kubectl` command:
+In order to access the Kibana dashboard via your web browser, you will 
+need to set up port forwarding for the kibana pod. 
+This can be accomplished using the `kubectl` command: 
 
 ```
 $ # Find the Kibana pod name
@@ -122,71 +165,101 @@ Handling connection for 5601
 
 ### Log Agent
 
-In the [`logagent`](./logagent) directory, you will find the Pulumi project reponsible for installing your log agent.
-The current solution deploys [`Filebeat`](https://www.elastic.co/beats/) which connects to the logstore deployed in the
-previous step. This solution can be swapped for other options as desired. This application is deployed to the `logagent`
-namespace.
+In the [`logagent`](./logagent) directory, you will find the Pulumi project 
+reponsible for installing your log agent. The current solution deploys 
+[`Filebeat`](https://www.elastic.co/beats/) which connects to the logstore 
+deployed in the previous step. This solution can be swapped for other 
+options as desired. This application is deployed to the `logagent` namespace.
+
 
 ### Certificate Management
 
-TLS is enabled via [cert-manager](https://cert-manager.io/) which is installed in the cert-manager namespace. Creation of ClusterIssuer or Issuer resources is delegated to the individual applications. It is not done as part of this deployment.
+TLS is enabled via [cert-manager](https://cert-manager.io/) which is 
+installed in the cert-manager namespace. Creation of ClusterIssuer 
+or Issuer resources is delegated to the individual applications. 
+It is not done as part of this deployment.
 
 
 ### Prometheus
 
-Prometheus is deployed and configured to enable the collection of metrics for all components that have
-Properties `prometheus.io:scrape: true` set in the annotations
-(along with any other connection information). This includes the Prometheus `node-exporter`
-daemonset which is deployed in this step as well.
+Prometheus is deployed and configured to enable the collection of 
+metrics for all components that have properties `prometheus.io:scrape: true` 
+set in the annotations (along with any other connection information). 
+This includes the Prometheus `node-exporter` daemonset which is 
+deployed in this step as well.
 
-This also pulls data from the NGINX KIC, provided the KIC is configured to allow Prometheus access, which is enabled by
-default.
+This also pulls data from the NGINX KIC, provided the KIC is configured 
+to allow Prometheus access, which is enabled by default.
+
 
 ### Grafana
 
-Grafana is deployed and configured with a connection to the Prometheus datasource installed above. At the time of this
-writing, the NGINX Plus KIC dashboard is installed as part of the initial setup. Additional datasources and dashboards
-can be added by the user either in the code, or via the standard Grafana tooling.
+Grafana is deployed and configured with a connection to the Prometheus 
+datasource installed above. At the time of this writing, the NGINX Plus 
+KIC dashboard is installed as part of the initial setup. Additional 
+datasources and dashboards can be added by the user either in the code, 
+or via the standard Grafana tooling.
+
 
 ### Observability
 
-We deploy the [OTEL Collector Operator](https://github.com/open-telemetry/opentelemetry-collector) along with a simple
-collector. There are several other configurations in the [observability/otel-objects](./observability/otel-objects) 
-directory. See the [README.md](./observability/otel-objects/README.md) file in the 
-[observability/otel-objects](./observability/otel-objects) for more information, including an explaination of the
-default configuration.
+We deploy the [OTEL Collector 
+Operator](https://github.com/open-telemetry/opentelemetry-collector) 
+along with a simple collector. There are several other configurations in the 
+[observability/otel-objects](./observability/otel-objects) directory. See the 
+[README.md](./observability/otel-objects/README.md) file in the 
+[observability/otel-objects](./observability/otel-objects) for more 
+information, including an explaination of the default configuration.
 
 ### Demo Application
 
-A forked version of the Google
-[_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos)
-application is contained in the [`sirius`](./sirius) directory. The github repository for this is at [_Bank of
+A forked version of the Google 
+[_Bank of Anthos_](https://github.com/GoogleCloudPlatform/bank-of-anthos) 
+application is contained in the [`sirius`](./sirius) directory. 
+The github repository for this is at [_Bank of 
 Sirius_](https://github.com/nginxinc/bank-of-sirius).
 
-Normally, the `frontend` microservice is exposed via a load balancer for traffic management. This deployment has been
-modified to use the NGINX or NGINX Plus KIC to manage traffic to the `frontend` microservice. The NGINX or NGINX Plus
-KIC is integrated into the cluster logging system, and the user can configure the KIC as desired.
+Normally, the `frontend` microservice is exposed via a load balancer for traffic 
+management. This deployment has been modified to use the NGINX or NGINX Plus KIC 
+to manage traffic to the `frontend` microservice. The NGINX or NGINX Plus KIC 
+is integrated into the cluster logging system, and the user can 
+configure the KIC as desired.
 
-An additional change to the application is the conversion of several standard Kubernetes deployment manifests into Pulumi code. This has been done for the configuration maps, ingress controller, and JWT RSA signing key pair. It allows the user to take advantage of Pulumi's feature set by demonstrating the process of creating and deploying an RSA key pair at deployment time, and using the project configuration file to set config variables, including secrets.
+An additional change to the application is the conversion of several 
+standard Kubernetes deployment manifests into Pulumi code. This has been done 
+for the configuration maps, Ingress controller, and JWT RSA signing key pair. 
+It allows the user to take advantage of Pulumi's feature set by demonstrating 
+the process of creating and deploying an RSA key pair at deployment time, and 
+using the project configuration file to set config variables, including secrets.
 
-As part of the Bank of Sirius deployment, we deploy a cluster-wide
-[self-signed](https://cert-manager.io/docs/configuration/selfsigned/)
-issuer using the cert-manager deployed above. Then, this is used by the Ingress object created to enable TLS access to
-the application. Note that this Issuer can be changed out by the user. For example: to use the
-[ACME](https://cert-manager.io/docs/configuration/acme/) issuer.
+As part of the Bank of Sirius deployment, we deploy a cluster-wide 
+[self-signed](https://cert-manager.io/docs/configuration/selfsigned/) 
+issuer using the cert-manager deployed above. Then, this is used by 
+the Ingress object created to enable TLS access to the application. 
+Note that this Issuer can be changed out by the user. For example: to use 
+the [ACME](https://cert-manager.io/docs/configuration/acme/) issuer.
 
-To provide visibility into the Postgres databases running as part of the application, the Prometheus Postgres data exporter will be deployed into the same namespace as the application and will be configured to be scraped by the Prometheus server installed earlier.
+To provide visibility into the Postgres databases running as part of 
+the application, the Prometheus Postgres data exporter will be deployed 
+into the same namespace as the application and will be configured to be 
+scraped by the Prometheus server installed earlier.
 
 
 **Notes** 
 
-Due to the way that Pulumi currently handles secrets, the [sirius](./sirius)
-directory contains its own configuration directory [sirius/config](./sirius/config). This directory contains an example
-configuration file that can be copied over and used. The user will be prompted to add passwords to the configuration
-file at the first run of the [start_all.sh](./start_all.sh) script. This is a workaround that will be retired as Pulumi
-provides better tools for hierarchical configuration files.
+Due to the way that Pulumi currently handles secrets, the [sirius](./sirius) 
+directory contains its own configuration directory [sirius/
+config](./sirius/config). This directory contains an example configuration 
+file that can be copied over and used. The user will be prompted to add 
+passwords to the configuration file at the first run of the [start_
+all.sh](./start_all.sh) script. This is a workaround that will be retired 
+as Pulumi provides better tools for hierarchical configuration files.
+
 
 ## Simple Load Testing
 
-To help enable simple load testing, a script has been provided that uses the `kubectl` command to port-forward monitoring and management connections to the local workstation. This command
-is [`test-foward.sh`](./extras/test-forward.sh) and is located in the [`extras`](./extras) directory. 
+To help enable simple load testing, a script has been provided 
+that uses the `kubectl` command to port-forward monitoring and 
+management connections to the local workstation. This command 
+is [`test-foward.sh`](./extras/test-forward.sh) and is 
+located in the [`extras`](./extras) directory. 
