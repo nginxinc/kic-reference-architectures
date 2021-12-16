@@ -38,8 +38,6 @@ ns = k8s.core.v1.Namespace(resource_name='prometheus',
                            metadata={'name': 'prometheus'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-
-
 config = pulumi.Config('prometheus')
 chart_name = config.get('chart_name')
 if not chart_name:
@@ -53,7 +51,7 @@ if not helm_repo_name:
 helm_repo_url = config.get('prometheus_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
-    
+
 grafana_config = pulumi.Config('grafana')
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
@@ -81,9 +79,9 @@ prometheus_release_args = ReleaseArgs(
                 "serviceMonitorSelectorNilUsesHelmValues": False,
                 "serviceMonitorSelector": {},
                 "serviceMonitorNamespaceSelector ": {
-                        "matchLabels": {
-                            "prometheus": True
-                        }
+                    "matchLabels": {
+                        "prometheus": True
+                    }
                 },
                 "storageSpec": {
                     "volumeClaimTemplate": {
@@ -152,7 +150,7 @@ prometheus_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-prometheus_release = Release("prometheus", args=prometheus_release_args)
+prometheus_release = Release("prometheus", args=prometheus_release_args, opts=pulumi.ResourceOptions(depends_on=[ns]))
 
 prom_status = prometheus_release.status
 
@@ -161,7 +159,7 @@ servicemon_manifests = servicemon_manifests_location()
 servicemon = ConfigGroup(
     'servicemon',
     files=[servicemon_manifests],
-    opts=pulumi.ResourceOptions(depends_on=[prometheus_release])
+    opts=pulumi.ResourceOptions(depends_on=[ns, prometheus_release])
 )
 
 #
@@ -200,14 +198,6 @@ statsd_release_args = ReleaseArgs(
             "create": True,
             "annotations": {},
             "name": ""
-        },
-        "podAnnotations": {
-            "prometheus.io/scrape": "true",
-            "prometheus.io/port": "9102"
-        },
-        "annotations": {
-            "prometheus.io/scrape": "true",
-            "prometheus.io/port": "9102"
         }
     },
     # By default Release resource will wait till all created resources
@@ -223,7 +213,8 @@ statsd_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-statsd_release = Release("statsd", args=statsd_release_args)
+statsd_release = Release("statsd", args=statsd_release_args,
+                         opts=pulumi.ResourceOptions(depends_on=[ns, prometheus_release]))
 
 statsd_status = statsd_release.status
 
