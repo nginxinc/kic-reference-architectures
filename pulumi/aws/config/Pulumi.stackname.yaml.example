@@ -178,16 +178,6 @@ config:
   ############################################################################
 
   # Grafana Configuration
-  grafana:chart_name: grafana
-  # Chart name for the helm chart for grafana
-  grafana:chart_version: 6.13.7
-  # Chart version for the helm chart for grafana
-  grafana:helm_repo_name: grafana
-  # Name of the repo to pull the grafana chart from
-  grafana:helm_repo_url: https://grafana.github.io/helm-charts
-  # URL of the chart repo to pull grafana from
-  grafana:adminuser: admin
-  # The username for the grafana installation
   grafana:adminpass: strongpass
   # The password for the grafana installation; note that this is not exposed to the internet
   # and requires kubeproxy to access. However, this should be encrypted which is dependent on
@@ -197,7 +187,7 @@ config:
   ############################################################################
 
   # Prometheus Configuration
-  prometheus:chart_name: prometheus
+  prometheus:chart_name: kube-prometheus-stack
   # Chart name for the helm chart for prometheus
   prometheus:chart_version: 14.6.0
   # Chart version for the helm chart for prometheus

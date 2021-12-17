@@ -317,16 +317,6 @@ header "Prometheus"
 cd "${script_dir}/prometheus"
 pulumi $pulumi_args up
 
-# This is commented out, as the new prometheus deployment provides this
-# functionality.
-#
-# If you wish to use this intead, you will need to adjust the helm manifest
-# values in the __main__.py file in the prometheus directory.
-#
-#header "Grafana"
-#cd "${script_dir}/grafana"
-#pulumi $pulumi_args up
-
 header "Observability"
 cd "${script_dir}/observability"
 pulumi $pulumi_args up
