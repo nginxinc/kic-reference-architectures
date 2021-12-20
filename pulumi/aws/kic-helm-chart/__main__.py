@@ -51,7 +51,25 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
             'service': {
                 'annotations': {
                     'co.elastic.logs/module': 'nginx'
-                }
+                },
+                "extraLabels": {
+                    "app": "kic-nginx-ingress"
+                },
+                "customPorts": [
+                    {
+                        "name": "dashboard",
+                        "targetPort": 8080,
+                        "protocol": "TCP",
+                        "port": 8080
+                    },
+                    {
+                        "name": "prometheus",
+                        "targetPort": 9113,
+                        "protocol": "TCP",
+                        "port": 9113
+                    }
+                ]
+
             },
             'pod': {
                 'annotations': {
@@ -62,7 +80,10 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
         'prometheus': {
             'create': True,
             'port': 9113
-        }
+        },
+        "opentracing-tracer": "/usr/local/lib/libjaegertracing_plugin.so",
+        "opentracing-tracer-config": "{\n    \"service_name\": \"nginx-ingress\",\n    \"propagation_format\": \"w3c\",\n    \"sampler\": {\n        \"type\": \"const\",\n        \"param\": 1\n    },\n    \"reporter\": {\n        \"localAgentHostPort\": \"simplest-collector.observability.svc.cluster.local:9978\"\n    }\n}  \n",
+        "opentracing": True
     }
 
     has_image_tag = 'image_tag' in repository or 'image_tag_alias' in repository
@@ -109,7 +130,10 @@ k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample',
                             kubeconfig=kubeconfig)
 
 ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
-                           metadata={'name': 'nginx-ingress'},
+                           metadata={'name': 'nginx-ingress',
+                                    'labels': {
+                                        'prometheus': 'scrape' }
+                                     },
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 chart_values = ecr_repository.apply(build_chart_values)

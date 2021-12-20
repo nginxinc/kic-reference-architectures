@@ -91,7 +91,7 @@ if command -v aws > /dev/null; then
   validate_aws_credentials
 fi
 
-k8s_projects=(sirius observability grafana prometheus certmgr logagent logstore kic-helm-chart)
+k8s_projects=(sirius observability prometheus certmgr logagent logstore kic-helm-chart)
 
 # Test to see if EKS has been destroy AND there are still Kubernetes resources
 # that are being managed by Pulumi. If so, we have to destroy the stack for

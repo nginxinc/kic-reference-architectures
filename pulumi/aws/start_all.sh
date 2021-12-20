@@ -182,6 +182,10 @@ fi
 # Admin password for grafana (see note in __main__.py in grafana project as to why not encrypted)
 # We run in the vpc project directory because we need the pulumi yaml to point us to the correct
 # configuration.
+#
+# This same password will be used for the Grafana deployment that is stood up as part of
+# the prometheus operator driven prometheus-kube-stack.
+#
 if pulumi config get grafana:adminpass -C ${script_dir}/vpc >/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
@@ -311,10 +315,6 @@ pulumi $pulumi_args up
 
 header "Prometheus"
 cd "${script_dir}/prometheus"
-pulumi $pulumi_args up
-
-header "Grafana"
-cd "${script_dir}/grafana"
 pulumi $pulumi_args up
 
 header "Observability"

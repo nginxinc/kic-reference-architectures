@@ -1,0 +1,55 @@
+---
+# This version of the kube proxy configuration is required to change the 
+# bind address for metrics from 127.0.0.1 to 0.0.0.0. See:
+# https://github.com/prometheus-community/helm-charts/issues/977
+# for details as why this is required. 
+#
+# Note this is a hack, and as such should be tested with any version 
+# changes to Kubernetes. You have been warned.
+#
+apiVersion: v1
+data:
+  config: |-
+    apiVersion: kubeproxy.config.k8s.io/v1alpha1
+    bindAddress: 0.0.0.0
+    clientConnection:
+      acceptContentTypes: ""
+      burst: 10
+      contentType: application/vnd.kubernetes.protobuf
+      kubeconfig: /var/lib/kube-proxy/kubeconfig
+      qps: 5
+    clusterCIDR: ""
+    configSyncPeriod: 15m0s
+    conntrack:
+      maxPerCore: 32768
+      min: 131072
+      tcpCloseWaitTimeout: 1h0m0s
+      tcpEstablishedTimeout: 24h0m0s
+    enableProfiling: false
+    healthzBindAddress: 0.0.0.0:10256
+    hostnameOverride: ""
+    iptables:
+      masqueradeAll: false
+      masqueradeBit: 14
+      minSyncPeriod: 0s
+      syncPeriod: 30s
+    ipvs:
+      excludeCIDRs: null
+      minSyncPeriod: 0s
+      scheduler: ""
+      syncPeriod: 30s
+    kind: KubeProxyConfiguration
+    metricsBindAddress: 0.0.0.0:10249
+    mode: "iptables"
+    nodePortAddresses: null
+    oomScoreAdj: -998
+    portRange: ""
+    udpIdleTimeout: 250ms
+kind: ConfigMap
+metadata:
+  annotations:
+  labels:
+    eks.amazonaws.com/component: kube-proxy
+    k8s-app: kube-proxy
+  name: kube-proxy-config
+  namespace: kube-system

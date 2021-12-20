@@ -51,7 +51,7 @@ kubectl port-forward service/elastic-kibana --namespace logstore 5601:5601 &
 echo $! > $PID01
 
 ## Grafana Tunnel
-kubectl port-forward service/grafana --namespace grafana 3000:80 &
+kubectl port-forward service/prometheus-grafana --namespace prometheus 3000:80 &
 echo $! > $PID02
 
 ## Loadgenerator Tunnel
@@ -59,7 +59,7 @@ kubectl port-forward service/loadgenerator --namespace bos 8089:8089 &
 echo $! > $PID03
 
 ## Prometheus Tunnel
-kubectl port-forward service/prometheus-server --namespace prometheus 9090:80 &
+kubectl port-forward service/prometheus-kube-prometheus-prometheus --namespace prometheus 9090:9090 &
 echo $! > $PID04
 
 ## Elasticsearch Tunnel
