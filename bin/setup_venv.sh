@@ -83,7 +83,7 @@ if ! command -v python3 >/dev/null; then
     echo "required libraries: libbz2 libffi libreadline libsqlite3 libssl zlib1g"
   fi
 
-  export PYENV_ROOT="${script_dir}/.pyenv"
+  export PYENV_ROOT="${script_dir}/../pulumi/python/.pyenv"
 
   mkdir -p "${PYENV_ROOT}"
   git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
@@ -101,7 +101,7 @@ fi
 if command -v pyenv >/dev/null; then
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
-  pyenv install --skip-existing <"${script_dir}/.python-version"
+  pyenv install --skip-existing <"${script_dir}/../pulumi/python/.python-version"
 
   # If the pyenv-virtualenv tools are installed, prompt the user if they want to
   # use them.
@@ -131,30 +131,30 @@ if [ ${has_pyenv_venv_plugin} -eq 1 ]; then
     pyenv activate ref-arch-pulumi-aws
   fi
 
-  if [ -h "${script_dir}/venv" ]; then
-    echo "Link already exists [${script_dir}/venv] - removing and relinking"
-    rm "${script_dir}/venv"
-  elif [ -d "${script_dir}/venv" ]; then
+  if [ -h "${script_dir}/../pulumi/python/venv" ]; then
+    echo "Link already exists [${script_dir}/../pulumi/python/venv] - removing and relinking"
+    rm "${script_dir}/../pulumi/python/venv"
+  elif [ -d "${script_dir}/../pulumi/python/venv" ]; then
     echo "Virtual environment directory already exists"
     askYesNo "Delete and replace with pyenv-virtualenv managed link?" false
     if [ $ANSWER = true ]; then
-      echo "Deleting ${script_dir}/venv"
-      rm -rf "${script_dir}/venv"
+      echo "Deleting ${script_dir}/../pulumi/python/venv"
+      rm -rf "${script_dir}/../pulumi/python/venv"
     else
-      echo >&2 "The path ${script_dir}/venv must not be a virtual environment directory when using pyenv-virtualenv"
+      echo >&2 "The path ${script_dir}/../pulumi/python/venv must not be a virtual environment directory when using pyenv-virtualenv"
       echo >&2 "Exiting. Please manually remove the directory"
       exit 1
     fi
   fi
 
   echo "Linking virtual environment [${VIRTUAL_ENV}] to local directory [venv]"
-  ln -s "${VIRTUAL_ENV}" "${script_dir}/venv"
+  ln -s "${VIRTUAL_ENV}" "${script_dir}/../pulumi/python/venv"
 fi
 
 # If pyenv isn't present do everything with default python tooling
 if [ ${has_pyenv_venv_plugin} -eq 0 ]; then
   if [ -z "${VIRTUAL_ENV}" ]; then
-    VIRTUAL_ENV="${script_dir}/venv"
+    VIRTUAL_ENV="${script_dir}/../pulumi/python/venv"
     echo "No virtual environment already specified, defaulting to: ${VIRTUAL_ENV}"
   fi
 
@@ -181,7 +181,7 @@ pip3 install wheel
 
 # Get nodeenv version so that node can be installed before we install Python
 # dependencies because pulumi_eks depends on the presence of node.
-pip3 install "$(grep nodeenv requirements.txt)"
+pip3 install "$(grep nodeenv "${script_dir}/../config/requirements.txt")"
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
@@ -192,12 +192,12 @@ else
 fi
 
 # Install general package requirements
-pip3 install --requirement "${script_dir}/requirements.txt"
+pip3 install --requirement "${script_dir}/../config/requirements.txt"
 # Install local common utilities module
-pip3 install --use-feature=in-tree-build "${script_dir}/kic-pulumi-utils" &&
-  rm -rf "${script_dir}/kic-pulumi-utils/.eggs" \
-    "${script_dir}/kic-pulumi-utils/build" \
-    "${script_dir}/kic-pulumi-utils/kic_pulumi_utils.egg-info"
+pip3 install --use-feature=in-tree-build "${script_dir}/../pulumi/python/utility/kic-pulumi-utils" &&
+  rm -rf "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/.eggs" \
+    "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/build" \
+    "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/kic_pulumi_utils.egg-info"
 
 ARCH=""
 case $(uname -m) in
@@ -245,7 +245,7 @@ fi
 
 # Add Pulumi to the virtual environment
 echo "Downloading Pulumi CLI into virtual environment"
-PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/requirements.txt" | cut -d '=' -f2)"
+PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/../config/requirements.txt" | cut -d '=' -f2)"
 
 if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then
   echo "Pulumi version ${PULUMI_VERSION} is already installed"
