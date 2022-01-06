@@ -2,6 +2,6 @@ name: logstore
 runtime:
   name: python
   options:
-    virtualenv: ../venv
-config: ../config
+    virtualenv: ../../venv
+config: ../../../../config
 description: Deploys a logging store

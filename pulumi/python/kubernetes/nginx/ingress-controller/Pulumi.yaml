@@ -2,6 +2,6 @@ name: kic-helm-chart
 runtime:
   name: python
   options:
-    virtualenv: ../venv
-config: ../config
+    virtualenv: ../../../venv
+config: ../../../../../config
 description: Sets up NGINX Kubernetes Ingress Controller using Helm

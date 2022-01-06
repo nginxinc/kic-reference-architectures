@@ -2,6 +2,6 @@ name: observability
 runtime:
   name: python
   options:
-    virtualenv: ../venv
-config: ../config
+    virtualenv: ../../venv
+config: ../../../../config
 description: Deploys OTEL
