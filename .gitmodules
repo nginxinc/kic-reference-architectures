@@ -1,0 +1,3 @@
+[submodule "pulumi/python/kubernetes/applications/sirius/src"]
+	path = pulumi/python/kubernetes/applications/sirius/src
+	url = https://github.com/nginxinc/bank-of-sirius.git
