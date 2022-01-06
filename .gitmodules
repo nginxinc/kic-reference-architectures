@@ -1,3 +1,0 @@
-[submodule "pulumi/aws/sirius/src"]
-	path = pulumi/aws/sirius/src
-	url = https://github.com/nginxinc/bank-of-sirius.git
