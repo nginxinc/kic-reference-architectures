@@ -1,0 +1,7 @@
+name: metallb
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv
+config: ../../../../config
+description: Deploys Metallb

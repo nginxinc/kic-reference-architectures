@@ -20,13 +20,13 @@ def remove_status_field(obj):
 
 def pulumi_eks_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    eks_project_path = os.path.join(script_dir, '..', 'eks')
+    eks_project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'aws', 'eks')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', 'kic-helm-chart')
+    ingress_project_path = os.path.join(script_dir, '..', '..', '..', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 

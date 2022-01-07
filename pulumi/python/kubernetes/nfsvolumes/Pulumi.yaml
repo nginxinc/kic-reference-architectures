@@ -1,0 +1,7 @@
+name: nfsvolumes
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv
+config: ../../../../config
+description: Deploys NFS PV Client
