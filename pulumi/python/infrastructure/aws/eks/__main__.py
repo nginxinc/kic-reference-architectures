@@ -58,20 +58,16 @@ stack_ref_id = f"{pulumi_user}/{vpc_project_name}/{stack_name}"
 stack_ref = pulumi.StackReference(stack_ref_id)
 vpc_definition: pulumi.Output[VPCDefinition] = stack_ref.get_output('vpc').apply(retrieve_vpc_and_subnets)
 
-node_group_opts = eks.ClusterNodeGroupOptionsArgs(
-    min_size=min_size,
-    max_size=max_size,
-    desired_capacity=desired_capacity,
-    instance_type=instance_type,
-)
-
 instance_profile = aws.iam.InstanceProfile(
     resource_name=f'node-group-profile-{project_name}-{stack_name}',
     role=iam.ec2_role
 )
 
 cluster_args = eks.ClusterArgs(
-    node_group_options=node_group_opts,
+    min_size=min_size,
+    max_size=max_size,
+    desired_capacity=desired_capacity,
+    instance_type=instance_type,
     vpc_id=vpc_definition.vpc_id,
     public_subnet_ids=vpc_definition.public_subnet_ids,
     private_subnet_ids=vpc_definition.private_subnet_ids,
