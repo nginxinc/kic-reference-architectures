@@ -26,9 +26,14 @@ if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
 
 
+def aws_project_name_from_project_dir(dirname: str):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'aws', dirname)
+    return pulumi_config.get_pulumi_project_name(project_path)
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_path = os.path.join(script_dir, '..', dirname)
+    project_path = os.path.join(script_dir, '..', '..', '..', 'utility', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
@@ -116,7 +121,7 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-eks_project_name = project_name_from_project_dir('eks')
+eks_project_name = aws_project_name_from_project_dir('eks')
 eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
 eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
 kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))

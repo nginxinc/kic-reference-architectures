@@ -2,6 +2,6 @@ name: vpc-sample-cluster
 runtime:
   name: python
   options:
-    virtualenv: ../../venv
-config: ../../../../config
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
 description: EKS standup

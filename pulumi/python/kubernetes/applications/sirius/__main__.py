@@ -26,7 +26,7 @@ def pulumi_eks_project_name():
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', '..', '..', 'ingress-controller')
+    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 

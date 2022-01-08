@@ -8,6 +8,11 @@ from kic_util import pulumi_config
 from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 
+def aws_project_name_from_project_dir(dirname: str):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_path = os.path.join(script_dir, '..', '..', 'infrastructure', 'aws', dirname)
+    return pulumi_config.get_pulumi_project_name(project_path)
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', dirname)
@@ -31,7 +36,7 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-ecr_project_name = project_name_from_project_dir('ecr')
+ecr_project_name = aws_project_name_from_project_dir('ecr')
 ecr_stack_ref_id = f"{pulumi_user}/{ecr_project_name}/{stack_name}"
 ecr_stack_ref = pulumi.StackReference(ecr_stack_ref_id)
 ecr_repository_url = ecr_stack_ref.require_output('repository_url')

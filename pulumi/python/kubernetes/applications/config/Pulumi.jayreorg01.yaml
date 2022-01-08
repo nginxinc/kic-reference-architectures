@@ -1,0 +1,5 @@
+config:
+  sirius:accounts_pwd:
+    secure: AAABAPZMPHRFvGTVIpTS+5JOwfd3hXcE+r4K9rU2uaifGT6F45l/ag==
+  sirius:ledger_pwd:
+    secure: AAABAFqep3yGbUi0H5xQpH+GVxOUAwLZMCiw87EEkG96WlIGxtGNNg==

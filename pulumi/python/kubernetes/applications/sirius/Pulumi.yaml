@@ -3,5 +3,5 @@ runtime:
   name: python
   options:
     virtualenv: ../../../venv
-config: ../../../../../config
+config: ../config
 description: Creates the Bank of Sirius App

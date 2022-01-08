@@ -2,6 +2,6 @@ name: ecr
 runtime:
   name: python
   options:
-    virtualenv: ../../venv
-config: ../../../../config
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
 description: Sets up ECR repository for ingress controller images

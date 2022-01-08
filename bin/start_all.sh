@@ -14,9 +14,9 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 
 if ! command -v pulumi >/dev/null; then
-  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
-    echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="${script_dir}/venv/bin:$PATH"
+  if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
+    echo "Adding to [${script_dir}/../pulumi/python/venv/bin] to PATH"
+    export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
 
     if ! command -v pulumi >/dev/null; then
       echo >&2 "Pulumi must be installed to continue"
@@ -34,9 +34,9 @@ if ! command -v python3 >/dev/null; then
 fi
 
 if ! command -v node >/dev/null; then
-  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
-    echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="${script_dir}/venv/bin:$PATH"
+  if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
+    echo "Adding to [${script_dir}/../pulumi/python/venv/bin] to PATH"
+    export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
 
     if ! command -v node >/dev/null; then
       echo >&2 "NodeJS must be installed to continue"
@@ -71,22 +71,22 @@ if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
   fi
 fi
 
-if [ ! -f "${script_dir}/config/environment" ]; then
-  touch "${script_dir}/config/environment"
+if [ ! -f "${script_dir}/../config/pulumi/environment" ]; then
+  touch "${script_dir}/../config/pulumi/environment"
 fi
 
-if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/config/environment"; then
+if ! grep --quiet '^PULUMI_STACK=.*' "${script_dir}/../config/pulumi/environment"; then
   read -r -e -p "Enter the name of the Pulumi stack to use in all projects: " PULUMI_STACK
-  echo "PULUMI_STACK=${PULUMI_STACK}" >>"${script_dir}/config/environment"
+  echo "PULUMI_STACK=${PULUMI_STACK}" >>"${script_dir}/../config/pulumi/environment"
 fi
 
 # Do we have the submodule source....
 #
-# Note: We had been checking for .git, but this is not guaranteed to be 
+# Note: We had been checking for .git, but this is not guaranteed to be
 # there if we build the docker image or use a tarball. So now we look
 # for the src subdirectory which should always be there.
 #
-if [[ -d "${script_dir}/sirius/src/src" ]]; then
+if [[ -d "${script_dir}/../pulumi/python/kubernetes/applications/sirius/src/src" ]]; then
     echo "Submodule source found"
 else
     # Error out with instructions.
@@ -100,22 +100,22 @@ else
     exit 3
 fi
 
-source "${script_dir}/config/environment"
+source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 # Create the stack if it does not already exist
-find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 if [[ -z "${AWS_PROFILE+x}" ]]; then
   echo "AWS_PROFILE not set"
-  if ! grep --quiet '^AWS_PROFILE=.*' "${script_dir}/config/environment"; then
+  if ! grep --quiet '^AWS_PROFILE=.*' "${script_dir}/../config/pulumi/environment"; then
     read -r -e -p "Enter the name of the AWS Profile to use in all projects (leave blank for default): " AWS_PROFILE
     if [[ -z "${AWS_PROFILE}" ]]; then
       AWS_PROFILE=default
     fi
-    echo "AWS_PROFILE=${AWS_PROFILE}" >>"${script_dir}/config/environment"
-    source "${script_dir}/config/environment"
-    find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
+    echo "AWS_PROFILE=${AWS_PROFILE}" >>"${script_dir}/../config/pulumi/environment"
+    source "${script_dir}/../config/pulumi/environment"
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
   fi
 else
   echo "Using AWS_PROFILE from environment: ${AWS_PROFILE}"
@@ -129,7 +129,7 @@ fi
 
 if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
   echo "AWS_DEFAULT_REGION not set"
-  if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/config/environment"; then
+  if ! grep --quiet '^AWS_DEFAULT_REGION=.*' "${script_dir}/../config/pulumi/environment"; then
     # First, check the config file for our current profile. If there
     # is no AWS command we assume that there is no config file, which
     # may not always be a valid assumption.
@@ -142,13 +142,13 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     fi
 
     read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
-    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/config/environment"
-    source "${script_dir}/config/environment"
-    find "${script_dir}" -mindepth 2 -maxdepth 2 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/../config/pulumi/environment"
+    source "${script_dir}/../config/pulumi/environment"
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
   fi
 else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
-  pulumi config set aws:region -C "${script_dir}/vpc" "${AWS_DEFAULT_REGION}"
+  pulumi config set aws:region -C "${script_dir}/../pulumi/python/infrastructure/aws/vpc" "${AWS_DEFAULT_REGION}"
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -164,19 +164,19 @@ fi
 echo "Checking for required secrets"
 
 # Sirius Accounts Database
-if pulumi config get sirius:accounts_pwd -C ${script_dir}/sirius >/dev/null 2>&1; then
+if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for the sirius accounts database"
 else
   echo "Create a password for the sirius accounts database"
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/sirius
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
 fi
 
 # Sirius Ledger Database
-if pulumi config get sirius:ledger_pwd -C ${script_dir}/sirius >/dev/null 2>&1; then
+if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for sirius ledger database"
 else
   echo "Create a password for the sirius ledger database"
-  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/sirius
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
 fi
 
 # Admin password for grafana (see note in __main__.py in grafana project as to why not encrypted)
@@ -186,16 +186,16 @@ fi
 # This same password will be used for the Grafana deployment that is stood up as part of
 # the prometheus operator driven prometheus-kube-stack.
 #
-if pulumi config get grafana:adminpass -C ${script_dir}/vpc >/dev/null 2>&1; then
+if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
-  pulumi config set grafana:adminpass -C ${script_dir}/vpc
+  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
 fi
 
 # Show colorful fun headers if the right utils are installed
 function header() {
-  "${script_dir}"/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/venv/bin/lolcat
+  "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
 }
 
 function add_kube_config() {
@@ -219,11 +219,11 @@ function add_kube_config() {
   cluster_name="$(pulumi stack output cluster_name)"
 
   echo "adding ${cluster_name} cluster to local kubeconfig"
-  "${script_dir}"/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
+  "${script_dir}"/../pulumi/python/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
 }
 
 function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/vpc" config get aws:profile)"
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/infrastructure/aws/vpc" config get aws:profile)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     profile_arg="--profile ${pulumi_aws_profile}"
   elif [[ -n "${AWS_PROFILE+x}" ]]; then
@@ -262,11 +262,11 @@ fi
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 header "AWS VPC"
-cd "${script_dir}/vpc"
+cd "${script_dir}/../pulumi/python/infrastructure/aws/vpc"
 pulumi $pulumi_args up
 
 header "AWS EKS"
-cd "${script_dir}/eks"
+cd "${script_dir}/../pulumi/python/infrastructure/aws/eks"
 pulumi $pulumi_args up
 
 # pulumi stack output cluster_name
@@ -278,11 +278,11 @@ if command -v kubectl > /dev/null; then
 fi
 
 header "AWS ECR"
-cd "${script_dir}/ecr"
+cd "${script_dir}/../pulumi/python/infrastructure/aws/ecr"
 pulumi $pulumi_args up
 
 header "KIC Image Build"
-cd "${script_dir}/kic-image-build"
+cd "${script_dir}/../pulumi/python/utility/kic-image-build"
 pulumi $pulumi_args up
 
 header "KIC Image Push"
@@ -294,38 +294,38 @@ if command -v security > /dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
     security unlock-keychain
   fi
 fi
-cd "${script_dir}/kic-image-push"
+cd "${script_dir}/../pulumi/python/utility/kic-image-push"
 pulumi $pulumi_args up
 
 header "Deploying KIC"
-cd "${script_dir}/kic-helm-chart"
+cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller"
 pulumi $pulumi_args up
 
 header "Logstore"
-cd "${script_dir}/logstore"
+cd "${script_dir}/../pulumi/python/kubernetes/logstore"
 pulumi $pulumi_args up
 
 header "Logagent"
-cd "${script_dir}/logagent"
+cd "${script_dir}/../pulumi/python/kubernetes/logagent"
 pulumi $pulumi_args up
 
 header "Cert Manager"
-cd "${script_dir}/certmgr"
+cd "${script_dir}/../pulumi/python/kubernetes/certmgr"
 pulumi $pulumi_args up
 
 header "Prometheus"
-cd "${script_dir}/prometheus"
+cd "${script_dir}/../pulumi/python/kubernetes/prometheus"
 pulumi $pulumi_args up
 
 header "Observability"
-cd "${script_dir}/observability"
+cd "${script_dir}/../pulumi/python/kubernetes/observability"
 pulumi $pulumi_args up
 
 header "Bank of Sirius"
-cd "${script_dir}/sirius"
+cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/sirius/verify.py)"
+app_url="$(pulumi stack output --json | python3 "${script_dir}"/../verify.py)"
 
 header "Finished!"
 echo "Application can now be accessed at: ${app_url}"
