@@ -13,16 +13,16 @@ jobs:
     - uses: syphar/restore-virtualenv@v1
       id: pulumi-aws-tests-cache-virtualenv
       with:
-        requirement_files: pulumi/aws/requirements.txt
+        requirement_files: config/requirements.txt
 
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
     - run: ./setup_venv.sh
-      working-directory: pulumi/aws
+      working-directory: bin
 
     - name: Test
-      working-directory: pulumi/aws
+      working-directory: bin
       run: python3 test.py
 
   macos-tests:
@@ -33,14 +33,14 @@ jobs:
     - uses: syphar/restore-virtualenv@v1
       id: pulumi-aws-tests-cache-virtualenv
       with:
-        requirement_files: pulumi/aws/requirements.txt
+        requirement_files: config/requirements.txt
 
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
     - run: ./setup_venv.sh
-      working-directory: pulumi/aws
+      working-directory: bin
 
     - name: Test
-      working-directory: pulumi/aws
+      working-directory: bin
       run: python3 test.py
