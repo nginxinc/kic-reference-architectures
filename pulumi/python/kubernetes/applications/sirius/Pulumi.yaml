@@ -1,4 +1,4 @@
-name: sirius
+name: sirius-deploy
 runtime:
   name: python
   options:

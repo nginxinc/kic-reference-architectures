@@ -8,6 +8,7 @@ from kic_util import pulumi_config
 from repository_push import RepositoryPush, RepositoryPushArgs, RepositoryCredentialsArgs
 
 
+# Leaving to use EKS since this is tied to AWS....
 def aws_project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', 'infrastructure', 'aws', dirname)

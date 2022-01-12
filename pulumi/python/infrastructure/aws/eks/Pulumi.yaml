@@ -1,4 +1,4 @@
-name: eks-sample
+name: aws-eks
 runtime:
   name: python
   options:

@@ -1,7 +1,7 @@
-name: eks-sample
+name: kubeconfig
 runtime:
   name: python
   options:
     virtualenv: ../../venv
-config: ../../../../config
-description: Creates new EKS cluster using existing VPC
+config: ../../../../config/pulumi
+description: Use an existing kubeconfig for deployment

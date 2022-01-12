@@ -1,7 +1,7 @@
-name: vpc-sample-cluster
+name: aws-vpc
 runtime:
   name: python
   options:
     virtualenv: ../../../venv
 config: ../../../../../config/pulumi
-description: EKS standup
+description: VPC standup

@@ -14,7 +14,7 @@ def remove_status_field(obj):
 
 def pulumi_eks_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    eks_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'aws', 'eks')
+    eks_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
 
@@ -49,7 +49,7 @@ kubeconfig = eks_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
 eks_stack_ref.get_output('cluster_name').apply(
     lambda s: pulumi.log.info(f'Cluster name: {s}'))
 
-k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample', kubeconfig=kubeconfig)
+k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
 # Create the namespace
 ns = k8s.core.v1.Namespace(resource_name='observability',

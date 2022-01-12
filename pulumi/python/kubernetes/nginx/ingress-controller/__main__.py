@@ -28,7 +28,7 @@ if not helm_repo_url:
 
 def aws_project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'aws', dirname)
+    project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 def project_name_from_project_dir(dirname: str):
@@ -121,18 +121,22 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-eks_project_name = aws_project_name_from_project_dir('eks')
+eks_project_name = aws_project_name_from_project_dir('kubeconfig')
 eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
 eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
 kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
+cluster_name = eks_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
 
 image_push_project_name = project_name_from_project_dir('kic-image-push')
 image_push_ref_id = f"{pulumi_user}/{image_push_project_name}/{stack_name}"
 image_push_ref = pulumi.StackReference(image_push_ref_id)
 ecr_repository = image_push_ref.get_output('ecr_repository')
 
-k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample',
+k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
+                            ##cluster=cluster_name)
+#k8s_provider = k8s.Provider(resource_name=f'ingress-controller')
+                            
 
 ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
                            metadata={'name': 'nginx-ingress',

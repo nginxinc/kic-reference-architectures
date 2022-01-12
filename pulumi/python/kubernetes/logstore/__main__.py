@@ -24,7 +24,7 @@ if not helm_repo_url:
 
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'aws', dirname)
+    project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
@@ -32,12 +32,12 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-eks_project_name = project_name_from_project_dir('eks')
+eks_project_name = project_name_from_project_dir('kubeconfig')
 eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
 eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
 kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 
-k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample',
+k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
 
 ns = k8s.core.v1.Namespace(resource_name='logstore',

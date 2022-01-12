@@ -1,4 +1,4 @@
-name: kic-helm-chart
+name: ingress-controller
 runtime:
   name: python
   options:

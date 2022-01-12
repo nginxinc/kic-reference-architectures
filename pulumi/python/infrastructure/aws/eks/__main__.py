@@ -21,13 +21,13 @@ def retrieve_vpc_and_subnets(vpc) -> VPCDefinition:
     pulumi.log.info(f"vpc id: {vpc['id']}")
 
     _public_subnet_ids = aws.ec2.get_subnet_ids(vpc_id=vpc['id'],
-                                                tags={"Project": "vpc-sample-cluster",
+                                                tags={"Project": "aws-vpc",
                                                       "Stack": stack_name,
                                                       "kubernetes.io/role/elb": "1"}).ids
     pulumi.log.info(f"public subnets: {_public_subnet_ids}")
 
     _private_subnet_ids = aws.ec2.get_subnet_ids(vpc_id=vpc['id'],
-                                                 tags={"Project": "vpc-sample-cluster",
+                                                 tags={"Project": "aws-vpc",
                                                        "Stack": stack_name,
                                                        "kubernetes.io/role/internal-elb": "1"}).ids
     pulumi.log.info(f"public subnets: {_private_subnet_ids}")

@@ -43,7 +43,7 @@ kubeconfig = kube_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
 kube_stack_ref.get_output('cluster_name').apply(
     lambda s: pulumi.log.info(f'Cluster name: {s}'))
 
-k8s_provider = k8s.Provider(resource_name=f'ingress-setup-sample', kubeconfig=kubeconfig)
+k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
 ns = k8s.core.v1.Namespace(resource_name='nfsvols',
                            metadata={'name': 'nfsvols'},
