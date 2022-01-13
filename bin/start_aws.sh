@@ -104,7 +104,7 @@ source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 # Create the stack if it does not already exist
-find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 if [[ -z "${AWS_PROFILE+x}" ]]; then
   echo "AWS_PROFILE not set"
@@ -115,7 +115,7 @@ if [[ -z "${AWS_PROFILE+x}" ]]; then
     fi
     echo "AWS_PROFILE=${AWS_PROFILE}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
   fi
 else
   echo "Using AWS_PROFILE from environment: ${AWS_PROFILE}"
@@ -144,7 +144,7 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
     echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 5 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
   fi
 else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
@@ -277,6 +277,10 @@ if command -v kubectl > /dev/null; then
   retry 30 kubectl version > /dev/null
 fi
 
+header "Kubeconfig"
+cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
+pulumi $pulumi_args up
+
 header "AWS ECR"
 cd "${script_dir}/../pulumi/python/infrastructure/aws/ecr"
 pulumi $pulumi_args up
@@ -325,7 +329,7 @@ header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/../verify.py)"
+app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
 echo "Application can now be accessed at: ${app_url}"
