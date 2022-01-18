@@ -178,7 +178,7 @@ if not statsd_chart_name:
     statsd_chart_name = 'prometheus-statsd-exporter'
 statsd_chart_version = config.get('statsd_chart_version')
 if not statsd_chart_version:
-    statsd_chart_version = '0.3.1'
+    statsd_chart_version = '0.4.2'
 helm_repo_name = config.get('prometheus_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'
