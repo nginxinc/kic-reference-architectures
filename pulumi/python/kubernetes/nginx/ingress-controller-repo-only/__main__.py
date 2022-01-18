@@ -30,7 +30,7 @@ if not nginx_repository:
     nginx_repository = "private-registry.nginx.com/nginx-ic/nginx-plus-ingress"
 nginx_tag = config.get('nginx_tag')
 if not nginx_tag:
-    nginx_tag = "2.0.3"
+    nginx_tag = "2.1.0"
 nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
     nginx_plus_flag = True
