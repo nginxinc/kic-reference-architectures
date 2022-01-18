@@ -4,6 +4,7 @@ set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
 
+
 # Don't pollute console output with upgrade notifications
 export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
@@ -31,21 +32,6 @@ if ! command -v python3 > /dev/null; then
   exit 1
 fi
 
-if ! command -v node > /dev/null; then
-  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
-    echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="${script_dir}/venv/bin:$PATH"
-
-    if ! command -v node > /dev/null; then
-      echo >&2 "NodeJS must be installed to continue"
-      exit 1
-    fi
-  else
-    echo >&2 "NodeJS must be installed to continue"
-    exit 1
-  fi
-fi
-
 # Check to see if the user is logged into Pulumi
 if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
   pulumi login
@@ -56,73 +42,39 @@ if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
   fi
 fi
 
-source "${script_dir}/config/environment"
+echo " "
+echo "Notice! This shell script will read the config/environment file to determine which pulumi stack to destroy."
+echo "Based on the type of stack it will either run the ./bin/destroy_kube.sh or the ./bin/destroy_aws.sh script."
+echo "If this is not what you want to do, please abort the script by typing ctrl-c and running the appropriate "
+echo "script manually."
+echo " "
+
+# Sleep so we are seen...
+sleep 5
+
+source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
-function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/vpc" config get aws:profile)"
-  if [ "${pulumi_aws_profile}" != "" ]; then
-    profile_arg="--profile ${pulumi_aws_profile}"
-  elif [[ -n "${AWS_PROFILE+x}" ]]; then
-    profile_arg="--profile ${AWS_PROFILE}"
+#
+# Determine what destroy script we need to run
+#
+if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
+  INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc)"
+  if [ $INFRA == 'AWS' ] ; then
+    echo "Destroying an AWS based stack; if this is not right please type ctrl-c to abort this script."
+    sleep 5
+    ${script_dir}/destroy_aws.sh
+    exit 0
+  elif [ $INFRA == 'kubeconfig' ] ; then
+    echo "Destroying a kubeconfig based stack; if this is not right please type ctrl-c to abort this script."
+    sleep 5
+    ${script_dir}/destroy_kube.sh
+    exit 0
   else
-    profile_arg=""
+    print "No infrastructure set in config file; aborting!"
+    exit 1
   fi
-
-  echo "Validating AWS credentials"
-  if ! "${script_dir}/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null; then
-    echo >&2 "AWS credentials have expired or are not valid"
-    exit 2
-  fi
-}
-
-function destroy_project() {
-  local project_dir="${script_dir}/$1"
-  local pulumi_args="--cwd ${project_dir} --emoji --stack ${PULUMI_STACK}"
-
-  if [ -f "${project_dir}/Pulumi.yaml" ]; then
-    pulumi ${pulumi_args} destroy
-  else
-    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${project_dir}"
-  fi
-}
-
-if command -v aws > /dev/null; then
-  validate_aws_credentials
-fi
-
-k8s_projects=(sirius observability prometheus certmgr logagent logstore kic-helm-chart)
-
-# Test to see if EKS has been destroy AND there are still Kubernetes resources
-# that are being managed by Pulumi. If so, we have to destroy the stack for
-# each Pulumi project in order to properly remove them from Pulumi's data store.
-if pulumi --cwd "${script_dir}/eks" stack | grep -q 'Current stack resources (0)'; then
-  echo "Pulumi does not know about an EKS instance running"
-
-  for project in "${k8s_projects[@]}"; do
-    if pulumi --cwd "${script_dir}/${project}" stack | grep -q 'Current stack resources (0)'; then
-      echo "kubernetes project [${project}] has an empty stack - doing nothing"
-    else
-      echo "kubernetes project [${project}] has references in Pulumi - cleaning"
-      pulumi stack rm --cwd "${script_dir}/${project}" --force --yes "${PULUMI_STACK}"
-      pulumi stack init --cwd "${script_dir}/${project}" "${PULUMI_STACK}"
-      pulumi stack select --cwd "${script_dir}/${project}" "${PULUMI_STACK}"
-    fi
-  done
-# If EKS hasn't been destroyed yet, we can go ahead and destroy the Kubernetes
-# resources in the normal way.
 else
-  for project in "${k8s_projects[@]}"; do
-    destroy_project "${project}"
-  done
+  print "No infrastructure set in config file; aborting!"
+  exit 2
 fi
-
-if [[ -n "${1:-}" ]] && [[ "${1}" == "k8s" ]]; then
-  echo "destroyed only kubernetes resources"
-  exit 0
-fi
-
-projects=(kic-image-push kic-image-build ecr eks vpc)
-for project in "${projects[@]}"; do
-  destroy_project "${project}"
-done

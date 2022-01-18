@@ -298,11 +298,11 @@ header "AWS ECR"
 cd "${script_dir}/../pulumi/python/infrastructure/aws/ecr"
 pulumi $pulumi_args up
 
-header "KIC Image Build"
+header "IC Image Build"
 cd "${script_dir}/../pulumi/python/utility/kic-image-build"
 pulumi $pulumi_args up
 
-header "KIC Image Push"
+header "IC Image Push"
 # If we are on MacOS and the user keychain is locked, we need to prompt the
 # user to unlock it so that `docker login` will work correctly.
 if command -v security > /dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
@@ -314,7 +314,7 @@ fi
 cd "${script_dir}/../pulumi/python/utility/kic-image-push"
 pulumi $pulumi_args up
 
-header "Deploying KIC"
+header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller"
 pulumi $pulumi_args up
 

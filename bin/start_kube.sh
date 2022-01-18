@@ -144,8 +144,8 @@ sleep 5
 #
 # Hack to deploy our secret....
 if [[ -f "${script_dir}/../extras/jwt.token" ]]; then
-  JWT=`cat ${script_dir}/../extras/jwt.token`
-  echo "Loading ${JWT} into nginx-ingress/regcred"
+  JWT=$(cat ${script_dir}/../extras/jwt.token)
+  echo "Loading JWT into nginx-ingress/regcred"
   ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 else
   # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS)
@@ -179,7 +179,7 @@ sleep 5
 if pulumi config get kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
   echo "Kubeconfig file found"
 else
-  echo "Provide a path to your kubeconfig file"
+  echo "Provide an absolute path to your kubeconfig file"
   pulumi config set kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
 fi
 
@@ -213,7 +213,7 @@ echo " "
 sleep 5
 
 while true; do
-    read -p "Do you wish to install metallb? " yn
+    read -r -e -p "Do you wish to install metallb? " yn
     case $yn in
         [Yy]* ) echo "Checking for necessary values in the configuration:"
                 pulumi config set metallb:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc enabled >/dev/null 2>&1
@@ -233,7 +233,7 @@ while true; do
 done
 
 while true; do
-    read -p "Do you wish to install nfs client support for persistent volumes? " yn
+    read -r -e -p "Do you wish to install nfs client support for persistent volumes? " yn
     case $yn in
         [Yy]* ) echo "Checking for necessary values in the configuration:"
                 pulumi config set nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc enabled >/dev/null 2>&1
@@ -269,7 +269,7 @@ if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/ap
   echo "Hostname found for deployment"
 else
   echo "Create a fqdn for your deployment"
-  pulumi config set --secret sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  pulumi config set sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -334,7 +334,7 @@ if pulumi config get nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastru
 fi
 
 # TODO: This is using a different project than the AWS deploy; we need to collapse those
-header "Deploying KIC"
+header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only"
 pulumi $pulumi_args up
 
