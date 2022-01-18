@@ -29,6 +29,11 @@ def pulumi_ingress_project_name():
     ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
+def pulumi_repo_ingress_project_name():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller-repo-only')
+    return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
 
 def sirius_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -75,30 +80,56 @@ eks_stack_ref.get_output('cluster_name').apply(
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
-# Logic to extract the FQDN of the load balancer for Ingress
-ingress_project_name = pulumi_ingress_project_name()
-ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+# TODO: Streamline the logic for FQDN/IP into something a bit more sane and scalable
+#
+# Currently, if we are doing an AWS deployment we use the AWS IC deployment, which uses the ELB hostname
+# as part of the certificate (self-signed).
+#
+# If we are using a kubeconfig file (ie, not type AWS) we expect we are going to get an IP address and not
+# a hostname in return. So we use the hostname variable to create the certificate we need, and then we use
+# the IP address in output to the user to tell them to setup DNS or a hostfile.
+#
+
+# We use the kubernetes namespace for this
+config = pulumi.Config('kubernetes')
+infra_type = config.require('infra_type')
+
+if infra_type == 'AWS':
+    # Logic to extract the FQDN of the load balancer for Ingress
+    ingress_project_name = pulumi_ingress_project_name()
+    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+    sirius_host = lb_ingress_hostname
+elif infra_type == 'kubeconfig':
+    # Logic to extract the FQDN of the load balancer for Ingress
+    ingress_project_name = pulumi_repo_ingress_project_name()
+    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    lb_ingress_hostname = config.require('fqdn')
+    sirius_host = config.require('fqdn')
+    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
+else:
+    print("Should not get here")
+    exit(6)
+
 
 # Create the namespace for Bank of Sirius
 ns = k8s.core.v1.Namespace(resource_name='bos',
                            metadata={'name': 'bos'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-# Add Config Maps for Bank of Sirius; these are built in
-# Pulumi in order to manage secrets and provide the option
-# for users to override defaults in the configuration file.
+# Add Config Maps for Bank of Sirius; these are built in Pulumi in order to manage secrets and provide the option
+# for users to override defaults in the configuration file. Configuration values that are required use the `require`
+# method. Those that are optional use the `get` method, and have additional logic to set defaults if no value is set
+# by the user.
 #
-# Configuration values that are required use the `require`
-# method. Those that are optional use the `get` method, and have
-# additional logic to set defaults if no value is set by the user
+# Note that the Pulumi code will exit with an error message if a required variable is not defined in the configuration
+# file.
 #
-# Note that the Pulumi code will exit with an error message if
-# a required variable is not defined in the configuration file.
-
 # Configuration Values are stored in the configuration:
 #  ./config/Pulumi.STACKNAME.yaml
+#
 # Note this config is specific to the sirius code!
 config = pulumi.Config('sirius')
 accounts_pwd = config.require_secret('accounts_pwd')
@@ -248,15 +279,13 @@ jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
                                         "jwtRS256.key.pub": str(encode_public, "utf-8")
                                     })
 
-# Create resources for the Bank of Sirius using the
-# Kubernetes YAML manifests which have been pulled from
+# Create resources for the Bank of Sirius using the  Kubernetes YAML manifests which have been pulled from
 # the google repository.
 #
-# Note that these have been lightly edited to remove
-# dependencies on GCP where necessary. Additionally, the
-# `frontend` service has been updated to use a ClusterIP
-# rather than the external load balancer, as that interaction
-# is now handled by the NGNIX KIC.
+# Note that these have been lightly edited to remove dependencies on GCP where necessary. Additionally, the
+# `frontend` service has been updated to use a ClusterIP rather than the external load balancer, as that interaction
+# is now handled by the NGNIX Ingress Controller
+#
 sirius_manifests = sirius_manifests_location()
 
 bos = ConfigGroup(
@@ -277,27 +306,9 @@ selfissuer = ConfigFile(
     transformations=[add_namespace],
     file=k8_manifest)
 
-# Add the Ingress controller for the Bank of Sirius
-# application. This uses the NGINX KIC that is installed
+# Add the Ingress controller for the Bank of Sirius  application. This uses the NGINX IC that is installed
 # as part of this Pulumi stack.
 #
-# By default, the deployment logic determines and uses the
-# FQDN of the Load Balancer for the Ingress controller.
-# This can be adjusted by the user by adding a value to the
-# configuration file. This must be a FQDN that resolves to
-# the IP of the NGINX KIC's load balancer.
-#
-# Configuration Values are stored in the configuration:
-#  ./config/Pulumi.STACKNAME.yaml
-config = pulumi.Config('sirius')
-sirius_host = config.get('hostname')
-
-# If we have not defined a hostname in our config, we use the  hostname of the load
-# balancer. The default TLS uses self-signed certificates, so no hostname validation
-# is required. However, if the user makes use of ACME or other certificate authorities
-# the hostname chosen will need to resolve appropriately.
-if not sirius_host:
-    sirius_host = lb_ingress_hostname
 
 # This block is responsible for creating the Ingress object for the application. This object
 # is deployed into the same namespace as the application and requires that an IngressClass
@@ -354,11 +365,20 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                            )],
                                        ))
 
-application_url = sirius_host.apply(lambda host: f'https://{host}')
-pulumi.export('application_url', application_url)
+# We use the kubernetes namespace for this
+config = pulumi.Config('kubernetes')
+infra_type = config.require('infra_type')
+if infra_type == 'AWS':
+    application_url = sirius_host.apply(lambda host: f'https://{host}')
+    pulumi.export('application_url', application_url)
+elif infra_type == 'kubeconfig':
+    pulumi.export('hostname', lb_ingress_hostname)
+    pulumi.export('ipaddress', lb_ingress_ip)
 
 #
-# Get the chart values for both monitoring charts
+# Get the chart values for both monitoring charts, switch back to the Sirius
+# namespace.
+#
 config = pulumi.Config('sirius')
 chart = config.get('chart')
 if not chart:

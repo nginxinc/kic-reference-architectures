@@ -44,7 +44,7 @@ if not chart_name:
     chart_name = 'kube-prometheus-stack'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '14.6.0'
+    chart_version = '30.0.1'
 helm_repo_name = config.get('prometheus_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'
@@ -136,8 +136,14 @@ prometheus_release_args = ReleaseArgs(
                     }
                 }
             }
+        },
+        "prometheusOperator": {
+            "tls": {
+                "enabled": False}
         }
     },
+    # Bumping this up - default is 300
+    timeout=600,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
@@ -200,6 +206,8 @@ statsd_release_args = ReleaseArgs(
             "name": ""
         }
     },
+    # Bumping this up - default is 300
+    timeout=600,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

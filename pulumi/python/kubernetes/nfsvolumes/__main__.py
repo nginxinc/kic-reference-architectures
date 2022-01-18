@@ -88,6 +88,8 @@ nfsvols_release_args = ReleaseArgs(
             ]
         }
     },
+    # Bumping this up - default is 300
+    timeout=600,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

@@ -13,7 +13,7 @@ def aws_project_name_from_project_dir(dirname: str):
 
 # Are we doing standalone or AWS?
 infra_type = config.require('infra_type')
-if infra_type == 'aws':
+if infra_type == 'AWS':
     stack_name = pulumi.get_stack()
     project_name = pulumi.get_project()
     pulumi_user = pulumi_config.get_pulumi_user()

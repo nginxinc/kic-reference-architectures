@@ -13,7 +13,7 @@ if not chart_name:
     chart_name = 'elasticsearch'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '15.9.0'
+    chart_version = '17.6.1'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'bitnami'
@@ -54,13 +54,25 @@ elastic_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values={
+        "master": {
+            "replicas": 1
+        },
+        "coordinating": {
+            "replicas": 1
+        },
+        "data": {
+            "replicas": 1
+        },
         "global": {
             "kibanaEnabled": True
         },
         "ingest": {
-            "enabled": True
+            "enabled": True,
+            "replicas": 1
         }
     },
+    # Bumping this up - default is 300
+    timeout=600,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
