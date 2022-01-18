@@ -261,6 +261,14 @@ fi
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
+# We automatically set this to aws for infra type; since this is a script specific to AWS
+# TODO: combined file should query and manage this
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc AWS
+# Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
+# way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
+# configuration because of the encryption needed for the passwords.
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius AWS
+
 header "AWS VPC"
 cd "${script_dir}/../pulumi/python/infrastructure/aws/vpc"
 pulumi $pulumi_args up
@@ -273,10 +281,15 @@ pulumi $pulumi_args up
 add_kube_config
 
 if command -v kubectl > /dev/null; then
-  echo "attempting to connect to newly create kubernetes cluster"
+  echo "Attempting to connect to newly create kubernetes cluster"
   retry 30 kubectl version > /dev/null
 fi
 
+#
+# This is used to streamline the pieces that follow. Moving forward we can add new logic behind this and this
+# should abstract away for us. This way we just call the kubeconfig project to get the needed information and
+# let the infrastructure specific parts do their own thing (as long as they work with this module)
+#
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
 pulumi $pulumi_args up

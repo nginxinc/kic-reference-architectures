@@ -159,7 +159,12 @@ fi
 # We automatically set this to a kubeconfig type for infra type
 # TODO: combined file should query and manage this
 pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc kubeconfig
-# Kubeconfig
+# Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
+# way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
+# configuration because of the encryption needed for the passwords.
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius kubeconfig
+
+# Inform the user of what we are doing
 
 echo " "
 echo "NOTICE! When using a kubeconfig file you need to ensure that your environment is configured to"
@@ -188,7 +193,7 @@ fi
 
 # Connect to the cluster
 if command -v kubectl > /dev/null; then
-  echo "attempting to connect to kubernetes cluster"
+  echo "Attempting to connect to kubernetes cluster"
   retry 30 kubectl version > /dev/null
 fi
 
@@ -197,6 +202,16 @@ fi
 # For standalone installations we need to ask for storage and loadbalancer access. Users can opt in to additional
 # modules that provide this support if required.
 #
+
+echo " "
+echo "NOTICE! You will need to select 'yes' if you wish to install/use these features in your deployment. This needs"
+echo "to be done with every startup, and the script will verify the values previously entered (ie, you do not need to"
+echo "re-enter the values each time. However, if you answer 'no' the script will remove the values from the config"
+echo " "
+
+# Sleep so we are seen
+sleep 5
+
 while true; do
     read -p "Do you wish to install metallb? " yn
     case $yn in
@@ -212,7 +227,7 @@ while true; do
         [Nn]* ) # If they don't want metallb, but have a value in there we delete it
                 pulumi config rm metallb:thecidr -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
                 pulumi config rm metallb:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                exit;;
+                break;;
         * ) echo "Please answer yes or no.";;
     esac
 done
@@ -239,10 +254,23 @@ while true; do
                 pulumi config rm nfsvols:nfsserver -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
                 pulumi config rm nfsvols:nfspath -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
                 pulumi config rm nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                exit;;
+                break;;
         * ) echo "Please answer yes or no.";;
     esac
 done
+
+# TODO: Figure out better way to handle hostname / ip address for exposing our IC
+#
+# This version of the code forces you to add a hostname which is used to generate the cert when the application is
+# deployed, and will output the IP address and the hostname that will need to be set in order to use the self-signed
+# cert and to access the application.
+#
+if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
+  echo "Hostname found for deployment"
+else
+  echo "Create a fqdn for your deployment"
+  pulumi config set --secret sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
 # directory. This is because we cannot pull secrets from different project

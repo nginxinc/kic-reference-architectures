@@ -59,32 +59,10 @@ fi
 source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
-function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/infrastructure/aws/vpc" config get aws:profile)"
-  if [ "${pulumi_aws_profile}" != "" ]; then
-    profile_arg="--profile ${pulumi_aws_profile}"
-  elif [[ -n "${AWS_PROFILE+x}" ]]; then
-    profile_arg="--profile ${AWS_PROFILE}"
-  else
-    profile_arg=""
-  fi
-
-  echo "Validating AWS credentials"
-  if ! "${script_dir}/../pulumi/python/venv/bin/aws" ${profile_arg} sts get-caller-identity > /dev/null; then
-    echo >&2 "AWS credentials have expired or are not valid"
-    exit 2
-  fi
-}
-
 
 APPLICATIONS=(sirius)
 KUBERNETES=(observability logagent logstore certmgr prometheus)
-NGINX=(kubernetes/nginx/ingress-controller utility/kic-image-build utility/kic-image-push)
-AWSINFRA=(ecr eks vpc)
-
-if command -v aws > /dev/null; then
-  validate_aws_credentials
-fi
+NGINX=(kubernetes/nginx/ingress-controller)
 
 #
 # This is a temporary process until we complete the directory reorg and move the start/stop
@@ -132,17 +110,6 @@ for project_dir in "kubeconfig" ; do
     pulumi ${pulumi_args} destroy
   else
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/${project_dir}"
-  fi
-done
-
-# Destroy the infrastructure
-for project_dir in "${AWSINFRA[@]}" ; do
-  echo "$project_dir"
-  if [ -f "${script_dir}/../pulumi/python/infrastructure/aws/${project_dir}/Pulumi.yaml" ]; then
-    pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/aws/${project_dir} --emoji --stack ${PULUMI_STACK}"
-    pulumi ${pulumi_args} destroy
-  else
-    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/aws/${project_dir}"
   fi
 done
 
