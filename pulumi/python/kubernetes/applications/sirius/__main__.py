@@ -106,8 +106,12 @@ elif infra_type == 'kubeconfig':
     ingress_project_name = pulumi_repo_ingress_project_name()
     ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
     ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    # We store the FQDN in the sirius logic, so switch config
+    config = pulumi.Config('sirius')
     lb_ingress_hostname = config.require('fqdn')
     sirius_host = config.require('fqdn')
+    # Set back to kubernetes
+    config = pulumi.Config('kubernetes')
     lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
 else:
     print("Should not get here")
@@ -374,6 +378,7 @@ if infra_type == 'AWS':
 elif infra_type == 'kubeconfig':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
+    pulumi.export('application_url', f'https://{lb_ingress_hostname}')
 
 #
 # Get the chart values for both monitoring charts, switch back to the Sirius
