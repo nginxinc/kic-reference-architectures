@@ -53,11 +53,11 @@ echo " "
 # Sleep so we are seen...
 sleep 5
 
-if grep --quiet '^PULUMI_STACK=.*' "${script_dir}/../config/pulumi/environment"; then
+if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_STACK=.*' "${script_dir}/../config/pulumi/environment"; then
   source "${script_dir}/../config/pulumi/environment"
   echo "Environment data found for stack: ${PULUMI_STACK}"
   while true; do
-    read -p "Environment file exists and is not empty. Answer yes to use, no to delete. " yn
+    read -r -e -p "Environment file exists and is not empty. Answer yes to use, no to delete. " yn
     case $yn in
     [Yy]*) # We have an environment file and they want to keep it....
       if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
@@ -88,7 +88,7 @@ if grep --quiet '^PULUMI_STACK=.*' "${script_dir}/../config/pulumi/environment";
 fi
 
 while true; do
-  read -p "Type 'a' for AWS, 'k' for kubeconfig? " infra
+  read -e -r -p "Type a for AWS, k for kubeconfig? " infra
   case $infra in
   [Aa]*)
     echo "Calling AWS startup script"

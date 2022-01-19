@@ -135,6 +135,9 @@ echo "NOTICE! Currently the deployment via kubeconfig only supports pulling imag
 echo "required in order to access the NGINX Plus repository. This should be placed in a file in the extras directory"
 echo "in the project root, in a file named jwt.token"
 echo " "
+echo "See https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret/ for more "
+echo "details and examples."
+echo " "
 
 # Make sure we see it
 sleep 5
@@ -360,9 +363,12 @@ pulumi $pulumi_args up
 
 header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
-
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
+
+# We currently don't run this becuase in most cases we are going to need to create either a DNS entry or a hostfile
+# mapping for our application.
+# TODO: find a more elegant solution to LB IP / hostname combos for testing the app
+#app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
 echo "Application can now be accessed at: ${app_url}"
