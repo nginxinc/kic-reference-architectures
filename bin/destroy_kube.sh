@@ -91,6 +91,18 @@ for project_dir in "${KUBERNETES[@]}" ; do
   fi
 done
 
+# TODO: figure out a more elegant way to do the CRD removal for prometheus
+# This is a hack for now to remove the CRD's for prometheus-kube-stack
+# See https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md#uninstall-chart
+kubectl delete crd alertmanagerconfigs.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd alertmanagers.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd podmonitors.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd probes.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd prometheuses.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd prometheusrules.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd servicemonitors.monitoring.coreos.com > /dev/null 2>&1
+kubectl delete crd thanosrulers.monitoring.coreos.com > /dev/null 2>&1
+
 # Destroy NGINX components
 for project_dir in "${NGINX[@]}" ; do
   echo "$project_dir"

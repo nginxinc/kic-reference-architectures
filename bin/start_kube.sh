@@ -368,6 +368,8 @@ pulumi $pulumi_args up
 # We currently don't run this becuase in most cases we are going to need to create either a DNS entry or a hostfile
 # mapping for our application.
 # TODO: find a more elegant solution to LB IP / hostname combos for testing the app
+# Bind this to something for now
+app_url=" "
 #app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
