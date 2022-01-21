@@ -25,13 +25,6 @@ def pulumi_ingress_project_name():
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 
-# Where are our manifests?
-def k8_manifest_location():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    k8_manifest_path = os.path.join(script_dir, 'manifests', 'metallb.yaml')
-    return k8_manifest_path
-
-
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 kube_project_name = pulumi_kube_project_name()
