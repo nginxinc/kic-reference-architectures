@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -o errexit  # abort on nonzero exit status
+set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
 
@@ -12,6 +12,24 @@ set -o pipefail # don't hide errors within pipes
 # quality assurance testing. For example, the NFS volume support is known to potentially cause issues due to the way
 # that NFS works (latency, performance).
 #
+
+# Timeout Value
+# We check in 15 second increments
+TIMEOUT=15
+
+
+# Clean up the namespace....
+cleanitup() {
+  echo "Deleting testspace namespace"
+  echo "This should remove all test resources"
+  kubectl delete ns testspace
+  if [ $? -ne 0 ] ; then
+    echo "FAILURE! Unable to remove namespace testpsace"
+    echo " "
+    exit 100
+  fi
+}
+
 
 echo " "
 echo "This script will perform testing on the current kubernetes installation using the currently active kubernetes"
@@ -27,36 +45,49 @@ if command -v kubectl > /dev/null; then
   echo "Found kubectl - continuing"
 else
   echo "Cannot proceed without kubectl!"
-  exit 100
+  echo "Please install kubectl and ensure it is in your path."
+  exit 101
+fi
+
+# Write out the configuration so we can see it
+echo "Dumping current configuration:"
+kubectl config view
+if [ $? -ne 0 ] ; then
+  echo "FAILURE! Unable to connect to dump configuration from kubeconfig file."
+  echo "Please check your kubeconfig file."
+  echo " "
+  exit 102
+else
+  echo " "
 fi
 
 # Make sure we can connect
+echo "Connecting to cluster:"
 kubectl cluster-info
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Unable to connect to cluster and pull information!"
+  echo "Please make sure you are able to connect to the cluster context defined in your kubeconfig file"
   echo " "
-  exit 101
+  exit 103
 else
-  echo " "
   echo "Success connecting to cluster"
   echo " "
 fi
 
 
 # We are going to do all our testing in a dedicated namespace
-echo " "
 echo "Test ability to create a namespace:"
 kubectl create ns testspace
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Unable to create namespace testspace!"
+  echo "Please make sure you are able to create namespaces in your cluster"
   echo " "
-  exit 1
+  exit 104
 fi
 echo "Namespace testspace created"
 echo " "
 
 # Create a PV Claim
-echo " "
 echo "Create a persistent volume"
 kubectl apply -f - << EOF
 kind: PersistentVolumeClaim
@@ -74,14 +105,18 @@ EOF
 
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Error trying to create persistent volume!"
+  echo "This could be related to an error running the YAML or an issue attempting to create"
+  echo "a persistent volume."
   echo " "
-  exit 2
+  echo "Please make sure you are able to create persistent volumes in your cluster and try again."
+  echo " "
+  cleanitup
+  exit 105
 fi
 echo "Persistent volume yaml applied"
 echo " "
 
 # Perform a write test
-echo " "
 echo "Test writing to the persistent volume"
 kubectl apply -f - << EOF
 apiVersion: batch/v1
@@ -109,29 +144,31 @@ spec:
 EOF
 
 WRITEJOB="FIRSTRUN"
-KOUNT=0
-while  [ "$WRITEJOB" != "Completed" ] || [ $KOUNT -ge 10 ]  ; do
-  WRITEJOB=$(kubectl get pods --selector=job-name=write --output=jsonpath='{.items[*].status.containerStatuses[0].state.terminated.reason}')
-  echo "Waiting for job to complete..."
+KOUNT=1
+while  [ "$WRITEJOB" != "Completed" ] && [ $KOUNT -lt $TIMEOUT ]  ; do
+  WRITEJOB=$(kubectl get pods --selector=job-name=write --namespace testspace --output=jsonpath='{.items[*].status.containerStatuses[0].state.terminated.reason}')
+  echo "Attempt $KOUNT of $TIMEOUT: Waiting for job to complete..."
   sleep 15
   ((KOUNT++))
 done
 
-if [ $KOUNT -ge 10 ] ; then
+if [ $KOUNT -ge $TIMEOUT ] ; then
   echo "FAILURE! Unable to create or write to persistent volume!"
-  exit 3
+  echo "Please make sure you are able to create and write to persistent volumes in your cluster."
+  cleanitup
+  exit 106
 elif [ "$WRITEJOB" == "Completed" ] ; then
   echo "Persistent volume write test completed; logs follow:"
   kubectl logs --selector=job-name=write  --namespace testspace
   echo " "
 else
   echo "Should not get here! Exiting!"
-  exit 4
+  cleanitup
+  exit 107
 fi
 
 
 # Perform a read test
-echo " "
 echo "Test reading from the persistent volume"
 kubectl apply -f - << EOF
 apiVersion: batch/v1
@@ -159,32 +196,37 @@ spec:
 EOF
 
 READJOB="FIRSTRUN"
-KOUNT=0
-while [ "$READJOB" != "Completed" ] || [ $KOUNT -ge 10 ]  ; do
-  READJOB=$(kubectl get pods --selector=job-name=read --output=jsonpath='{.items[*].status.containerStatuses[0].state.terminated.reason}')
-  echo "Waiting for job to complete..."
+KOUNT=1
+while [ "$READJOB" != "Completed" ]  && [ $KOUNT -lt $TIMEOUT ]   ; do
+  READJOB=$(kubectl get pods --selector=job-name=read --namespace testspace --output=jsonpath='{.items[*].status.containerStatuses[0].state.terminated.reason}')
+  echo "Attempt $KOUNT of $TIMEOUT: Waiting for job to complete..."
   sleep 15
   ((KOUNT++))
 done
 
-if [ $KOUNT -ge 10 ] ; then
+if [ $KOUNT -ge $TIMEOUT ] ; then
   echo "FAILURE! Unable to read from persistent volume!"
-  exit 3
+  echo "Please make sure you are able to read from persistent volumes in your cluster"
+  cleanitup
+  exit 108
 elif [ "$READJOB" == "Completed" ] ; then
   echo "Persistent volume read test completed; logs follow:"
   kubectl logs --selector=job-name=read  --namespace testspace
   echo " "
 else
   echo "Should not get here! Exiting!"
-  exit 4
+  cleanitup
+  exit 109
 fi
 
 # Clean up...
-echo " "
 echo "Cleaning up read job"
 kubectl --namespace testspace delete job read
 if [ $? -ne 0 ] ; then
-  echo "Failed to cleanup read job"
+  echo "FAILURE! Unable to delete read job!"
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 110
 else
   echo "Complete"
   echo " "
@@ -193,7 +235,10 @@ fi
 echo "Cleaning up write job"
 kubectl --namespace testspace delete job write
 if [ $? -ne 0 ] ; then
-  echo "Failed to cleanup write job"
+  echo "FAILURE! Unable to delete write job!"
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 111
 else
   echo "Complete"
   echo " "
@@ -202,7 +247,10 @@ fi
 echo "Cleaning up persistent volume"
 kubectl --namespace testspace delete pvc maratest01
 if [ $? -ne 0 ] ; then
-  echo "Failed to cleanup persistent volume"
+  echo "FAILURE! Unable to clean up persistent volume!"
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 112
 else
   echo "Complete"
   echo " "
@@ -251,8 +299,9 @@ EOF
 
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Unable to create KUARD application!"
-  echo " "
-  exit 1
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 113
 fi
 
 echo "Sleeping 30 to wait for IP assignment"
@@ -260,10 +309,13 @@ sleep 30
 echo "Checking for External IP address"
 echo " "
 EXTIP=$(kubectl  get service kuard  --namespace testspace --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
-if [ $? -ne 0 ] ; then
+if [ "$EXTIP" == "" ] ; then
   echo "FAILURE! Unable to pull loadBalancer IP address!"
+  echo "This could mean that you do not have a loadBalancer egress defined for the cluster, or it could"
+  echo "be misconfigured. Please remediate this issue."
   echo " "
-  exit 1
+  cleanitup
+  exit 114
 fi
 
 echo "External IP is $EXTIP"
@@ -273,25 +325,25 @@ echo "Deleting KUARD deployment"
 kubectl --namespace testspace delete deployment kuard
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Unable to delete KUARD deployment!"
-  echo " "
-  exit 1
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 115
 fi
 
 echo "Deleting KUARD service"
 kubectl --namespace testspace delete service kuard
 if [ $? -ne 0 ] ; then
   echo "FAILURE! Unable to delete KUARD service!"
-  echo " "
-  exit 1
+  echo "Please check your installation to determine why this is failing!"
+  cleanitup
+  exit 116
 fi
 
-echo "Deleting testspace namespace"
-kubectl delete ns testspace
-if [ $? -ne 0 ] ; then
-  echo "FAILURE! Unable to delete KUARD service!"
-  echo " "
-  exit 1
-fi
-
-echo "All tests passed!"
+# If we reached this point we are good!
+cleanitup
+echo " "
+echo "=============================================================="
+echo "| All tests passed! This system meets the basic requirements |"
+echo "| to deploy MARA.                                            |"
+echo "=============================================================="
 
