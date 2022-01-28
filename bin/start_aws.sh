@@ -104,7 +104,9 @@ source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 # Create the stack if it does not already exist
-find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+# We skip over the tools directory, because that uses a unique stack for setup of the
+# kubernetes components for installations without them.
+find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*"  -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 if [[ -z "${AWS_PROFILE+x}" ]]; then
   echo "AWS_PROFILE not set"

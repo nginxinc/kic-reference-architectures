@@ -214,6 +214,7 @@ if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/ap
 else
   echo "Create a fqdn for your deployment"
   pulumi config set sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  pulumi config set kic-helm:fqdn -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config

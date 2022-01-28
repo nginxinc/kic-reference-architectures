@@ -6,7 +6,6 @@ import pulumi
 from pulumi import Output
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.core.v1 import Service
-import pulumi_kubernetes.helm.v3 as helm
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from pulumi_kubernetes.yaml import ConfigFile
 
@@ -35,6 +34,8 @@ nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
     nginx_plus_flag = True
 
+# Get the FQDN
+fqdn = config.get('fqdn')
 
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -171,7 +172,7 @@ ingress_service = srv.status
 # both, and then make a determination on what the user needs to do based on what they have
 # been given.
 #
-pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
+pulumi.export('lb_ingress_hostname', fqdn)
 pulumi.export('lb_ingress_ip', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].ip))
 # Print out our status
 pulumi.export("kic_status", pstatus)

@@ -106,13 +106,11 @@ elif infra_type == 'kubeconfig':
     ingress_project_name = pulumi_repo_ingress_project_name()
     ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
     ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-    # We store the FQDN in the sirius logic, so switch config
-    config = pulumi.Config('sirius')
-    lb_ingress_hostname = config.require('fqdn')
-    sirius_host = config.require('fqdn')
+    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
     # Set back to kubernetes
     config = pulumi.Config('kubernetes')
     lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
+    sirius_host = lb_ingress_hostname
 else:
     print("Should not get here")
     exit(6)
