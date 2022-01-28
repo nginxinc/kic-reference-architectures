@@ -4,39 +4,35 @@ set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
 
-
 # Don't pollute console output with upgrade notifications
 export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
 export PULUMI_SKIP_CONFIRMATIONS=true
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-if ! command -v pulumi > /dev/null; then
+if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
     export PATH="${script_dir}/venv/bin:$PATH"
-
-    if ! command -v pulumi > /dev/null; then
-      echo >&2 "Pulumi must be installed to continue"
-      exit 1
-    fi
-  else
-    echo >&2 "Pulumi must be installed to continue"
-    exit 1
   fi
 fi
 
-if ! command -v python3 > /dev/null; then
+if ! command -v pulumi >/dev/null; then
+  echo >&2 "Pulumi must be installed to continue"
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null; then
   echo >&2 "Python 3 must be installed to continue"
   exit 1
 fi
 
 # Check to see if the user is logged into Pulumi
-if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
   pulumi login
 
-  if ! pulumi whoami --non-interactive > /dev/null 2>&1; then
+  if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
     echo >&2 "Unable to login to Pulumi - exiting"
     exit 2
   fi
@@ -60,12 +56,12 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 #
 if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
   INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc)"
-  if [ $INFRA == 'AWS' ] ; then
+  if [ $INFRA == 'AWS' ]; then
     echo "Destroying an AWS based stack; if this is not right please type ctrl-c to abort this script."
     sleep 5
     ${script_dir}/destroy_aws.sh
     exit 0
-  elif [ $INFRA == 'kubeconfig' ] ; then
+  elif [ $INFRA == 'kubeconfig' ]; then
     echo "Destroying a kubeconfig based stack; if this is not right please type ctrl-c to abort this script."
     sleep 5
     ${script_dir}/destroy_kube.sh
