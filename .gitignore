@@ -262,3 +262,5 @@ override.tf.json
 
 *.pyc
 !/extras/jwt.token
+/pulumi/python/tools/common/config/*.yaml
+/pulumi/python/tools/common/config/environment
