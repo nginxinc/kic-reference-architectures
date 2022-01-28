@@ -147,7 +147,7 @@ sleep 5
 # TODO: Integrate this into the mainline along with logic to work with/without
 #
 # Hack to deploy our secret....
-if [[ -f "${script_dir}/../extras/jwt.token" ]]; then
+if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
   JWT=$(cat ${script_dir}/../extras/jwt.token)
   echo "Loading JWT into nginx-ingress/regcred"
   ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
