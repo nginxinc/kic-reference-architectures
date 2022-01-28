@@ -14,12 +14,15 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
 # projects.
 #
-#if [ -x "${script_dir}/../pulumi/python/venv/bin/python" ]; then
-  #echo "NOTICE! Unable to find the vnev directory. This is required for the pulumi/python deployment process."
-  #echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
-  #echo " "
-  #exit 1
-#fi
+if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" > /dev/null ; then
+  echo "NOTICE! Unable to find the vnev directory. This is required for the pulumi/python deployment process."
+  echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
+  echo " "
+  exit 1
+else
+  echo "Adding to [${script_dir}/venv/bin] to PATH"
+  export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
+fi
 
 if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then

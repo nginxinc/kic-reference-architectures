@@ -7,6 +7,11 @@ from pulumi_kubernetes.yaml import ConfigFile
 from kic_util import pulumi_config
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
+# We need the kubeconfig and cluster name.
+config = pulumi.Config('kubernetes')
+cluster_name = config.require('cluster_name')
+context_name = config.require('context_name')
+kubeconfig = config.require('kubeconfig')
 
 # Function to add namespace
 def add_namespace(obj):
@@ -15,15 +20,8 @@ def add_namespace(obj):
 
 def pulumi_kube_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    kube_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'kubeconfig')
+    kube_project_path = os.path.join(script_dir, '..', 'common')
     return pulumi_config.get_pulumi_project_name(kube_project_path)
-
-
-def pulumi_ingress_project_name():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
-    return pulumi_config.get_pulumi_project_name(ingress_project_path)
-
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -32,9 +30,7 @@ pulumi_user = pulumi_config.get_pulumi_user()
 
 kube_stack_ref_id = f"{pulumi_user}/{kube_project_name}/{stack_name}"
 kube_stack_ref = pulumi.StackReference(kube_stack_ref_id)
-kubeconfig = kube_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
-kube_stack_ref.get_output('cluster_name').apply(
-    lambda s: pulumi.log.info(f'Cluster name: {s}'))
+
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 

@@ -55,20 +55,32 @@ elastic_release_args = ReleaseArgs(
     # Values from Chart's parameters specified hierarchically,
     values={
         "master": {
-            "replicas": 1
+            "replicas": 3,
+            "resources": {
+                "requests": {},
+                "limits": {}
+            },
         },
         "coordinating": {
-            "replicas": 1
+            "replicas": 2
         },
         "data": {
-            "replicas": 1
+            "replicas": 3,
+            "resources": {
+                "requests": {},
+                "limits": {}
+            },
         },
         "global": {
             "kibanaEnabled": True
         },
         "ingest": {
             "enabled": True,
-            "replicas": 1
+            "replicas": 2,
+            "resources": {
+                "requests": {},
+                "limits": {}
+            },
         }
     },
     # Bumping this up - default is 300

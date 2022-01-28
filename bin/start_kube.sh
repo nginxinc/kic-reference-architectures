@@ -104,7 +104,8 @@ source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 # Create the stack if it does not already exist
-find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+# Do not change the tools directory of add-ons.
+find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 # Show colorful fun headers if the right utils are installed
 function header() {
@@ -201,66 +202,6 @@ if command -v kubectl > /dev/null; then
 fi
 
 
-#
-# For standalone installations we need to ask for storage and loadbalancer access. Users can opt in to additional
-# modules that provide this support if required.
-#
-
-echo " "
-echo "NOTICE! You will need to select 'yes' if you wish to install/use these features in your deployment. This needs"
-echo "to be done with every startup, and the script will verify the values previously entered (ie, you do not need to"
-echo "re-enter the values each time. However, if you answer 'no' the script will remove the values from the config"
-echo " "
-
-# Sleep so we are seen
-sleep 5
-
-while true; do
-    read -r -e -p "Do you wish to install metallb? " yn
-    case $yn in
-        [Yy]* ) echo "Checking for necessary values in the configuration:"
-                pulumi config set metallb:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc enabled >/dev/null 2>&1
-                if pulumi config get metallb:thecidr -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
-                  echo "CIDR found"
-                else
-                  echo "Provide your CIDR (Note: no validation is done on this data)"
-                  pulumi config set metallb:thecidr -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
-                fi
-          break;;
-        [Nn]* ) # If they don't want metallb, but have a value in there we delete it
-                pulumi config rm metallb:thecidr -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                pulumi config rm metallb:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-
-while true; do
-    read -r -e -p "Do you wish to install nfs client support for persistent volumes? " yn
-    case $yn in
-        [Yy]* ) echo "Checking for necessary values in the configuration:"
-                pulumi config set nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc enabled >/dev/null 2>&1
-                if pulumi config get nfsvols:nfsserver -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
-                  echo "NFS Server IP found"
-                else
-                  echo "Provide your NFS Server IP (Note: no validation is done on this data)"
-                  pulumi config set nfsvols:nfsserver -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
-                fi
-                if pulumi config get nfsvols:nfspath -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
-                  echo "NFS Share Path found"
-                else
-                  echo "Provide your NFS Share Path (Note: no validation is done on this data)"
-                  pulumi config set nfsvols:nfspath -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
-                fi
-          break;;
-        [Nn]* ) # If they don't want nfsvols, but have a value in there we delete it
-                pulumi config rm nfsvols:nfsserver -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                pulumi config rm nfsvols:nfspath -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                pulumi config rm nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc > /dev/null 2>&1
-                break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
 
 # TODO: Figure out better way to handle hostname / ip address for exposing our IC
 #
@@ -323,18 +264,6 @@ pulumi_args="--emoji --stack ${PULUMI_STACK}"
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
 pulumi $pulumi_args up
-
-if pulumi config get metallb:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
-  header "MetalLB"
-  cd "${script_dir}/../pulumi/python/kubernetes/metallb"
-  pulumi $pulumi_args up
-fi
-
-if pulumi config get nfsvols:enabled -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
-  header "NFSVols"
-  cd "${script_dir}/../pulumi/python/kubernetes/nfsvolumes"
-  pulumi $pulumi_args up
-fi
 
 # TODO: This is using a different project than the AWS deploy; we need to collapse those
 header "Deploying IC"
