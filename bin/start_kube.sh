@@ -213,7 +213,6 @@ if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/ap
   echo "Hostname found for deployment"
 else
   echo "Create a fqdn for your deployment"
-  pulumi config set sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
   pulumi config set kic-helm:fqdn -C ${script_dir}/../pulumi/python/config
 fi
 
