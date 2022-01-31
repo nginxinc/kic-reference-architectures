@@ -162,7 +162,7 @@ fi
 
 # We automatically set this to a kubeconfig type for infra type
 # TODO: combined file should query and manage this
-pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/configkubeconfig
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config kubeconfig
 # Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
 # configuration because of the encryption needed for the passwords.
