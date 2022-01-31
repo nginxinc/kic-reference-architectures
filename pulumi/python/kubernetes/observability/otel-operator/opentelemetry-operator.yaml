@@ -9,23 +9,152 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.6.0-beta.0
+  creationTimestamp: null
+  name: instrumentations.opentelemetry.io
+spec:
+  group: opentelemetry.io
+  names:
+    kind: Instrumentation
+    listKind: InstrumentationList
+    plural: instrumentations
+    shortNames:
+    - otelinst
+    - otelinsts
+    singular: instrumentation
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Instrumentation is the spec for OpenTelemetry instrumentation.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: InstrumentationSpec defines the desired state of OpenTelemetry
+              SDK and instrumentation.
+            properties:
+              exporter:
+                description: Exporter defines exporter configuration.
+                properties:
+                  endpoint:
+                    description: Endpoint is address of the collector with OTLP endpoint.
+                    type: string
+                type: object
+              java:
+                description: Java defines configuration for java auto-instrumentation.
+                properties:
+                  image:
+                    description: Image is a container image with javaagent auto-instrumentation
+                      JAR.
+                    type: string
+                type: object
+              nodejs:
+                description: NodeJS defines configuration for nodejs auto-instrumentation.
+                properties:
+                  image:
+                    description: Image is a container image with NodeJS SDK and auto-instrumentation.
+                    type: string
+                type: object
+              propagators:
+                description: Propagators defines inter-process context propagation
+                  configuration.
+                items:
+                  description: Propagator represents the propagation type.
+                  enum:
+                  - tracecontext
+                  - baggage
+                  - b3
+                  - b3multi
+                  - jaeger
+                  - xray
+                  - ottrace
+                  - none
+                  type: string
+                type: array
+              python:
+                description: Python defines configuration for python auto-instrumentation.
+                properties:
+                  image:
+                    description: Image is a container image with Python SDK and auto-instrumentation.
+                    type: string
+                type: object
+              resource:
+                description: Resource defines the configuration for the resource attributes,
+                  as defined by the OpenTelemetry specification.
+                properties:
+                  addK8sUIDAttributes:
+                    description: AddK8sUIDAttributes defines whether K8s UID attributes
+                      should be collected (e.g. k8s.deployment.uid).
+                    type: boolean
+                  resourceAttributes:
+                    additionalProperties:
+                      type: string
+                    description: 'Attributes defines attributes that are added to
+                      the resource. For example environment: dev'
+                    type: object
+                type: object
+              sampler:
+                description: Sampler defines sampling configuration.
+                properties:
+                  argument:
+                    description: Argument defines sampler argument. The value depends
+                      on the sampler type. For instance for parentbased_traceidratio
+                      sampler type it is a number in range [0..1] e.g. 0.25.
+                    type: string
+                  type:
+                    description: Type defines sampler type. The value can be for instance
+                      parentbased_always_on, parentbased_always_off, parentbased_traceidratio...
+                    enum:
+                    - always_on
+                    - always_off
+                    - traceidratio
+                    - parentbased_always_on
+                    - parentbased_always_off
+                    - parentbased_traceidratio
+                    - jaeger_remote
+                    - xray
+                    type: string
+                type: object
+            type: object
+          status:
+            description: InstrumentationStatus defines status of the instrumentation.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     cert-manager.io/inject-ca-from: opentelemetry-operator-system/opentelemetry-operator-serving-cert
     controller-gen.kubebuilder.io/version: v0.6.0-beta.0
   name: opentelemetrycollectors.opentelemetry.io
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        caBundle: Cg==
-        service:
-          name: webhook-service
-          namespace: opentelemetry-operator-system
-          path: /convert
-          port: 443
-      conversionReviewVersions:
-      - v1
-      - v1beta1
   group: opentelemetry.io
   names:
     kind: OpenTelemetryCollector
@@ -249,6 +378,163 @@ spec:
                   type: string
                 description: PodAnnotations is the set of annotations that will be
                   attached to Collector and Target Allocator pods.
+                type: object
+              podSecurityContext:
+                description: PodSecurityContext holds pod-level security attributes
+                  and common container settings. Some fields are also present in container.securityContext.  Field
+                  values of container.securityContext take precedence over field values
+                  of PodSecurityContext.
+                properties:
+                  fsGroup:
+                    description: "A special supplemental group that applies to all
+                      containers in a pod. Some volume types allow the Kubelet to
+                      change the ownership of that volume to be owned by the pod:
+                      \n 1. The owning GID will be the FSGroup 2. The setgid bit is
+                      set (new files created in the volume will be owned by FSGroup)
+                      3. The permission bits are OR'd with rw-rw---- \n If unset,
+                      the Kubelet will not modify the ownership and permissions of
+                      any volume."
+                    format: int64
+                    type: integer
+                  fsGroupChangePolicy:
+                    description: 'fsGroupChangePolicy defines behavior of changing
+                      ownership and permission of the volume before being exposed
+                      inside Pod. This field will only apply to volume types which
+                      support fsGroup based ownership(and permissions). It will have
+                      no effect on ephemeral volume types such as: secret, configmaps
+                      and emptydir. Valid values are "OnRootMismatch" and "Always".
+                      If not specified, "Always" is used.'
+                    type: string
+                  runAsGroup:
+                    description: The GID to run the entrypoint of the container process.
+                      Uses runtime default if unset. May also be set in SecurityContext.  If
+                      set in both SecurityContext and PodSecurityContext, the value
+                      specified in SecurityContext takes precedence for that container.
+                    format: int64
+                    type: integer
+                  runAsNonRoot:
+                    description: Indicates that the container must run as a non-root
+                      user. If true, the Kubelet will validate the image at runtime
+                      to ensure that it does not run as UID 0 (root) and fail to start
+                      the container if it does. If unset or false, no such validation
+                      will be performed. May also be set in SecurityContext.  If set
+                      in both SecurityContext and PodSecurityContext, the value specified
+                      in SecurityContext takes precedence.
+                    type: boolean
+                  runAsUser:
+                    description: The UID to run the entrypoint of the container process.
+                      Defaults to user specified in image metadata if unspecified.
+                      May also be set in SecurityContext.  If set in both SecurityContext
+                      and PodSecurityContext, the value specified in SecurityContext
+                      takes precedence for that container.
+                    format: int64
+                    type: integer
+                  seLinuxOptions:
+                    description: The SELinux context to be applied to all containers.
+                      If unspecified, the container runtime will allocate a random
+                      SELinux context for each container.  May also be set in SecurityContext.  If
+                      set in both SecurityContext and PodSecurityContext, the value
+                      specified in SecurityContext takes precedence for that container.
+                    properties:
+                      level:
+                        description: Level is SELinux level label that applies to
+                          the container.
+                        type: string
+                      role:
+                        description: Role is a SELinux role label that applies to
+                          the container.
+                        type: string
+                      type:
+                        description: Type is a SELinux type label that applies to
+                          the container.
+                        type: string
+                      user:
+                        description: User is a SELinux user label that applies to
+                          the container.
+                        type: string
+                    type: object
+                  seccompProfile:
+                    description: The seccomp options to use by the containers in this
+                      pod.
+                    properties:
+                      localhostProfile:
+                        description: localhostProfile indicates a profile defined
+                          in a file on the node should be used. The profile must be
+                          preconfigured on the node to work. Must be a descending
+                          path, relative to the kubelet's configured seccomp profile
+                          location. Must only be set if type is "Localhost".
+                        type: string
+                      type:
+                        description: "type indicates which kind of seccomp profile
+                          will be applied. Valid options are: \n Localhost - a profile
+                          defined in a file on the node should be used. RuntimeDefault
+                          - the container runtime default profile should be used.
+                          Unconfined - no profile should be applied."
+                        type: string
+                    required:
+                    - type
+                    type: object
+                  supplementalGroups:
+                    description: A list of groups applied to the first process run
+                      in each container, in addition to the container's primary GID.  If
+                      unspecified, no groups will be added to any container.
+                    items:
+                      format: int64
+                      type: integer
+                    type: array
+                  sysctls:
+                    description: Sysctls hold a list of namespaced sysctls used for
+                      the pod. Pods with unsupported sysctls (by the container runtime)
+                      might fail to launch.
+                    items:
+                      description: Sysctl defines a kernel parameter to be set
+                      properties:
+                        name:
+                          description: Name of a property to set
+                          type: string
+                        value:
+                          description: Value of a property to set
+                          type: string
+                      required:
+                      - name
+                      - value
+                      type: object
+                    type: array
+                  windowsOptions:
+                    description: The Windows specific settings applied to all containers.
+                      If unspecified, the options within a container's SecurityContext
+                      will be used. If set in both SecurityContext and PodSecurityContext,
+                      the value specified in SecurityContext takes precedence.
+                    properties:
+                      gmsaCredentialSpec:
+                        description: GMSACredentialSpec is where the GMSA admission
+                          webhook (https://github.com/kubernetes-sigs/windows-gmsa)
+                          inlines the contents of the GMSA credential spec named by
+                          the GMSACredentialSpecName field.
+                        type: string
+                      gmsaCredentialSpecName:
+                        description: GMSACredentialSpecName is the name of the GMSA
+                          credential spec to use.
+                        type: string
+                      hostProcess:
+                        description: HostProcess determines if a container should
+                          be run as a 'Host Process' container. This field is alpha-level
+                          and will only be honored by components that enable the WindowsHostProcessContainers
+                          feature flag. Setting this field without the feature flag
+                          will result in errors when validating the Pod. All of a
+                          Pod's containers must have the same effective HostProcess
+                          value (it is not allowed to have a mix of HostProcess containers
+                          and non-HostProcess containers).  In addition, if HostProcess
+                          is true then HostNetwork must also be set to true.
+                        type: boolean
+                      runAsUserName:
+                        description: The UserName in Windows to run the entrypoint
+                          of the container process. Defaults to the user specified
+                          in image metadata if unspecified. May also be set in PodSecurityContext.
+                          If set in both SecurityContext and PodSecurityContext, the
+                          value specified in SecurityContext takes precedence.
+                        type: string
+                    type: object
                 type: object
               ports:
                 description: Ports allows a set of ports to be exposed by the underlying
@@ -551,6 +837,13 @@ spec:
                       type: string
                   type: object
                 type: array
+              upgradeStrategy:
+                description: UpgradeStrategy represents how the operator will handle
+                  upgrades to the CR when a newer version of the operator is deployed
+                enum:
+                - automatic
+                - none
+                type: string
               volumeClaimTemplates:
                 description: VolumeClaimTemplates will provide stable storage using
                   PersistentVolumes. Only available when the mode=statefulset.
@@ -2510,6 +2803,14 @@ rules:
 - apiGroups:
   - apps
   resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
   - statefulsets
   verbs:
   - create
@@ -2528,6 +2829,16 @@ rules:
   - get
   - list
   - update
+- apiGroups:
+  - opentelemetry.io
+  resources:
+  - instrumentations
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - opentelemetry.io
   resources:
@@ -2675,12 +2986,24 @@ spec:
       - args:
         - --metrics-addr=127.0.0.1:8080
         - --enable-leader-election
-        image: quay.io/opentelemetry/opentelemetry-operator:v0.37.1
+        image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:v0.42.0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
         name: manager
         ports:
         - containerPort: 9443
           name: webhook-server
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
         resources:
           limits:
             cpu: 200m
@@ -2711,7 +3034,7 @@ spec:
           defaultMode: 420
           secretName: opentelemetry-operator-controller-manager-service-cert
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: opentelemetry-operator-serving-cert
@@ -2728,7 +3051,7 @@ spec:
     organizationalUnits:
     - opentelemetry-operator
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: opentelemetry-operator-selfsigned-issuer
@@ -2743,6 +3066,27 @@ metadata:
     cert-manager.io/inject-ca-from: opentelemetry-operator-system/opentelemetry-operator-serving-cert
   name: opentelemetry-operator-mutating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: opentelemetry-operator-webhook-service
+      namespace: opentelemetry-operator-system
+      path: /mutate-opentelemetry-io-v1alpha1-instrumentation
+  failurePolicy: Fail
+  name: minstrumentation.kb.io
+  rules:
+  - apiGroups:
+    - opentelemetry.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - instrumentations
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
@@ -2793,6 +3137,47 @@ metadata:
     cert-manager.io/inject-ca-from: opentelemetry-operator-system/opentelemetry-operator-serving-cert
   name: opentelemetry-operator-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: opentelemetry-operator-webhook-service
+      namespace: opentelemetry-operator-system
+      path: /validate-opentelemetry-io-v1alpha1-instrumentation
+  failurePolicy: Fail
+  name: vinstrumentationcreateupdate.kb.io
+  rules:
+  - apiGroups:
+    - opentelemetry.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - instrumentations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: opentelemetry-operator-webhook-service
+      namespace: opentelemetry-operator-system
+      path: /validate-opentelemetry-io-v1alpha1-instrumentation
+  failurePolicy: Ignore
+  name: vinstrumentationdelete.kb.io
+  rules:
+  - apiGroups:
+    - opentelemetry.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - DELETE
+    resources:
+    - instrumentations
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
