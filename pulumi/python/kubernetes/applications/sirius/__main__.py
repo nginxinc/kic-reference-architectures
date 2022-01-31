@@ -376,7 +376,8 @@ if infra_type == 'AWS':
 elif infra_type == 'kubeconfig':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
-    pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    application_url = sirius_host.apply(lambda host: f'https://{host}')
 
 #
 # Get the chart values for both monitoring charts, switch back to the Sirius
