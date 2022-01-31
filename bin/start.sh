@@ -73,7 +73,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
     read -r -e -p "Environment file exists and is not empty. Answer yes to use, no to delete. " yn
     case $yn in
     [Yy]*) # We have an environment file and they want to keep it....
-      if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
+      if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
         INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc)"
         if [ $INFRA == 'AWS' ]; then
           exec ${script_dir}/start_aws.sh

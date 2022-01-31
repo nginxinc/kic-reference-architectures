@@ -188,7 +188,7 @@ fi
 # This same password will be used for the Grafana deployment that is stood up as part of
 # the prometheus operator driven prometheus-kube-stack.
 #
-if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
+if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
@@ -265,7 +265,7 @@ pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 # We automatically set this to aws for infra type; since this is a script specific to AWS
 # TODO: combined file should query and manage this
-pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc AWS
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/configAWS
 # Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
 # configuration because of the encryption needed for the passwords.

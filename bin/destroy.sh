@@ -54,7 +54,7 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 #
 # Determine what destroy script we need to run
 #
-if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc >/dev/null 2>&1; then
+if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
   INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc)"
   if [ $INFRA == 'AWS' ]; then
     echo "Destroying an AWS based stack; if this is not right please type ctrl-c to abort this script."
