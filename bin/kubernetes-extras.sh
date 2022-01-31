@@ -9,6 +9,9 @@ export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
 export PULUMI_SKIP_CONFIRMATIONS=true
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
+
 # Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
 # projects.
 #
