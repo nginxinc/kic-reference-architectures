@@ -18,12 +18,12 @@ if infra_type == 'AWS':
     project_name = pulumi.get_project()
     pulumi_user = pulumi_config.get_pulumi_user()
 
-    eks_project_name = aws_project_name_from_project_dir('eks')
-    eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
-    eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
-    kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
+    k8_project_name = aws_project_name_from_project_dir('eks')
+    k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
+    k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
+    kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
     #kubeconfig = config.require('kubeconfig')
-    cluster_name = eks_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
+    cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
     #
     # Export the clusters' kubeconfig
     #

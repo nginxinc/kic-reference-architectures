@@ -18,7 +18,7 @@ def remove_status_field(obj):
         del obj['status']
 
 
-def pulumi_eks_project_name():
+def pulumi_k8_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     eks_project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
@@ -69,13 +69,13 @@ def add_namespace(obj):
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
-eks_project_name = pulumi_eks_project_name()
+k8_project_name = pulumi_k8_project_name()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
-eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
-kubeconfig = eks_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
-eks_stack_ref.get_output('cluster_name').apply(
+k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
+k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
+kubeconfig = k8_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
+k8_stack_ref.get_output('cluster_name').apply(
     lambda s: pulumi.log.info(f'Cluster name: {s}'))
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)

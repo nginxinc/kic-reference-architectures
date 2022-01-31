@@ -17,10 +17,10 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-eks_project_name = project_name_from_project_dir('kubeconfig')
-eks_stack_ref_id = f"{pulumi_user}/{eks_project_name}/{stack_name}"
-eks_stack_ref = pulumi.StackReference(eks_stack_ref_id)
-kubeconfig = eks_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
+k8_project_name = project_name_from_project_dir('kubeconfig')
+k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
+k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
+kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
@@ -35,7 +35,7 @@ if not chart_name:
     chart_name = 'cert-manager'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = 'v1.4.0'
+    chart_version = 'v1.7.0'
 helm_repo_name = config.get('certmgr_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'jetstack'
