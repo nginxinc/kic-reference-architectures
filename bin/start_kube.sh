@@ -184,7 +184,7 @@ if pulumi config get kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/con
   echo "Kubeconfig file found"
 else
   echo "Provide an absolute path to your kubeconfig file"
-  pulumi config set kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
+  pulumi config set kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/config
 fi
 
 # Clustername
@@ -192,7 +192,7 @@ if pulumi config get kubernetes:cluster_name -C ${script_dir}/../pulumi/python/c
   echo "Clustername found"
 else
   echo "Provide your clustername"
-  pulumi config set kubernetes:cluster_name -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
+  pulumi config set kubernetes:cluster_name -C ${script_dir}/../pulumi/python/config
 fi
 
 # Connect to the cluster
@@ -214,7 +214,7 @@ if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/ap
 else
   echo "Create a fqdn for your deployment"
   pulumi config set sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
-  pulumi config set kic-helm:fqdn -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
+  pulumi config set kic-helm:fqdn -C ${script_dir}/../pulumi/python/config
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -256,7 +256,7 @@ if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/config>
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
-  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
+  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
 

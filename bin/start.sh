@@ -74,7 +74,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
     case $yn in
     [Yy]*) # We have an environment file and they want to keep it....
       if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
-        INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc)"
+        INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config)"
         if [ $INFRA == 'AWS' ]; then
           exec ${script_dir}/start_aws.sh
           exit 0

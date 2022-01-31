@@ -117,7 +117,7 @@ if [[ -z "${AWS_PROFILE+x}" ]]; then
     fi
     echo "AWS_PROFILE=${AWS_PROFILE}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
   fi
 else
   echo "Using AWS_PROFILE from environment: ${AWS_PROFILE}"
@@ -146,11 +146,11 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
     echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
   fi
 else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
-  pulumi config set aws:region -C "${script_dir}/../pulumi/python/infrastructure/aws/vpc" "${AWS_DEFAULT_REGION}"
+  pulumi config set aws:region -C "${script_dir}/../pulumi/python/config" "${AWS_DEFAULT_REGION}"
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -192,7 +192,7 @@ if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/config>
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
-  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/infrastructure/aws/vpc
+  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
 # Show colorful fun headers if the right utils are installed
@@ -225,7 +225,7 @@ function add_kube_config() {
 }
 
 function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/infrastructure/aws/vpc" config get aws:profile)"
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get aws:profile)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     profile_arg="--profile ${pulumi_aws_profile}"
   elif [[ -n "${AWS_PROFILE+x}" ]]; then
@@ -265,7 +265,7 @@ pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 # We automatically set this to aws for infra type; since this is a script specific to AWS
 # TODO: combined file should query and manage this
-pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/configAWS
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config AWS
 # Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
 # configuration because of the encryption needed for the passwords.

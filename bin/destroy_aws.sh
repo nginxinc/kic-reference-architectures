@@ -60,7 +60,7 @@ source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/infrastructure/aws/vpc" config get aws:profile)"
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get aws:profile)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     profile_arg="--profile ${pulumi_aws_profile}"
   elif [[ -n "${AWS_PROFILE+x}" ]]; then
