@@ -17,13 +17,6 @@ def pulumi_k8_project_name():
     eks_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
-
-def pulumi_ingress_project_name():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
-    return pulumi_config.get_pulumi_project_name(ingress_project_path)
-
-
 def otel_operator_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     otel_operator_path = os.path.join(script_dir, 'otel-operator', '*.yaml')
