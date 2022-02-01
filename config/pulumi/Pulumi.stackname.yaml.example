@@ -1,3 +1,20 @@
+################################################################################
+# This configuration file is a template that is intended to show all of the
+# valid options. There are two ways to use this file:
+#
+# 1. You can allow the scripts to create their own configuration; this results
+#    in defaults being used for any configuration value that has a default, and
+#    any required variables will be prompted for.
+# 2. You can manually edit this file for your environment; to do this you need to
+#    create a file in this configuration directory. This file needs to be named
+#    Pulumi.stackname.yaml, where stackname is replaced with the name of the stack
+#    you are configuring.
+#
+# NOTE: Currently, many of the stacks stood up by this process have sanity checks
+#       that will fill in default values if values are not found in this file.
+#
+################################################################################
+
 config:
   ############################################################################
   # AWS Access Settings
@@ -9,7 +26,27 @@ config:
   aws:region: us-east-1
 
   ############################################################################
-  # VPC Settings
+  # K8 Infrastructure Settings
+  ############################################################################
+
+  # NOTE: There are currently two valid values for this configuration variable; you can
+  #       define to use AWS or kubeconfig. If not set, this value will be requested
+  #       in the run of start.sh and will be written to the file.
+  #
+  # kubernetes:infra_type: AWS
+  # kubernetes:infra_type: kubeconfig
+  #
+  # NOTE: For kubernetes installations that are using the kubeconfig file, there are three
+  #       other variables that need to be set. This includes the fully qualified path to the
+  #       kubeconfig file, the name of the cluster you will be using, and the name of the
+  #       context you are using.
+  #
+  # kubernetes:kubeconfig: /full/path/to/kube/config
+  # kubernetes:cluster_name: name-of-cluster
+  # kubernetes:context_name: name-of-context
+
+  ############################################################################
+  # AWS: VPC Settings
   ############################################################################
 
   # An optional array of availability zone ids to create subnets for can be
@@ -20,7 +57,7 @@ config:
     - us-west-1b
 
   ############################################################################
-  # AWS Elastic Kubernetes Service (EKS) Settings
+  # AWS: Elastic Kubernetes Service (EKS) Settings
   ############################################################################
 
   # This is the Kubernetes version to install using EKS. Changing this value may result in bugs in the behavior
@@ -44,6 +81,13 @@ config:
   # different from the version of the ingress controller itself. Rather, this
   # is the version of the helm chart which describes *how* to deploy the ingress
   # controller.
+  #
+  # NOTE: If you choose to deploy onto a cluster defined by a kubeconfig file, the
+  #       only currently supported deployment method is to use a JWT to deploy a
+  #       NGINX Plus IC. This is a temporary configuration that will be updated to
+  #       fully support all of the deployment methods that the AWS infrastructure
+  #       supports.
+  #
 
   # NGINX Kubernetes Ingress Controller (KIC) Configuration
   kic-helm:chart_name: nginx-ingress
@@ -77,7 +121,7 @@ config:
 
 
   ############################################################################
-  # Options for building from oss_image
+  # Options for building from oss_image (WIP)
   ############################################################################
 
   ############################################################################
@@ -141,6 +185,8 @@ config:
     kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
 
   ############################################################################
+  # Logagent Deployment (Filebeat)
+  ############################################################################
 
   # Logagent Configuration
   logagent:chart_name: filebeat
@@ -153,6 +199,8 @@ config:
   # URL of the chart repo to pull the logagent from
 
   ############################################################################
+  # Logstore Deployment (Elasticsearch)
+  ############################################################################
 
   # Logstore Configuration
   logstore:chart_name: elasticsearch
@@ -163,6 +211,23 @@ config:
   # Name of the repo to pull the logstore from
   logstore:helm_repo_url: https://charts.bitnami.com/bitnami
 
+  # NOTE: Because of the wide variety of kubernetes clusters that we deploy to
+  #       we have provided the ability to tune the ELK stack appropriately. By
+  #       default we deploy 1 each of the ingest, data, master, and coordinating
+  #       nodes. This is sufficient for basic POC testing but will most likely
+  #       fall over with heavy usage.
+
+  logstore:master_replicas: 3
+  # Number of master replicas to deploy
+  logstore:data_replicas: 3
+  # Number of data replicas to deploy
+  logstore:ingest_replicas: 2
+  # Number of ingest replicas to deploy
+  logstore:coordinating_replicas: 2
+  # Number of coordinating replicas to deploy
+
+  ############################################################################
+  # Certificate Management (cert-manager) Deployment
   ############################################################################
 
   # Cert Manager Configuration
@@ -176,14 +241,19 @@ config:
   # URL of the chart repo to pull certmanager from
 
   ############################################################################
+  # Grafana Configuration (Part of Kube-Prometheus-Stack Deployment)
+  ############################################################################
+  # NOTE: The password for the grafana installation; note that this is not exposed
+  #       to the internet and requires kubeproxy to access. However, this should be
+  #       encrypted which is dependent on Pulumi addressing hierarchical config files
+  #       (for the ideal solution). See the anthos subdir for details.
 
   # Grafana Configuration
   grafana:adminpass: strongpass
-  # The password for the grafana installation; note that this is not exposed to the internet
-  # and requires kubeproxy to access. However, this should be encrypted which is dependent on
-  # Pulumi addressing hierarchical config files (for the ideal solution). See the anthos subdir
-  # for details.
 
+
+  ############################################################################
+  # Prometheus Deployment (kube-prometheus-stack)
   ############################################################################
 
   # Prometheus Configuration
@@ -200,6 +270,8 @@ config:
   prometheus.statsd_chart_version: 0.4.2
 
   ############################################################################
+  # Bank of Sirius Configuration
+  ############################################################################
 
-  # The parameters for the Bank of Sirius are set in a configuration directory
-  # within that project.
+  # NOTE: The parameters for the Bank of Sirius are set in a configuration directory
+  #       within that project.
