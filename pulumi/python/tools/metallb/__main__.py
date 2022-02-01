@@ -80,8 +80,6 @@ metallb_system_memberlist_secret = k8s.core.v1.Secret("metallb_systemMemberlistS
     opts=pulumi.ResourceOptions(depends_on=[ns])
     )
 
-##therange = "192.168.216.101-192.168.216.110"
-
 
 # Create a config map
 metallb_system_config_config_map = k8s.core.v1.ConfigMap("metallb_systemConfigConfigMap",

@@ -12,17 +12,20 @@ spec:
             endpoint: 0.0.0.0:9978
           http:
             endpoint: 0.0.0.0:9979
-
+      # Collect Prometheus Metrics
+    exporters:
+      otlp:
+        endpoint: https://ingest.lightstep.com:443
+        headers: {"lightstep-service-name":"my-service","lightstep-access-token":"RJuKPQjYWBCf1wimH/IzCtOfhjoeJHv5AOZYpZfrgt//xCBLEaegjL8YEJFh597iwkYZ/OJe0vHGPEQFLwPpzk2FGv6T4cAZm1gPmo6N"}
     processors:
       batch:
-
-    exporters:
-      logging:
-        logLevel:
-
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [logging]
+          exporters: [otlp]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
