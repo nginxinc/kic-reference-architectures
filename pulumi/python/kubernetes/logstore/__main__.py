@@ -21,6 +21,27 @@ helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://charts.bitnami.com/bitnami'
 
+#
+# Define the default replicas for the Elastic components. If not set we default to one copy of each - master, ingest,
+# data, and coordinating. This is ideal for smaller installations - K3S, Microk8s, minikube, etc. However, it may fall
+# over when running with a high volume of logs.
+#
+master_replicas = config.get('master_replicas')
+if not master_replicas:
+    master_replicas = 1
+
+ingest_replicas = config.get('ingest_replicas')
+if not ingest_replicas:
+    ingest_replicas = 1
+
+data_replicas = config.get('data_replicas')
+if not data_replicas:
+    data_replicas = 1
+
+coordinating_replicas = config.get('coordinating_replicas')
+if not coordinating_replicas:
+    coordinating_replicas = 1
+
 
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -55,17 +76,17 @@ elastic_release_args = ReleaseArgs(
     # Values from Chart's parameters specified hierarchically,
     values={
         "master": {
-            "replicas": 3,
+            "replicas": master_replicas,
             "resources": {
                 "requests": {},
                 "limits": {}
             },
         },
         "coordinating": {
-            "replicas": 2
+            "replicas": coordinating_replicas
         },
         "data": {
-            "replicas": 3,
+            "replicas": data_replicas,
             "resources": {
                 "requests": {},
                 "limits": {}
@@ -76,7 +97,7 @@ elastic_release_args = ReleaseArgs(
         },
         "ingest": {
             "enabled": True,
-            "replicas": 2,
+            "replicas": ingest_replicas,
             "resources": {
                 "requests": {},
                 "limits": {}
