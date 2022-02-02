@@ -22,6 +22,14 @@ if not helm_repo_url:
     helm_repo_url = 'https://charts.bitnami.com/bitnami'
 
 #
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
+#
 # Define the default replicas for the Elastic components. If not set we default to one copy of each - master, ingest,
 # data, and coordinating. This is ideal for smaller installations - K3S, Microk8s, minikube, etc. However, it may fall
 # over when running with a high volume of logs.
@@ -104,8 +112,8 @@ elastic_release_args = ReleaseArgs(
             },
         }
     },
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

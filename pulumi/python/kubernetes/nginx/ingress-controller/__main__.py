@@ -24,6 +24,13 @@ if not helm_repo_name:
 helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
 
 
 def aws_project_name_from_project_dir(dirname: str):
@@ -158,8 +165,8 @@ kic_release_args = ReleaseArgs(
     # Values from Chart's parameters specified hierarchically,
     values=chart_values,
 
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

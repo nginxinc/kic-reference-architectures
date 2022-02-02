@@ -55,6 +55,14 @@ nfsserver = config.require('nfsserver')
 nfspath = config.require('nfspath')
 nfsopts = '{nolock,nfsvers=3}'
 
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
 nfsvols_release_args = ReleaseArgs(
     chart=chart_name,
     repository_opts=RepositoryOptsArgs(
@@ -77,8 +85,8 @@ nfsvols_release_args = ReleaseArgs(
             ]
         }
     },
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

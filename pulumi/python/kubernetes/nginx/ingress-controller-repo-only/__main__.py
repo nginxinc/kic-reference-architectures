@@ -34,6 +34,14 @@ nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
     nginx_plus_flag = True
 
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
 # Get the FQDN
 fqdn = config.get('fqdn')
 
@@ -143,8 +151,8 @@ kic_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values=chart_values,
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

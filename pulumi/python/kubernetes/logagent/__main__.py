@@ -22,6 +22,14 @@ if not helm_repo_url:
     helm_repo_url = 'https://helm.elastic.co'
 
 
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname)
@@ -81,8 +89,8 @@ filebeat_release_args = ReleaseArgs(
             }
         }
     },
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

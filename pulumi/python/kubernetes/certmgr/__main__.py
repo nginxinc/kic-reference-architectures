@@ -69,6 +69,14 @@ helm_repo_url = config.get('certmgr_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://charts.jetstack.io'
 
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
 certmgr_release_args = ReleaseArgs(
     chart=chart_name,
     repository_opts=RepositoryOptsArgs(
@@ -76,13 +84,8 @@ certmgr_release_args = ReleaseArgs(
     ),
     version=chart_version,
     namespace=ns.metadata.name,
-
-    # Values from Chart's parameters specified hierarchically,
-    #values={
-        #"installCRDs": True
-    #},
-    # Bumping this up - default is 300
-    timeout=600,
+    # Configure the timeout value.
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.

@@ -98,6 +98,8 @@ config:
   # Name of the repo to pull the kic chart from
   kic-helm:helm_repo_url: https://helm.nginx.com/stable
   # URL of the chart repo to pull kic from
+  kic-helm:helm_timeout: 300
+  # Timeout value for helm operations in seconds
 
   # Acceptable values are default value is (oss_image):
   # source    - build the KIC image from source code
@@ -197,6 +199,8 @@ config:
   # Name of the repo to pull the logagent from
   logagent:helm_repo_url: https://helm.elastic.co
   # URL of the chart repo to pull the logagent from
+  logagent:helm_timeout: 300
+  # Timeout value for helm operations in seconds
 
   ############################################################################
   # Logstore Deployment (Elasticsearch)
@@ -210,6 +214,9 @@ config:
   logstore:helm_repo_name: bitnami
   # Name of the repo to pull the logstore from
   logstore:helm_repo_url: https://charts.bitnami.com/bitnami
+  # URL of the chart repo to pull the logstore from
+  logstore:helm_timeout: 300
+  # Timeout value for helm operations in seconds
 
   # NOTE: Because of the wide variety of kubernetes clusters that we deploy to
   #       we have provided the ability to tune the ELK stack appropriately. By
@@ -239,6 +246,8 @@ config:
   # Name of the repo to pull the certmanager chart from
   certmgr:certmgr_helm_repo_url: https://charts.jetstack.io
   # URL of the chart repo to pull certmanager from
+  certmgr:helm_timeout: 300
+  # Timeout value for helm operations in seconds
 
   ############################################################################
   # Grafana Configuration (Part of Kube-Prometheus-Stack Deployment)
@@ -264,10 +273,13 @@ config:
   prometheus:helm_repo_name: prometheus-community
   # Name of the repo to pull the prometheus chart from
   prometheus:helm_repo_url: https://https://prometheus-community.github.io/helm-charts
-  # Name of the statsd chart (uses the same repo as the prom chart)
+  # URL of the chart repo
   prometheus:statsd_chart_name: prometheus-statsd-exporter
-  # Version of the statsd chart (uses the same repo as the prom chart)
+  # Name of the statsd chart (uses the same repo as the prom chart)
   prometheus.statsd_chart_version: 0.4.2
+  # Version of the statsd chart (uses the same repo as the prom chart)
+  prometheus:helm_timeout: 300
+  # Timeout value for helm operations in seconds
 
   ############################################################################
   # Bank of Sirius Configuration

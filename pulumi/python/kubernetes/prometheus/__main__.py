@@ -52,6 +52,14 @@ helm_repo_url = config.get('prometheus_helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://prometheus-community.github.io/helm-charts'
 
+#
+# Allow the user to set timeout per helm chart; otherwise
+# we default to 5 minutes.
+#
+helm_timeout = config.get('helm_timeout')
+if not helm_timeout:
+    helm_timeout = 300
+
 grafana_config = pulumi.Config('grafana')
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
@@ -142,8 +150,8 @@ prometheus_release_args = ReleaseArgs(
                 "enabled": False}
         }
     },
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
@@ -206,8 +214,8 @@ statsd_release_args = ReleaseArgs(
             "name": ""
         }
     },
-    # Bumping this up - default is 300
-    timeout=600,
+    # User configurable timeout
+    timeout=helm_timeout,
     # By default Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
