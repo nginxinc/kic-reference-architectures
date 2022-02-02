@@ -52,6 +52,9 @@ function distro_like() {
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+# Unset if defined
+unset VIRTUAL_ENV
+
 if ! command -v git >/dev/null; then
   echo >&2 "git must be installed to continue"
   exit 1

@@ -120,7 +120,7 @@ else
 fi
 
 # Contextname
-# TODO: Update process to use context name as well as kubeconfig and clustername
+# TODO: Update process to use context name as well as kubeconfig and clustername #84
 if pulumi config get kubernetes:context_name -C ${script_dir}/../pulumi/python/tools/common >/dev/null 2>&1; then
   echo "Context name found"
 else

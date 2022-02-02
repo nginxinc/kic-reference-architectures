@@ -113,7 +113,7 @@ for project_dir in "${KUBERNETES[@]}" ; do
   fi
 done
 
-# TODO: figure out a more elegant way to do the CRD removal for prometheus
+# TODO: figure out a more elegant way to do the CRD removal for prometheus #83
 # This is a hack for now to remove the CRD's for prometheus-kube-stack
 # See https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md#uninstall-chart
 kubectl delete crd alertmanagerconfigs.monitoring.coreos.com > /dev/null 2>&1

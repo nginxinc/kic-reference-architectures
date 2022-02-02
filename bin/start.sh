@@ -9,13 +9,16 @@ export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
 export PULUMI_SKIP_CONFIRMATIONS=true
 
+# Unset virtual environment if defined....
+unset VIRTUAL_ENV
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 # Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
 # projects.
 #
 if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" > /dev/null ; then
-  echo "NOTICE! Unable to find the vnev directory. This is required for the pulumi/python deployment process."
+  echo "NOTICE! Unable to find the venv directory. This is required for the pulumi/python deployment process."
   echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
   echo " "
   exit 1

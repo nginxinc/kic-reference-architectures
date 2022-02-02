@@ -144,7 +144,7 @@ echo " "
 sleep 5
 
 #
-# TODO: Integrate this into the mainline along with logic to work with/without
+# TODO: Integrate this into the mainline along with logic to work with/without #80
 #
 # Hack to deploy our secret....
 if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
@@ -152,16 +152,16 @@ if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
   echo "Loading JWT into nginx-ingress/regcred"
   ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 else
-  # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS)
+  # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS) #81
   echo "No JWT found; this will likely fail"
 fi
 
 # Check for stack info....
-# TODO: Move these to use kubeconfig for the Pulumi main config (which redirects up) instead of aws/vpc
+# TODO: Move these to use kubeconfig for the Pulumi main config (which redirects up) instead of aws/vpc #80
 #
 
 # We automatically set this to a kubeconfig type for infra type
-# TODO: combined file should query and manage this
+# TODO: combined file should query and manage this #80
 pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config kubeconfig
 # Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
@@ -203,7 +203,7 @@ fi
 
 
 
-# TODO: Figure out better way to handle hostname / ip address for exposing our IC
+# TODO: Figure out better way to handle hostname / ip address for exposing our IC #82
 #
 # This version of the code forces you to add a hostname which is used to generate the cert when the application is
 # deployed, and will output the IP address and the hostname that will need to be set in order to use the self-signed
@@ -265,7 +265,7 @@ header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
 pulumi $pulumi_args up
 
-# TODO: This is using a different project than the AWS deploy; we need to collapse those
+# TODO: This is using a different project than the AWS deploy; we need to collapse those #80
 header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only"
 pulumi $pulumi_args up
@@ -296,7 +296,7 @@ pulumi $pulumi_args up
 
 # We currently don't run this becuase in most cases we are going to need to create either a DNS entry or a hostfile
 # mapping for our application.
-# TODO: find a more elegant solution to LB IP / hostname combos for testing the app
+# TODO: find a more elegant solution to LB IP / hostname combos for testing the app #82
 # Bind this to something for now
 app_url=" "
 #app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
