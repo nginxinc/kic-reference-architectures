@@ -11,7 +11,18 @@ def aws_project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'aws', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
-# Are we doing standalone or AWS?
+#
+# There are two paths currently available; if the user has requested that we stand up MARA on AWS
+# we pursue one route. If they request that a kubeconfig file be used, the second route is chosen.
+#
+# The difference is in where the information about the cluster is pulled from; if AWS is chosen the
+# data is pulled from the ../aws/eks directory. If Kubeconfig is chosen the information is pulled from
+# the configuration file under /config/pulumi.
+#
+# In both cases, this project is used to reference the kubernetes cluster. That is, this project exports
+# the variables used for cluster connection regardless of where it pulls them from (AWS project or kubeconfig).
+#
+
 infra_type = config.require('infra_type')
 if infra_type == 'AWS':
     stack_name = pulumi.get_stack()
@@ -22,7 +33,6 @@ if infra_type == 'AWS':
     k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
     k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
     kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
-    #kubeconfig = config.require('kubeconfig')
     cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
     #
     # Export the clusters' kubeconfig
