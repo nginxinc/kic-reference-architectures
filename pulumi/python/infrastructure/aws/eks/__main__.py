@@ -63,6 +63,15 @@ instance_profile = aws.iam.InstanceProfile(
     role=iam.ec2_role
 )
 
+#
+# We were initially using a "ClusterNodeGroupOptionsArg" construct here, but that was sporadically failing when
+# the process would run. This has been raised as an issue both in this project, and an issue in the Pulumi EKS
+# project.
+#
+# See https://github.com/nginxinc/kic-reference-architectures/issues/72 for details and discussion on the current
+# workaround being used here.
+#
+
 cluster_args = eks.ClusterArgs(
     min_size=min_size,
     max_size=max_size,
