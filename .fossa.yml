@@ -5,10 +5,10 @@ cli:
   project: git@github.com:nginxinc/kic-reference-architectures.git
 analyze:
   modules:
-  - name: pulumi/aws
+  - name: pulumi/python
     type: pip
-    path: pulumi/aws
-    target: pulumi/aws
+    path: pulumi/python
+    target: pulumi/python
     options:
       strategy: pip
-      requirements: pulumi/aws/requirements.txt
+      requirements: config/pulumi/requirements.txt
