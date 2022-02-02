@@ -38,6 +38,7 @@ def aws_project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'utility', dirname)
@@ -141,14 +142,11 @@ ecr_repository = image_push_ref.get_output('ecr_repository')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
-                            ##cluster=cluster_name)
-#k8s_provider = k8s.Provider(resource_name=f'ingress-controller')
-                            
 
 ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
                            metadata={'name': 'nginx-ingress',
-                                    'labels': {
-                                        'prometheus': 'scrape' }
+                                     'labels': {
+                                         'prometheus': 'scrape'}
                                      },
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 

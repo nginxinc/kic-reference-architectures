@@ -1,6 +1,4 @@
 import os
-import typing
-from typing import Dict
 
 import pulumi
 from pulumi import Output
@@ -45,81 +43,82 @@ if not helm_timeout:
 # Get the FQDN
 fqdn = config.get('fqdn')
 
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
+
 
 def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     k8_manifest_path = os.path.join(script_dir, 'manifests', 'regcred.yaml')
     return k8_manifest_path
 
+
 k8_manifest = k8_manifest_location()
 
 registrycred = ConfigFile(
-            "regcred",
-            file=k8_manifest)
+    "regcred",
+    file=k8_manifest)
 
-
-chart_values =  {
-        'controller': {
-            'nginxplus': nginx_plus_flag,
-            'healthStatus': True,
-            'appprotect': {
-                'enable': False
-            },
-            "image": {
-                "repository": nginx_repository,
-                "tag": nginx_tag,
-                "pullPolicy": "Always"
-             },
-            "serviceAccount": {
-                 "imagePullSecretName": "regcred"
-             },
-            'config': {
-                'name': 'nginx-config',
-                'entries': {
-                    'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent '
-                                  '\"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status '
-                                  '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
-                                  '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
-                }
-            },
-            'service': {
-                'annotations': {
-                    'co.elastic.logs/module': 'nginx'
-                },
-                "extraLabels": {
-                    "app": "kic-nginx-ingress"
-                },
-                "customPorts": [
-                    {
-                        "name": "dashboard",
-                        "targetPort": 8080,
-                        "protocol": "TCP",
-                        "port": 8080
-                    },
-                    {
-                        "name": "prometheus",
-                        "targetPort": 9113,
-                        "protocol": "TCP",
-                        "port": 9113
-                    }
-                ]
-            },
-            'pod': {
-                'annotations': {
-                    'co.elastic.logs/module': 'nginx'
-                }
+chart_values = {
+    'controller': {
+        'nginxplus': nginx_plus_flag,
+        'healthStatus': True,
+        'appprotect': {
+            'enable': False
+        },
+        "image": {
+            "repository": nginx_repository,
+            "tag": nginx_tag,
+            "pullPolicy": "Always"
+        },
+        "serviceAccount": {
+            "imagePullSecretName": "regcred"
+        },
+        'config': {
+            'name': 'nginx-config',
+            'entries': {
+                'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent '
+                              '\"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status '
+                              '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
+                              '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
             }
         },
-        'prometheus': {
-            'create': True,
-            'port': 9113
+        'service': {
+            'annotations': {
+                'co.elastic.logs/module': 'nginx'
+            },
+            "extraLabels": {
+                "app": "kic-nginx-ingress"
+            },
+            "customPorts": [
+                {
+                    "name": "dashboard",
+                    "targetPort": 8080,
+                    "protocol": "TCP",
+                    "port": 8080
+                },
+                {
+                    "name": "prometheus",
+                    "targetPort": 9113,
+                    "protocol": "TCP",
+                    "port": 9113
+                }
+            ]
+        },
+        'pod': {
+            'annotations': {
+                'co.elastic.logs/module': 'nginx'
+            }
         }
+    },
+    'prometheus': {
+        'create': True,
+        'port': 9113
     }
-
+}
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -130,14 +129,13 @@ kube_stack_ref_id = f"{pulumi_user}/{kube_project_name}/{stack_name}"
 kube_stack_ref = pulumi.StackReference(kube_stack_ref_id)
 kubeconfig = kube_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 
-
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller-repo-only',
                             kubeconfig=kubeconfig)
 
 ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
                            metadata={'name': 'nginx-ingress',
-                                    'labels': {
-                                        'prometheus': 'scrape' }
+                                     'labels': {
+                                         'prometheus': 'scrape'}
                                      },
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 

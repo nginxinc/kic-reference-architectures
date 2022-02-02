@@ -80,7 +80,7 @@ k8_stack_ref.get_output('cluster_name').apply(
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
-# TODO: Streamline the logic for FQDN/IP into something a bit more sane and scalable
+# TODO: Streamline the logic for FQDN/IP into something a bit more sane and scalable #82
 #
 # Currently, if we are doing an AWS deployment we use the AWS IC deployment, which uses the ELB hostname
 # as part of the certificate (self-signed).

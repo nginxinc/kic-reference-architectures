@@ -3,7 +3,6 @@ import os
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
-from pulumi_kubernetes.yaml import ConfigGroup
 from pulumi_kubernetes.yaml import ConfigFile
 
 from kic_util import pulumi_config
@@ -20,12 +19,9 @@ def project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'cert-manager'
-    
-#def remove_status_field(obj):
-    #if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
-        #del obj['status']
 
 
 stack_name = pulumi.get_stack()
@@ -100,7 +96,6 @@ certmgr_release_args = ReleaseArgs(
     force_update=True)
 
 certmgr_release = Release("certmgr", args=certmgr_release_args, opts=pulumi.ResourceOptions(depends_on=crd_dep))
-
 
 status = certmgr_release.status
 pulumi.export("certmgr_status", status)

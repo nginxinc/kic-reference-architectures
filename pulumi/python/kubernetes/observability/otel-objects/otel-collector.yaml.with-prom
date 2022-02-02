@@ -13,6 +13,21 @@ spec:
           http:
             endpoint: 0.0.0.0:9979
       # Collect Prometheus Metrics
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'federate'
+              scrape_interval: 15s
+
+              honor_labels: false
+              metrics_path: '/federate'
+
+              params:
+                'match[]':
+                  - '{job=~".+"}'
+              static_configs:
+                - targets:
+                  - 'prometheus-kube-prometheus-prometheus.prometheus:9090'
     exporters:
       otlp:
         endpoint: https://ingest.lightstep.com:443
@@ -26,6 +41,6 @@ spec:
           processors: [batch]
           exporters: [otlp]
         metrics:
-          receivers: [otlp]
+          receivers: [otlp,prometheus]
           processors: [batch]
           exporters: [otlp]
