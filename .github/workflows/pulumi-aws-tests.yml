@@ -18,12 +18,12 @@ jobs:
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-    - run: bin/setup_venv.sh
-      working-directory: /
+    - run: setup_venv.sh
+      working-directory: bin
 
     - name: Test
-      working-directory: /
-      run: python3 bin/test.py
+      working-directory: bin
+      run: python3 test.py
 
   macos-tests:
     runs-on: macos-latest
@@ -38,9 +38,9 @@ jobs:
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-    - run: bin/setup_venv.sh
-      working-directory: /
+    - run: setup_venv.sh
+      working-directory: bin
 
     - name: Test
-      working-directory: /
-      run: python3 bin/test.py
+      working-directory: bin
+      run: python3 test.py
