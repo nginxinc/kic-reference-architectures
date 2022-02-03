@@ -97,7 +97,7 @@ docker build ${additional_docker_opts} \
   --build-arg DOCKER_GID="${DOCKER_GID}" \
   -t "kic-ref-arch-pulumi-aws:${1}" \
   -f "${script_dir}/Dockerfile.${1}" \
-  "${script_dir}"
+  "${script_dir}/.."
 
 # Run unit tests
-docker run --interactive --tty --rm "kic-ref-arch-pulumi-aws:${1}" venv/bin/python3 test.py
+docker run --interactive --tty --rm "kic-ref-arch-pulumi-aws:${1}" bin/test_runner.sh

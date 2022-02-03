@@ -12,14 +12,5 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build and Test Debian Image
-      working-directory: docker
-      run: bash build_dev_docker_image.sh debian
-
-  centos-container-tests:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Build and Test CentOS Image
-      working-directory: docker
-      run: bash build_dev_docker_image.sh centos
+      working-directory:
+      run: bash docker/build_dev_docker_image.sh debian

@@ -16,12 +16,14 @@ RUN set -eux; \
     useradd --home-dir /pulumi/projects/kic-reference-architectures \
         --groups docker --uid $UID --gid $GID --shell /bin/bash --create-home runner
 
+# Copy the source code into the container...
 COPY --chown=runner:runner . /pulumi/projects/kic-reference-architectures
 
 RUN set -eux; \
     apt-get update -qq; \
     apt-get install --no-install-recommends -qqq --yes \
         gcc \
+        python3-venv \
         ca-certificates \
         git \
         libbz2-dev \
@@ -34,8 +36,8 @@ RUN set -eux; \
         vim \
         wget \
         zlib1g-dev; \
-    su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/setup_venv.sh'; \
-    echo 'source /pulumi/projects/kic-reference-architectures/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
+    su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/bin/setup_venv.sh'; \
+    echo 'source /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
     apt-get purge --yes \
         gcc \
         libbz2-dev \
@@ -47,9 +49,9 @@ RUN set -eux; \
     apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* /usr/share/man/* /root/.cache \
         /pulumi/projects/kic-reference-architectures/.cache \
-        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-dotnet \
-        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-go \
-        /pulumi/projects/kic-reference-architectures/venv/bin/pulumi-language-nodejs; \
+        /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/pulumi-language-dotnet \
+        /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/pulumi-language-go \
+        /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/pulumi-language-nodejs; \
     find -type d -name __pycache__ -exec rm --force --recursive  '{}' \; 2> /dev/null || true
 
 USER runner
