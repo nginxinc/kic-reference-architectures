@@ -15,10 +15,10 @@ jobs:
       with:
         requirement_files: config/requirements.txt
 
-    #- uses: syphar/restore-pip-download-cache@v1
-      #if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+    - uses: syphar/restore-pip-download-cache@v1
+      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
 
-    - run: setup_venv.sh
+    - run: ./setup_venv.sh
       working-directory: bin
 
     - name: Test
