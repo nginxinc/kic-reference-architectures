@@ -23,7 +23,7 @@ jobs:
 
     - name: Test
       working-directory: bin
-      run: ./test_runner.sh
+      run: ./test_runner.sh "/home/runner/work/kic-reference-architectures/"
 
   macos-tests:
     runs-on: macos-latest
@@ -43,4 +43,4 @@ jobs:
 
     - name: Test
       working-directory: bin
-      run: ./test_runner.sh
+      run: ./test_runner.sh "/home/runner/work/kic-reference-architectures/"
