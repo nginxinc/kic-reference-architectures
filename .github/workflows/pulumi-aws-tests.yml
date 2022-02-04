@@ -43,4 +43,4 @@ jobs:
 
     - name: Test
       working-directory: bin
-      run: ./test_runner.sh "/home/runner/work/kic-reference-architectures/kic-reference-architectures"
+      run: ./test_runner.sh "/Users/runner/work/kic-reference-architectures/kic-reference-architectures"
