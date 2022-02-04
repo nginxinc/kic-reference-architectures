@@ -1,7 +1,0 @@
-name: kic-image-build
-runtime:
-  name: python
-  options:
-    virtualenv: ../venv
-config: ../config
-description: Builds a new KIC image

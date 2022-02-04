@@ -1,0 +1,7 @@
+name: common-config
+runtime:
+  name: python
+  options:
+    virtualenv: ../venv
+config: ../../../config/pulumi
+description: Common Configuration Project

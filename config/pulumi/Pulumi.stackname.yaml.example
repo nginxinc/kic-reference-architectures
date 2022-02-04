@@ -1,0 +1,289 @@
+################################################################################
+# This configuration file is a template that is intended to show all of the
+# valid options. There are two ways to use this file:
+#
+# 1. You can allow the scripts to create their own configuration; this results
+#    in defaults being used for any configuration value that has a default, and
+#    any required variables will be prompted for.
+# 2. You can manually edit this file for your environment; to do this you need to
+#    create a file in this configuration directory. This file needs to be named
+#    Pulumi.stackname.yaml, where stackname is replaced with the name of the stack
+#    you are configuring.
+#
+# NOTE: Currently, many of the stacks stood up by this process have sanity checks
+#       that will fill in default values if values are not found in this file.
+#
+################################################################################
+
+config:
+  ############################################################################
+  # AWS Access Settings
+  ############################################################################
+
+  # If you have an AWS profile defined, you can configure it here instead of using an environment variable.
+  aws:profile: myProfile
+  # Your AWS region can be configured here instead of using an environment variable.
+  aws:region: us-east-1
+
+  ############################################################################
+  # K8 Infrastructure Settings
+  ############################################################################
+
+  # NOTE: There are currently two valid values for this configuration variable; you can
+  #       define to use AWS or kubeconfig. If not set, this value will be requested
+  #       in the run of start.sh and will be written to the file.
+  #
+  # kubernetes:infra_type: AWS
+  # kubernetes:infra_type: kubeconfig
+  #
+  # NOTE: For kubernetes installations that are using the kubeconfig file, there are three
+  #       other variables that need to be set. This includes the fully qualified path to the
+  #       kubeconfig file, the name of the cluster you will be using, and the name of the
+  #       context you are using.
+  #
+  # kubernetes:kubeconfig: /full/path/to/kube/config
+  # kubernetes:cluster_name: name-of-cluster
+  # kubernetes:context_name: name-of-context
+
+  ############################################################################
+  # AWS: VPC Settings
+  ############################################################################
+
+  # An optional array of availability zone ids to create subnets for can be
+  # specified here. The default value is all the availability zones associated
+  # with a region.
+  vpc:azs:
+    - us-west-1a
+    - us-west-1b
+
+  ############################################################################
+  # AWS: Elastic Kubernetes Service (EKS) Settings
+  ############################################################################
+
+  # This is the Kubernetes version to install using EKS. Changing this value may result in bugs in the behavior
+  # of the reference architecture because it is designed around the APIs for 1.19.
+  eks:k8s_version: 1.19
+  # This is the default instance type used by EKS.
+  eks:instance_type: t2.large
+  # The minimum number of compute instances to provision for the EKS cluster.
+  eks:min_size: 3
+  # The maximum size of the EKS cluster.
+  eks:max_size: 12
+  # The desired capacity of the EKS cluster.
+  eks:desired_capacity: 3
+
+  ############################################################################
+  # NGINX Kubernetes Ingress Controller (KIC) Settings
+  ############################################################################
+
+  # The following settings (kic-helm:*) define the properties of the helm chart
+  # used to deploy the ingress controller. Note, the version specified here is
+  # different from the version of the ingress controller itself. Rather, this
+  # is the version of the helm chart which describes *how* to deploy the ingress
+  # controller.
+  #
+  # NOTE: If you choose to deploy onto a cluster defined by a kubeconfig file, the
+  #       only currently supported deployment method is to use a JWT to deploy a
+  #       NGINX Plus IC. This is a temporary configuration that will be updated to
+  #       fully support all of the deployment methods that the AWS infrastructure
+  #       supports.
+  #
+
+  # NGINX Kubernetes Ingress Controller (KIC) Configuration
+  kic-helm:chart_name: nginx-ingress
+  # Chart name for the helm chart for kic
+  kic-helm:chart_version: 0.12.0
+  # Chart version for the helm chart for kic
+  kic-helm:helm_repo_name: nginx-stable
+  # Name of the repo to pull the kic chart from
+  kic-helm:helm_repo_url: https://helm.nginx.com/stable
+  # URL of the chart repo to pull kic from
+  kic-helm:helm_timeout: 300
+  # Timeout value for helm operations in seconds
+
+  # Acceptable values are default value is (oss_image):
+  # source    - build the KIC image from source code
+  # registry  - download and use an NGINX Ingress Controller container image from a public registry
+  kic:image_origin: registry
+
+  # Full repository and tag path for ingress controller image
+  # For example, if you have a subscription to NGINX Plus Ingress Controller
+  # and have configured the Docker client certificates such that you can
+  # access the NGINX Docker registry, you can specify the NGINX Plus
+  # image name here. See this page for configuration documentation:
+  # https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/
+  #
+  # The following are all valid image names:
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.0
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.0-ot
+  # kic:image_name: docker.io/nginx/nginx-ingress:2.1.0
+  # kic:image_name: nginx/nginx-ingress:2.1.0
+  # kic:image_name: nginx/nginx-ingress:2.1.0-alpine
+  kic:image_name: nginx/nginx-ingress:2.1.0
+
+
+  ############################################################################
+  # Options for building from oss_image (WIP)
+  ############################################################################
+
+  ############################################################################
+  # Options for building from source
+  ############################################################################
+
+  # This parameter informs the image creation build script what type of
+  # Docker image to build. You will need to check the source code to know
+  # exactly what targets are available. As of 1.11.2, the following make
+  # targets are available:
+  #   debian-image (default)
+  #   alpine-image
+  #   debian-image-plus
+  #   debian-image-nap-plus
+  #   openshift-image
+  #   openshift-image-plus
+  #   openshift-image-nap-plus
+  #   debian-image-opentracing
+  #   debian-image-opentracing-plus
+  kic:make_target: debian-image
+
+  # By default the latest version of the NGINX Kubernetes Ingress Controller
+  # source code will be downloaded and built unless an alternative URL is
+  # provided for the kic_src_url parameter. To use the default, just omit this key.
+  # URLs can point to a directory path on the local filesystem, tar.gz archive, or to a
+  # git repository. Specify a tag/commit/branch for a git repository URL in the fragment.
+  #
+  # Example URLs:
+  #
+  # HTTP/HTTPS url pointing to a tar.gz archive:
+  # https://github.com/nginxinc/kubernetes-ingress/archive/refs/tags/v1.11.3.tar.gz
+  #
+  # tar.gz archive on the local filesystem:
+  # file:///var/tmp/v1.11.3.tar.gz
+  # /var/tmp/v1.11.3.tar.gz
+  #
+  # Directory containing the source tree on the local filesystem:
+  # file:///var/tmp/kubernetes-ingress-1.11.3
+  # /var/tmp/kubernetes-ingress-1.11.3
+  #
+  # Github URL without a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git
+  # git@github.com:nginxinc/kubernetes-ingress.git
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git
+  #
+  # Github URL with a tag specified:
+  # https://github.com/nginxinc/kubernetes-ingress.git#v2.1.0
+  # git@github.com:nginxinc/kubernetes-ingress.git#v2.1.0
+  # ssh://git@github.com:nginxinc/kubernetes-ingress.git#v2.1.0
+  kic:src_url: https://github.com/nginxinc/kubernetes-ingress.git#v2.1.0
+
+  # When set to true, Pulumi's diff logic is circumvented and the image will always be
+  # rebuilt regardless of the input variables to Pulumi being the same or not.
+  kic:always_rebuild: false
+  # When the block below is defined and the make_target is set to an NGINX plus image,
+  # NGINX Plus will be built.
+  kic:nginx_plus:
+    # Path on the executing system's filesystem of the NGINX repository key.
+    kic:key_path: /etc/ssl/nginx/nginx-repo.key
+    # Path on the executing system's filesystem of the NGINX repository certificate.
+    kic:cert_path: /etc/ssl/nginx/nginx-repo.crt
+
+  ############################################################################
+  # Logagent Deployment (Filebeat)
+  ############################################################################
+
+  # Logagent Configuration
+  logagent:chart_name: filebeat
+  # Chart name for the helm chart for the logagent
+  logagent:chart_version: 7.16.3
+  # Chart version for the helm chart for the logagent
+  logagent:helm_repo_name: elastic
+  # Name of the repo to pull the logagent from
+  logagent:helm_repo_url: https://helm.elastic.co
+  # URL of the chart repo to pull the logagent from
+  logagent:helm_timeout: 300
+  # Timeout value for helm operations in seconds
+
+  ############################################################################
+  # Logstore Deployment (Elasticsearch)
+  ############################################################################
+
+  # Logstore Configuration
+  logstore:chart_name: elasticsearch
+  # Chart name for the helm chart for the logstore
+  logstore:chart_version: 17.6.2
+  # Chart version for the helm chart for the logstore
+  logstore:helm_repo_name: bitnami
+  # Name of the repo to pull the logstore from
+  logstore:helm_repo_url: https://charts.bitnami.com/bitnami
+  # URL of the chart repo to pull the logstore from
+  logstore:helm_timeout: 300
+  # Timeout value for helm operations in seconds
+
+  # NOTE: Because of the wide variety of kubernetes clusters that we deploy to
+  #       we have provided the ability to tune the ELK stack appropriately. By
+  #       default we deploy 1 each of the ingest, data, master, and coordinating
+  #       nodes. This is sufficient for basic POC testing but will most likely
+  #       fall over with heavy usage.
+
+  logstore:master_replicas: 3
+  # Number of master replicas to deploy
+  logstore:data_replicas: 3
+  # Number of data replicas to deploy
+  logstore:ingest_replicas: 2
+  # Number of ingest replicas to deploy
+  logstore:coordinating_replicas: 2
+  # Number of coordinating replicas to deploy
+
+  ############################################################################
+  # Certificate Management (cert-manager) Deployment
+  ############################################################################
+
+  # Cert Manager Configuration
+  certmgr:chart_name: cert-manager
+  # Chart hame for the helm chart for certmanager
+  certmgr:chart_version: v1.6.1
+  # Chart version for the helm chart for certmanager
+  certmgr:certmgr_helm_repo_name: jetstack
+  # Name of the repo to pull the certmanager chart from
+  certmgr:certmgr_helm_repo_url: https://charts.jetstack.io
+  # URL of the chart repo to pull certmanager from
+  certmgr:helm_timeout: 300
+  # Timeout value for helm operations in seconds
+
+  ############################################################################
+  # Grafana Configuration (Part of Kube-Prometheus-Stack Deployment)
+  ############################################################################
+  # NOTE: The password for the grafana installation; note that this is not exposed
+  #       to the internet and requires kubeproxy to access. However, this should be
+  #       encrypted which is dependent on Pulumi addressing hierarchical config files
+  #       (for the ideal solution). See the anthos subdir for details.
+
+  # Grafana Configuration
+  grafana:adminpass: strongpass
+
+
+  ############################################################################
+  # Prometheus Deployment (kube-prometheus-stack)
+  ############################################################################
+
+  # Prometheus Configuration
+  prometheus:chart_name: kube-prometheus-stack
+  # Chart name for the helm chart for prometheus
+  prometheus:chart_version: 30.0.1
+  # Chart version for the helm chart for prometheus
+  prometheus:helm_repo_name: prometheus-community
+  # Name of the repo to pull the prometheus chart from
+  prometheus:helm_repo_url: https://https://prometheus-community.github.io/helm-charts
+  # URL of the chart repo
+  prometheus:statsd_chart_name: prometheus-statsd-exporter
+  # Name of the statsd chart (uses the same repo as the prom chart)
+  prometheus.statsd_chart_version: 0.4.2
+  # Version of the statsd chart (uses the same repo as the prom chart)
+  prometheus:helm_timeout: 300
+  # Timeout value for helm operations in seconds
+
+  ############################################################################
+  # Bank of Sirius Configuration
+  ############################################################################
+
+  # NOTE: The parameters for the Bank of Sirius are set in a configuration directory
+  #       within that project.

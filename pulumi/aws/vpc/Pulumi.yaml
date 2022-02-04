@@ -1,7 +1,0 @@
-name: vpc-sample-cluster
-runtime:
-  name: python
-  options:
-    virtualenv: ../venv
-config: ../config
-description: EKS standup

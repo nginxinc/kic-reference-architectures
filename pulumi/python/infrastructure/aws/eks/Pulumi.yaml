@@ -1,0 +1,7 @@
+name: aws-eks
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Creates new EKS cluster using existing VPC
