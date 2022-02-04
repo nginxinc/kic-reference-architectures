@@ -43,4 +43,4 @@ jobs:
 
     - name: Test
       working-directory: bin
-      run: python3 test.py
+      run: ./test_runner.sh
