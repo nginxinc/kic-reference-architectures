@@ -35,7 +35,9 @@ To satisfy the four key characteristics, many modern app architectures employ:
 
 To see details on the current state of this project, please see the
 [readme](./pulumi/python/README.md) in the [`pulumi/python`](./pulumi/python) subdirectory. This project is under active
-development, and the current work is using [Pulumi](https://www.pulumi.com/) with Python.
+development, and the current work is using [Pulumi](https://www.pulumi.com/) with Python. Additionally, please see
+[Status and Issues](./docs/status-and-issues.md) for the current state of the project including build status and known
+issues.
 
 This project was started to provide a complete, stealable, easy to deploy, and standalone example of how a modern app
 architecture can be built. It was driven by the need to be flexible and not require a long list of dependencies to get

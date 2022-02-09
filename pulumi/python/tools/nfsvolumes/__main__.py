@@ -59,7 +59,7 @@ nfsopts = '{nolock,nfsvers=3}'
 # Allow the user to set timeout per helm chart; otherwise
 # we default to 5 minutes.
 #
-helm_timeout = config.get('helm_timeout')
+helm_timeout = config.get_int('helm_timeout')
 if not helm_timeout:
     helm_timeout = 300
 
