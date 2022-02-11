@@ -9,6 +9,10 @@ from pulumi_kubernetes.yaml import ConfigFile
 
 from kic_util import pulumi_config
 
+#
+# We default to the OSS IC; if the user wants Plus they need to enable it in the config file
+# along with the Plus flag, and the addition of a JWT.
+#
 config = pulumi.Config('kic-helm')
 chart_name = config.get('chart_name')
 if not chart_name:
@@ -24,13 +28,13 @@ if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
 nginx_repository = config.get('nginx_repository')
 if not nginx_repository:
-    nginx_repository = "private-registry.nginx.com/nginx-ic/nginx-plus-ingress"
+    nginx_repository = "nginx/nginx-ingress"
 nginx_tag = config.get('nginx_tag')
 if not nginx_tag:
     nginx_tag = "2.1.0"
 nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
-    nginx_plus_flag = True
+    nginx_plus_flag = False
 
 #
 # Allow the user to set timeout per helm chart; otherwise
@@ -132,6 +136,7 @@ kubeconfig = kube_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller-repo-only',
                             kubeconfig=kubeconfig)
 
+# This is required for the service monitor from the Prometheus namespace
 ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
                            metadata={'name': 'nginx-ingress',
                                      'labels': {
@@ -155,7 +160,7 @@ kic_release_args = ReleaseArgs(
     # are available. Set this to true to skip waiting on resources being
     # available.
     skip_await=False,
-    # If we fail, clean up 
+    # If we fail, clean up
     cleanup_on_fail=True,
     # Provide a name for our release
     name="kic",

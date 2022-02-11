@@ -146,14 +146,18 @@ sleep 5
 #
 # TODO: Integrate this into the mainline along with logic to work with/without #80
 #
-# Hack to deploy our secret....
+# This logic takes the JWT and transforms it into a secret so we can pull the NGINX Plus IC. If the user is not
+# deploying plus (and does not have a JWT) we create a placeholder credential that is used to create a secert. That
+# secret is not a valid secret, but it is created to make the logic easier to read/code.
+#
 if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
   JWT=$(cat ${script_dir}/../extras/jwt.token)
   echo "Loading JWT into nginx-ingress/regcred"
   ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 else
   # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS) #81
-  echo "No JWT found; this will likely fail"
+  echo "No JWT found; writing placeholder manifest"
+  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=placeholder --docker-password=placeholder -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 fi
 
 # Check for stack info....

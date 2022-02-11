@@ -85,8 +85,8 @@ you are not building from source, you do not need to install `make`. By default,
 
 Docker is required because the Ingress Controller is a Docker image and needs Docker to generate the image.
 
-**NOTE**: The kubeconfig deployment option currently requires that a JWT token be used to pull the NGINX plus image from
-the nginx.com repository. This will be updated in a future release.
+**NOTE**: The kubeconfig deployment option currently only allows you to deploy from a registry. This allows you to
+deploy the NGINX IC or the NGINX Plus IC (with a JWT from your F5 account)
 
 #### Kubernetes
 
