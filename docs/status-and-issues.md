@@ -20,21 +20,23 @@ includes the following:
 
 All of these configurations use Pulumi code within Python as the Infrastructure as Code (IaC) manager.
 
-| K8 Provider     | Tested | Infrastructure Support      | IC Options              | FQDN/IP         | Notes                                            |
-|-----------------|--------|-----------------------------|-------------------------|-----------------|--------------------------------------------------|
-| AWS EKS         | Yes    | Full Infrastructure Standup | Build, Pull (uses ECR)  | Provided        |                                                  |
-| Azure AKS       | Yes    | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Google GKE      | Yes    | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| MicroK8s        | Yes    | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
-| Harvester/RKE2  | Yes    | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| K3S             | Yes    | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| Rancher Desktop | No     | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| Minikube        | No     | Kubeconfig Only (3)         | NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| K8 Provider     | Tested | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
+|-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
+| AWS EKS         | Yes    | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
+| Azure AKS       | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Google GKE      | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| MicroK8s        | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
+| Harvester/RKE2  | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| K3S             | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| Rancher Desktop | No     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| Minikube        | No     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
 
 ### Notes:
 1. The NGINX IC build/deploy process is currently under active development and support for IC will be standardized across
 all providers. Follow [#81](https://github.com/nginxinc/kic-reference-architectures/issues/81) and 
-[#86](https://github.com/nginxinc/kic-reference-architectures/issues/86) for details.
+[#86](https://github.com/nginxinc/kic-reference-architectures/issues/86) for details. Currently, for all non-AWS environments
+you have the option to specify either NGINX or NGINX Plus as your IC. The later does require an active subscription and a 
+JWT to be included at build time. Please see the documentation for more details.
 2. The process via which the IP and FQDN are created and used is currently under active development, and will be streamlined
 and standardized for all providers. Follow [#82](https://github.com/nginxinc/kic-reference-architectures/issues/82) for
 details.
