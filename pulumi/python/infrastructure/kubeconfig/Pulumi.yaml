@@ -1,0 +1,7 @@
+name: kubeconfig
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv
+config: ../../../../config/pulumi
+description: Use an existing kubeconfig for deployment

@@ -1,0 +1,46 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: simplest
+  namespace: observability
+spec:
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:9978
+          http:
+            endpoint: 0.0.0.0:9979
+      # Collect Prometheus Metrics
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'federate'
+              scrape_interval: 15s
+
+              honor_labels: false
+              metrics_path: '/federate'
+
+              params:
+                'match[]':
+                  - '{job=~".+"}'
+              static_configs:
+                - targets:
+                  - 'prometheus-kube-prometheus-prometheus.prometheus:9090'
+    exporters:
+      otlp:
+        endpoint: https://ingest.lightstep.com:443
+        headers: {"lightstep-service-name":"my-service","lightstep-access-token":"XXXX"}
+    processors:
+      batch:
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+        metrics:
+          receivers: [otlp,prometheus]
+          processors: [batch]
+          exporters: [otlp]

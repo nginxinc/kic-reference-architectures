@@ -1,0 +1,7 @@
+name: logstore
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv
+config: ../../../../config/pulumi
+description: Deploys a logging store

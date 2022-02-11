@@ -1,7 +1,0 @@
-name: eks-sample
-runtime:
-  name: python
-  options:
-    virtualenv: ../venv
-config: ../config
-description: Creates new EKS cluster using existing VPC

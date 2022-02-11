@@ -1,7 +1,0 @@
-name: logagent
-runtime:
-  name: python
-  options:
-    virtualenv: ../venv
-config: ../config
-description: Deploys a log agent

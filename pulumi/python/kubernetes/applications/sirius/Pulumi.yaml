@@ -1,0 +1,7 @@
+name: sirius-deploy
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ./config
+description: Creates the Bank of Sirius App

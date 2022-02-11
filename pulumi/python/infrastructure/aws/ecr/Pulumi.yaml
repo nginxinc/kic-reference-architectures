@@ -1,0 +1,7 @@
+name: aws-ecr
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Sets up ECR repository for ingress controller images

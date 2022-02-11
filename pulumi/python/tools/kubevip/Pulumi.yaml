@@ -1,0 +1,7 @@
+name: kubevip
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv
+config: ../common/config
+description: Deploys kube-vip

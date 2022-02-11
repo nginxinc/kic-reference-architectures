@@ -1,0 +1,7 @@
+name: aws-vpc
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: VPC standup
