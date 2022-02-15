@@ -11,8 +11,6 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-
-
 if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/../pulumi/python/venv/bin] to PATH"
@@ -87,17 +85,17 @@ fi
 # for the src subdirectory which should always be there.
 #
 if [[ -d "${script_dir}/../pulumi/python/kubernetes/applications/sirius/src/src" ]]; then
-    echo "Submodule source found"
+  echo "Submodule source found"
 else
-    # Error out with instructions.
-    echo "Bank of Sirius submodule not found"
-    echo " "
-    echo "Please run:"
-    echo "    git submodule update --init --recursive --remote"
-    echo "Inside your git directory and re-run this script"
-    echo ""
-    echo >&2 "Unable to find submodule - exiting"
-    exit 3
+  # Error out with instructions.
+  echo "Bank of Sirius submodule not found"
+  echo " "
+  echo "Please run:"
+  echo "    git submodule update --init --recursive --remote"
+  echo "Inside your git directory and re-run this script"
+  echo ""
+  echo >&2 "Unable to find submodule - exiting"
+  exit 3
 fi
 
 source "${script_dir}/../config/pulumi/environment"
@@ -106,7 +104,7 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 # Create the stack if it does not already exist
 # We skip over the tools directory, because that uses a unique stack for setup of the
 # kubernetes components for installations without them.
-find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*"  -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 if [[ -z "${AWS_PROFILE+x}" ]]; then
   echo "AWS_PROFILE not set"
@@ -135,7 +133,7 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     # First, check the config file for our current profile. If there
     # is no AWS command we assume that there is no config file, which
     # may not always be a valid assumption.
-    if ! command -v aws > /dev/null; then
+    if ! command -v aws >/dev/null; then
       AWS_CLI_DEFAULT_REGION="us-east-1"
     elif aws configure get region --profile "${AWS_PROFILE}" >/dev/null; then
       AWS_CLI_DEFAULT_REGION="$(aws configure get region --profile "${AWS_PROFILE}")"
@@ -181,18 +179,14 @@ else
   pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
 fi
 
-# Admin password for grafana (see note in __main__.py in grafana project as to why not encrypted)
-# We run in the vpc project directory because we need the pulumi yaml to point us to the correct
-# configuration.
+# Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
+# This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
 #
-# This same password will be used for the Grafana deployment that is stood up as part of
-# the prometheus operator driven prometheus-kube-stack.
-#
-if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
-  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/config
+  pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
 # Show colorful fun headers if the right utils are installed
@@ -235,29 +229,28 @@ function validate_aws_credentials() {
   fi
 
   echo "Validating AWS credentials"
-  if ! aws ${profile_arg} sts get-caller-identity > /dev/null; then
+  if ! aws ${profile_arg} sts get-caller-identity >/dev/null; then
     echo >&2 "AWS credentials have expired or are not valid"
     exit 2
   fi
 }
 
 function retry() {
-    local -r -i max_attempts="$1"; shift
-    local -i attempt_num=1
-    until "$@"
-    do
-        if ((attempt_num==max_attempts))
-        then
-            echo "Attempt ${attempt_num} failed and there are no more attempts left!"
-            return 1
-        else
-            echo "Attempt ${attempt_num} failed! Trying again in $attempt_num seconds..."
-            sleep $((attempt_num++))
-        fi
-    done
+  local -r -i max_attempts="$1"
+  shift
+  local -i attempt_num=1
+  until "$@"; do
+    if ((attempt_num == max_attempts)); then
+      echo "Attempt ${attempt_num} failed and there are no more attempts left!"
+      return 1
+    else
+      echo "Attempt ${attempt_num} failed! Trying again in $attempt_num seconds..."
+      sleep $((attempt_num++))
+    fi
+  done
 }
 
-if command -v aws > /dev/null; then
+if command -v aws >/dev/null; then
   validate_aws_credentials
 fi
 
@@ -282,9 +275,9 @@ pulumi $pulumi_args up
 # pulumi stack output cluster_name
 add_kube_config
 
-if command -v kubectl > /dev/null; then
+if command -v kubectl >/dev/null; then
   echo "Attempting to connect to newly create kubernetes cluster"
-  retry 30 kubectl version > /dev/null
+  retry 30 kubectl version >/dev/null
 fi
 
 #
@@ -307,7 +300,7 @@ pulumi $pulumi_args up
 header "IC Image Push"
 # If we are on MacOS and the user keychain is locked, we need to prompt the
 # user to unlock it so that `docker login` will work correctly.
-if command -v security > /dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
+if command -v security >/dev/null && [[ "$(uname -s)" == "Darwin" ]]; then
   if ! security show-keychain-info 2>/dev/null; then
     echo "Enter in your system credentials in order to access the system keychain for storing secrets securely with Docker."
     security unlock-keychain

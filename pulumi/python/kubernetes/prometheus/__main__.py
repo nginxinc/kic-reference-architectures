@@ -60,7 +60,6 @@ helm_timeout = config.get_int('helm_timeout')
 if not helm_timeout:
     helm_timeout = 300
 
-grafana_config = pulumi.Config('grafana')
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
 # same time that we fix the Anthos issues.

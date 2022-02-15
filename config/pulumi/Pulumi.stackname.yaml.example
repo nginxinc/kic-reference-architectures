@@ -250,18 +250,6 @@ config:
   # Timeout value for helm operations in seconds
 
   ############################################################################
-  # Grafana Configuration (Part of Kube-Prometheus-Stack Deployment)
-  ############################################################################
-  # NOTE: The password for the grafana installation; note that this is not exposed
-  #       to the internet and requires kubeproxy to access. However, this should be
-  #       encrypted which is dependent on Pulumi addressing hierarchical config files
-  #       (for the ideal solution). See the anthos subdir for details.
-
-  # Grafana Configuration
-  grafana:adminpass: strongpass
-
-
-  ############################################################################
   # Prometheus Deployment (kube-prometheus-stack)
   ############################################################################
 
@@ -280,6 +268,13 @@ config:
   # Version of the statsd chart (uses the same repo as the prom chart)
   prometheus:helm_timeout: 300
   # Timeout value for helm operations in seconds
+  #
+  prometheus:adminpass: strongpass
+  # Grafana Configuration
+  # NOTE: The password for the grafana installation; note that this is not exposed
+  #       to the internet and requires kubeproxy to access. However, this should be
+  #       encrypted which is dependent on Pulumi addressing hierarchical config files
+  #       (for the ideal solution). See the anthos subdir for details.
 
   ############################################################################
   # Bank of Sirius Configuration
