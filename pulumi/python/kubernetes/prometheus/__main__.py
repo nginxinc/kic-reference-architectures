@@ -63,7 +63,7 @@ if not helm_timeout:
 # Require an admin password, but do not encrypt it due to the
 # issues we experienced with Anthos; this can be adjusted at the
 # same time that we fix the Anthos issues.
-adminpass = grafana_config.require('adminpass')
+adminpass = config.require('adminpass')
 
 prometheus_release_args = ReleaseArgs(
     chart=chart_name,
