@@ -11,8 +11,6 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-
-
 if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/../pulumi/python/venv/bin] to PATH"
@@ -87,17 +85,17 @@ fi
 # for the src subdirectory which should always be there.
 #
 if [[ -d "${script_dir}/../pulumi/python/kubernetes/applications/sirius/src/src" ]]; then
-    echo "Submodule source found"
+  echo "Submodule source found"
 else
-    # Error out with instructions.
-    echo "Bank of Sirius submodule not found"
-    echo " "
-    echo "Please run:"
-    echo "    git submodule update --init --recursive --remote"
-    echo "Inside your git directory and re-run this script"
-    echo ""
-    echo >&2 "Unable to find submodule - exiting"
-    exit 3
+  # Error out with instructions.
+  echo "Bank of Sirius submodule not found"
+  echo " "
+  echo "Please run:"
+  echo "    git submodule update --init --recursive --remote"
+  echo "Inside your git directory and re-run this script"
+  echo ""
+  echo >&2 "Unable to find submodule - exiting"
+  exit 3
 fi
 
 source "${script_dir}/../config/pulumi/environment"
@@ -113,19 +111,18 @@ function header() {
 }
 
 function retry() {
-    local -r -i max_attempts="$1"; shift
-    local -i attempt_num=1
-    until "$@"
-    do
-        if ((attempt_num==max_attempts))
-        then
-            echo "Attempt ${attempt_num} failed and there are no more attempts left!"
-            return 1
-        else
-            echo "Attempt ${attempt_num} failed! Trying again in $attempt_num seconds..."
-            sleep $((attempt_num++))
-        fi
-    done
+  local -r -i max_attempts="$1"
+  shift
+  local -i attempt_num=1
+  until "$@"; do
+    if ((attempt_num == max_attempts)); then
+      echo "Attempt ${attempt_num} failed and there are no more attempts left!"
+      return 1
+    else
+      echo "Attempt ${attempt_num} failed! Trying again in $attempt_num seconds..."
+      sleep $((attempt_num++))
+    fi
+  done
 }
 
 #
@@ -153,11 +150,11 @@ sleep 5
 if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
   JWT=$(cat ${script_dir}/../extras/jwt.token)
   echo "Loading JWT into nginx-ingress/regcred"
-  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
+  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml >${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 else
   # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS) #81
   echo "No JWT found; writing placeholder manifest"
-  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=placeholder --docker-password=placeholder -n nginx-ingress --dry-run=client -o yaml > ${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
+  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=placeholder --docker-password=placeholder -n nginx-ingress --dry-run=client -o yaml >${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 fi
 
 # Check for stack info....
@@ -184,7 +181,7 @@ echo " "
 # Sleep so that this is seen...
 sleep 5
 
-if pulumi config get kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+if pulumi config get kubernetes:kubeconfig -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Kubeconfig file found"
 else
   echo "Provide an absolute path to your kubeconfig file"
@@ -192,7 +189,7 @@ else
 fi
 
 # Clustername
-if pulumi config get kubernetes:cluster_name -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+if pulumi config get kubernetes:cluster_name -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Clustername found"
 else
   echo "Provide your clustername"
@@ -200,12 +197,10 @@ else
 fi
 
 # Connect to the cluster
-if command -v kubectl > /dev/null; then
+if command -v kubectl >/dev/null; then
   echo "Attempting to connect to kubernetes cluster"
-  retry 30 kubectl version > /dev/null
+  retry 30 kubectl version >/dev/null
 fi
-
-
 
 # TODO: Figure out better way to handle hostname / ip address for exposing our IC #82
 #
@@ -248,20 +243,15 @@ else
   pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
 fi
 
-# Admin password for grafana (see note in __main__.py in grafana project as to why not encrypted)
-# We run in the vpc project directory because we need the pulumi yaml to point us to the correct
-# configuration.
+# Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
+# This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
 #
-# This same password will be used for the Grafana deployment that is stood up as part of
-# the prometheus operator driven prometheus-kube-stack.
-#
-if pulumi config get grafana:adminpass -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
   echo "Create a password for the grafana admin user"
-  pulumi config set grafana:adminpass -C ${script_dir}/../pulumi/python/config
+  pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
-
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
