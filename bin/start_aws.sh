@@ -104,7 +104,7 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 # Create the stack if it does not already exist
 # We skip over the tools directory, because that uses a unique stack for setup of the
 # kubernetes components for installations without them.
-find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
+find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
 if [[ -z "${AWS_PROFILE+x}" ]]; then
   echo "AWS_PROFILE not set"
@@ -115,7 +115,7 @@ if [[ -z "${AWS_PROFILE+x}" ]]; then
     fi
     echo "AWS_PROFILE=${AWS_PROFILE}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
+    find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:profile "${AWS_PROFILE}" \;
   fi
 else
   echo "Using AWS_PROFILE from environment: ${AWS_PROFILE}"
@@ -144,7 +144,7 @@ if [[ -z "${AWS_DEFAULT_REGION+x}" ]]; then
     read -r -e -p "Enter the name of the AWS Region to use in all projects [${AWS_CLI_DEFAULT_REGION}]: " AWS_DEFAULT_REGION
     echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-${AWS_CLI_DEFAULT_REGION}}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi" -mindepth 1 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
+    find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set aws:region "${AWS_DEFAULT_REGION}" \;
   fi
 else
   echo "Using AWS_DEFAULT_REGION from environment/config: ${AWS_DEFAULT_REGION}"
@@ -195,13 +195,13 @@ function header() {
 }
 
 function add_kube_config() {
-  pulumi_region="$(pulumi config get aws:region)"
+  pulumi_region="$(pulumi config get aws:region -C ${script_dir}/../pulumi/python/config)"
   if [ "${pulumi_region}" != "" ]; then
     region_arg="--region ${pulumi_region}"
   else
     region_arg=""
   fi
-  pulumi_aws_profile="$(pulumi config get aws:profile)"
+  pulumi_aws_profile="$(pulumi config get aws:profile -C ${script_dir}/../pulumi/python/config)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     echo "Using AWS profile [${pulumi_aws_profile}] from Pulumi configuration"
     profile_arg="--profile ${pulumi_aws_profile}"
@@ -212,7 +212,7 @@ function add_kube_config() {
     profile_arg=""
   fi
 
-  cluster_name="$(pulumi stack output cluster_name)"
+  cluster_name="$(pulumi stack output cluster_name -C ${script_dir}/../pulumi/python/infrastructure/aws/eks)"
 
   echo "adding ${cluster_name} cluster to local kubeconfig"
   "${script_dir}"/../pulumi/python/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
