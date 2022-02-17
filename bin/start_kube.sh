@@ -253,6 +253,21 @@ else
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
+#
+# TODO: Allow startup scripts to prompt and accept additional config values #97
+# The default helm timeout for all of the projects is set at the default of 300 seconds (5 minutes)
+# However, since this code path is most commonly going to be used to deploy locally we need to bump
+# that value up. A fix down the road will add this a prompt, but for now we are going to double this
+# value for all helm deploys.
+#
+
+pulumi config set kic-helm:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set logagent:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set logstore:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set certmgr:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set prometheus:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+
+
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
 header "Kubeconfig"
