@@ -208,7 +208,7 @@ fi
 # deployed, and will output the IP address and the hostname that will need to be set in order to use the self-signed
 # cert and to access the application.
 #
-if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
+if pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Hostname found for deployment"
 else
   echo "Create a fqdn for your deployment"
