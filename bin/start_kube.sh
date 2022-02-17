@@ -208,7 +208,7 @@ fi
 # deployed, and will output the IP address and the hostname that will need to be set in order to use the self-signed
 # cert and to access the application.
 #
-if pulumi config get sirius:fqdn -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
+if pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Hostname found for deployment"
 else
   echo "Create a fqdn for your deployment"
@@ -252,6 +252,21 @@ else
   echo "Create a password for the grafana admin user"
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
+
+#
+# TODO: Allow startup scripts to prompt and accept additional config values #97
+# The default helm timeout for all of the projects is set at the default of 300 seconds (5 minutes)
+# However, since this code path is most commonly going to be used to deploy locally we need to bump
+# that value up. A fix down the road will add this a prompt, but for now we are going to double this
+# value for all helm deploys.
+#
+
+pulumi config set kic-helm:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set logagent:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set logstore:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set certmgr:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+pulumi config set prometheus:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
+
 
 pulumi_args="--emoji --stack ${PULUMI_STACK}"
 
