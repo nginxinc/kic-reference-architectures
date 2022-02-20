@@ -8,19 +8,34 @@ set -o pipefail # don't hide errors within pipes
 export PULUMI_SKIP_UPDATE_CHECK=true
 # Run Pulumi non-interactively
 export PULUMI_SKIP_CONFIRMATIONS=true
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-if ! command -v pulumi >/dev/null; then
-  if [ -x "${script_dir}/venv/bin/pulumi" ]; then
-    echo "Adding to [${script_dir}/venv/bin] to PATH"
-    export PATH="${script_dir}/venv/bin:$PATH"
-  fi
+# Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
+# projects.
+#
+if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" > /dev/null ; then
+  echo "NOTICE! Unable to find the venv directory. This is required for the pulumi/python deployment process."
+  echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
+  echo " "
+  exit 1
+else
+  echo "Adding to [${script_dir}/venv/bin] to PATH"
+  export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
 fi
 
 if ! command -v pulumi >/dev/null; then
-  echo >&2 "Pulumi must be installed to continue"
-  exit 1
+  if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
+    echo "Adding to [${script_dir}/venv/bin] to PATH"
+    export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
+
+    if ! command -v pulumi >/dev/null; then
+      echo >&2 "Pulumi must be installed to continue"
+      exit 1
+    fi
+  else
+    echo >&2 "Pulumi must be installed to continue"
+    exit 1
+  fi
 fi
 
 if ! command -v python3 >/dev/null; then
