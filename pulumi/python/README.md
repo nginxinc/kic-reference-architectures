@@ -7,7 +7,7 @@ as a reference when building your own Infrastructure as Code (IaC) deployments.
 As such, each discrete stage of deployment is defined as a separate Pulumi project 
 that can be deployed independently of each stage. Although Pulumi supports many 
 programming languages, Python was chosen as the language for this project. 
-The reimplementation of the deployments definitions here should be reproducible 
+The reimplementation of the deployment here should be easily reproducible 
 in other languages.
 
 ## Getting Started
@@ -181,7 +181,7 @@ the API – meaning, the API will respond correctly to calls to either the `v1be
 and/or `v1` routes.
 
 This project uses the NGINX KIC v2.x releases which includes full support 
-for the GA APIs. Do not use the [???]
+for the GA APIs.
 
 ### Log Store
 
