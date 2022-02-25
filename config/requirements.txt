@@ -3,8 +3,7 @@ fart~=0.1.5
 lolcat~=1.4
 nodeenv~=1.6.0
 passlib~=1.7.4
-pulumi~=3.24.1
-pulumi==3.25.0
+pulumi~=3.25.0
 pulumi-aws>=4.37.5
 pulumi-docker~=3.1.0
 pulumi-eks>=0.37.1
