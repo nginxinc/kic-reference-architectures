@@ -1,4 +1,5 @@
 awscli~=1.22.63
+grpcio==1.43.0
 fart~=0.1.5
 lolcat~=1.4
 nodeenv~=1.6.0
