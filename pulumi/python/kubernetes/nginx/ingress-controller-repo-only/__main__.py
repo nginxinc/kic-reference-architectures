@@ -169,7 +169,7 @@ kic_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-kic_chart = Release("kic", args=kic_release_args)
+kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(depends_on=[ns]))
 
 pstatus = kic_chart.status
 
