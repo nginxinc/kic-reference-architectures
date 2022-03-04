@@ -214,7 +214,7 @@ cd "${script_dir}/../pulumi/python/infrastructure/digitalocean/domk8s"
 pulumi $pulumi_args up
 
 # pulumi stack output cluster_name
-cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}"  -C /home/jschmidt/repos/kic-reference-architectures/bin/../pulumi/python/infrastructure/digitalocean/domk8s)
+cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}"  -C ${script_dir}/../pulumi/python/infrastructure/digitalocean/domk8s)
 add_kube_config
 
 if command -v kubectl >/dev/null; then
