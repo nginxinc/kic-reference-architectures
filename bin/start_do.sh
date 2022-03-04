@@ -195,6 +195,38 @@ function retry() {
   done
 }
 
+#
+# This deploy only works with the NGINX registries.
+#
+echo " "
+echo "NOTICE! Currently the deployment for Digital Ocean only supports pulling images from the registry! A JWT is "
+echo "required in order to access the NGINX Plus repository. This should be placed in a file in the extras directory"
+echo "in the project root, in a file named jwt.token"
+echo " "
+echo "See https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret/ for more "
+echo "details and examples."
+echo " "
+
+# Make sure we see it
+sleep 5
+
+#
+# TODO: Integrate this into the mainline along with logic to work with/without #80
+#
+# This logic takes the JWT and transforms it into a secret so we can pull the NGINX Plus IC. If the user is not
+# deploying plus (and does not have a JWT) we create a placeholder credential that is used to create a secert. That
+# secret is not a valid secret, but it is created to make the logic easier to read/code.
+#
+if [[ -s "${script_dir}/../extras/jwt.token" ]]; then
+  JWT=$(cat ${script_dir}/../extras/jwt.token)
+  echo "Loading JWT into nginx-ingress/regcred"
+  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=${JWT} --docker-password=none -n nginx-ingress --dry-run=client -o yaml >${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
+else
+  # TODO: need to adjust so we can deploy from an unauthenticated registry (IC OSS) #81
+  echo "No JWT found; writing placeholder manifest"
+  ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=placeholder --docker-password=placeholder -n nginx-ingress --dry-run=client -o yaml >${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
+fi
+
 if command -v doctl >/dev/null; then
   validate_do_credentials
 fi
