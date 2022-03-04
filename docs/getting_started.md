@@ -167,6 +167,19 @@ and profile values that will then be added to the `./config/Pulumi/Pulumi.<stack
 file for the project, although there are two other configuration files kept for the application standup and the
 kubernetes extras functionality. For more details on those, please see the README.md in those directories.
 
+### Digital Ocean
+
+If you are using Digital Ocean as your infrastructure provider 
+[configuring Pulumi for Digital Ocean](https://www.pulumi.com/registry/packages/digitalocean/) is necessary. The first step
+is to install the [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/) utility to interact with your
+Digital Ocean account. 
+
+Next, you will need to create a 
+[Digital Ocean Personal API Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/)
+for authentication to Digital Ocean. When you run the script [`./bin/start.sh`](../bin/start.sh) and select a
+Digital Ocean deployment, your token will be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration file for the project, although there are two other configuration files kept for the application standup
+and the kubernetes extras functionality. For more details on those, please see the README.md in those directories.
+
 ### Pulumi
 
 If you already have run the [`./bin/setup_venv.sh`](../bin/setup_venv.sh)
@@ -181,15 +194,15 @@ Pulumi documentation for additional details regarding the command and alternativ
 The easiest way to run the project is to run [`start.sh`](./start.sh)
 after you have completed the installation steps. When doing so, be sure to choose the same
 [Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/)
-for all of your projects. Additionally, this script will prompt you for the AWS region and profile information. This
+for all of your projects. Additionally, this script will prompt you for infrastructure specific configuration values. This
 information will be used to populate the `./config/pulumi/Pulumi.<stack>.yaml` file.
 
 Alternatively, you can enter into each Pulumi project directory and execute each project independently by doing
 `pulumi up`. Take a look at `start.sh` and dependent scripts to get a feel for the flow.
 
-If you want to destroy the entire environment you can run [`destroy.sh`](./destroy.sh). This script calls either an AWS
-or kubeconfig specific script for the actual destruction. Detailed information and warnings are emitted by the script as
-it runs.
+If you want to destroy the entire environment you can run [`destroy.sh`](./destroy.sh). This script calls the correct
+destroy script based on the information stored in the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file. 
+Detailed information and warnings are emitted by the script as it runs.
 
 ### Running the Project in a Docker Container
 

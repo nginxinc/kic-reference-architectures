@@ -57,6 +57,7 @@ consists of the following:
 ├── config
 ├── infrastructure
 │   ├── aws
+│   ├── digitalocean
 │   └── kubeconfig
 ├── kubernetes
 │   ├── applications
@@ -137,6 +138,17 @@ to the cluster.
 
 The [`ecr`](./infrastructure/aws/ecr) project is responsible for installing and 
 configuring ECR for use with the previously created EKS cluster.
+
+### Digital Ocean
+
+The following directories are specific to Digital Ocean.
+
+#### DOMK8S
+
+Contained within the [`domk8s`](./infrastructure/digitalocean/domk8s) directory contains the 
+logic needed to stand up a Digital Ocean Managed Kubernetes cluster. There are a number of 
+configuration options available to customize the build, however the defaults can be used 
+to create a standard sized cluster in the SFO3 region.
 
 ### NGINX Ingress Controller Docker Image Build
 
