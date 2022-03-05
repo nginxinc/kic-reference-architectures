@@ -63,6 +63,7 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 APPLICATIONS=(sirius)
 KUBERNETES=(observability logagent logstore certmgr prometheus)
 NGINX=(kubernetes/nginx/ingress-controller-repo-only)
+INFRA=(kubeconfig digitalocean/domk8s)
 
 #
 # This is a temporary process until we complete the directory reorg and move the start/stop
@@ -115,7 +116,7 @@ for project_dir in "${NGINX[@]}" ; do
 done
 
 # Clean up the kubeconfig project
-for project_dir in "kubeconfig digitalocean/domk8s" ; do
+for project_dir in "${INFRA[@]}" ; do
   echo "$project_dir"
   if [ -f "${script_dir}/../pulumi/python/infrastructure/${project_dir}/Pulumi.yaml" ]; then
     pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/${project_dir} --emoji --stack ${PULUMI_STACK}"
@@ -124,7 +125,3 @@ for project_dir in "kubeconfig digitalocean/domk8s" ; do
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/${project_dir}"
   fi
 done
-
-
-
-
