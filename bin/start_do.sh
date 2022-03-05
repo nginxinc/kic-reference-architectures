@@ -289,9 +289,14 @@ pulumi $pulumi_args up
 
 header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
-
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
+
+# We currently don't run this becuase in most cases we are going to need to create either a DNS entry or a hostfile
+# mapping for our application.
+# TODO: find a more elegant solution to LB IP / hostname combos for testing the app #82
+# Bind this to something for now
+app_url=" "
+#app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
 echo "Application can now be accessed at: ${app_url}"
