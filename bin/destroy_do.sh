@@ -115,7 +115,7 @@ for project_dir in "${NGINX[@]}" ; do
 done
 
 # Clean up the kubeconfig project
-for project_dir in "kubeconfig" ; do
+for project_dir in "kubeconfig digitalocean/domk8s" ; do
   echo "$project_dir"
   if [ -f "${script_dir}/../pulumi/python/infrastructure/${project_dir}/Pulumi.yaml" ]; then
     pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/${project_dir} --emoji --stack ${PULUMI_STACK}"
