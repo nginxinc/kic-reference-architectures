@@ -121,9 +121,6 @@ elif infra_type == 'DO':
     config = pulumi.Config('kubernetes')
     lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
     sirius_host = lb_ingress_hostname
-else:
-    print("Should not get here")
-    exit(6)
 
 
 # Create the namespace for Bank of Sirius
@@ -384,6 +381,11 @@ if infra_type == 'AWS':
     application_url = sirius_host.apply(lambda host: f'https://{host}')
     pulumi.export('application_url', application_url)
 elif infra_type == 'kubeconfig':
+    pulumi.export('hostname', lb_ingress_hostname)
+    pulumi.export('ipaddress', lb_ingress_ip)
+    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    application_url = sirius_host.apply(lambda host: f'https://{host}')
+elif infra_type == 'DO':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
     #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
