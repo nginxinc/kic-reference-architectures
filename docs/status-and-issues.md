@@ -23,6 +23,7 @@ All of these configurations use Pulumi code within Python as the Infrastructure 
 | K8 Provider     | Tested | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
 |-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
 | AWS EKS         | Yes    | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
+| Digtial Ocean         | Yes    | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)||
 | Azure AKS       | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
 | Google GKE      | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
 | MicroK8s        | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |

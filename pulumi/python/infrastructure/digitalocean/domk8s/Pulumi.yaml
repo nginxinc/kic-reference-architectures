@@ -1,0 +1,7 @@
+name: do-k8s
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Creates new Digital Ocean K8 cluster

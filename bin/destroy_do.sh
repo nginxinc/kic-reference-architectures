@@ -125,7 +125,3 @@ for project_dir in "${INFRA[@]}" ; do
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/${project_dir}"
   fi
 done
-
-
-
-

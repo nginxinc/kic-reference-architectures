@@ -104,7 +104,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
 fi
 
 while true; do
-  read -e -r -p "Type a for AWS, k for kubeconfig? " infra
+  read -e -r -p "Type a for AWS, d for Digital Ocean, k for kubeconfig? " infra
   case $infra in
   [Aa]*)
     echo "Calling AWS startup script"
@@ -118,6 +118,12 @@ while true; do
     exit 0
     break
     ;;
-  *) echo "Please answer a or k." ;;
+  [Dd]*)
+    echo "Calling Digital Ocean startup script"
+    exec ${script_dir}/start_do.sh
+    exit 0
+    break
+    ;;
+  *) echo "Please answer a, d, or k." ;;
   esac
 done
