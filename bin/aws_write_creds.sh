@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -x
+set -v
 
 set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
