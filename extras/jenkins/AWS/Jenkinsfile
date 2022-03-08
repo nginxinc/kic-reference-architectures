@@ -149,7 +149,7 @@ pipeline {
          */
 
           sh '''
-            echo $NGINX_JWT > $WORKSPACE/extras/jwt.token
+            echo "${NGINX_JWT}" > $WORKSPACE/extras/jwt.token
             $WORKSPACE/bin/start_aws.sh
             '''
       }
