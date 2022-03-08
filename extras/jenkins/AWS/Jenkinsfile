@@ -99,6 +99,19 @@ pipeline {
 
           sh '''
             $WORKSPACE/bin/setup_venv.sh
+            '''
+
+      }
+    }
+
+    stage('Copy AWS Credentials') {
+      steps {
+
+        /*
+         * Copy credentials over
+         */
+
+          sh '''
             $WORKSPACE/bin/aws_write_creds.sh
             '''
 
@@ -119,7 +132,7 @@ pipeline {
 
           sh '''
             echo "PULUMI_STACK=marajenkaws${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
-            echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION" >> $WORKSPACE/config/pulumi/environment
+            echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> $WORKSPACE/config/pulumi/environment
             echo "AWS_PROFILE=${AWS_PROFILE}" >> $WORKSPACE/config/pulumi/environment
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/config
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
