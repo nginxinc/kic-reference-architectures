@@ -25,7 +25,7 @@ pipeline {
 
    environment {
         AWS_DEFAULT_REGION     = credentials('AWS_DEFAULT_REGION')
-        /*AWS_PROFILE            = credentials('AWS_PROFILE')*/
+        AWS_PROFILE            = credentials('AWS_PROFILE')
         AWS_ACCESS_KEY_ID      = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY  = credentials('AWS_SECRET_ACCESS_KEY')
         AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
@@ -118,8 +118,8 @@ pipeline {
 
           sh '''
             echo "PULUMI_STACK=marajenkaws${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
-            echo "AWS_DEFAULT_REGION=us-west-2" >> $WORKSPACE/config/pulumi/environment
-            echo "AWS_PROFILE=f5" >> $WORKSPACE/config/pulumi/environment
+            echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION" >> $WORKSPACE/config/pulumi/environment
+            echo "AWS_PROFILE=${AWS_PROFILE}" >> $WORKSPACE/config/pulumi/environment
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/config
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
@@ -131,8 +131,8 @@ pipeline {
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:profile "f5" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:region "us-west-2" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:profile "${AWS_PROFILE}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:region "${AWS_DEFAULT_REGION}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenkaws${BUILD_NUMBER}
             '''
@@ -144,11 +144,12 @@ pipeline {
 
         /*
          * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
-         * the MARA deployment in AWS.
+         * the credentials file if we have environment variables set. Finally, it moves the JWT into the correct location.
          */
 
           sh '''
             echo $NGINX_JWT > $WORKSPACE/extras/jwt.token
+            $WORKSPACE/bin/aws_write_creds.sh
             $WORKSPACE/bin/start_aws.sh
             '''
       }
