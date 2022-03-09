@@ -4,8 +4,14 @@
 
 ## Purpose
 
-This directory contains a set of Jenkinsfiles that can be used with MARA. These should be considered to be in a "draft"
-status, and should be reviewed and modified if you plan on using them. 
+This directory contains several subdirectories, each of which contains a 
+[Jenkinsfile](https://www.jenkins.io/doc/book/pipeline/jenkinsfile/). These are designed to be used by the  
+[Jenkins](https://www.jenkins.io/) CI system to run builds of the MARA project. These can be used as-is from the 
+repository using the ability of Jenkins to pull its pipeline configuration from SCM, as described in 
+[this article](https://www.jenkins.io/doc/book/pipeline/getting-started/#defining-a-pipeline-in-scm ) 
+
+Please note that these should be considered to be in a "draft" status, and should be reviewed and modified if you plan 
+on using them. As always, pull requests, issues, and comments are welcome.
 
 ## Key Files
 
