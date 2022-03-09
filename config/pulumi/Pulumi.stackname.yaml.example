@@ -35,6 +35,7 @@ config:
   #
   # kubernetes:infra_type: AWS
   # kubernetes:infra_type: kubeconfig
+  # kubernetes:infra_type: DO
   #
   # NOTE: For kubernetes installations that are using the kubeconfig file, there are three
   #       other variables that need to be set. This includes the fully qualified path to the
