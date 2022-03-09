@@ -40,13 +40,11 @@ if infra_type == 'AWS':
     k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
     kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
     cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
-    cluster_id = k8_stack_ref.require_output('cluster_id').apply(lambda c: str(c))
     #
     # Export the clusters' kubeconfig
     #
     pulumi.export("cluster_name", cluster_name)
     pulumi.export("kubeconfig", kubeconfig)
-    pulumi.export("cluster_id", cluster_id)
 elif infra_type == 'DO':
         stack_name = pulumi.get_stack()
         project_name = pulumi.get_project()
@@ -57,11 +55,13 @@ elif infra_type == 'DO':
         k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
         kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
         cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
+        cluster_id = k8_stack_ref.require_output('cluster_id').apply(lambda c: str(c))
         #
         # Export the clusters' kubeconfig
         #
         pulumi.export("cluster_name", cluster_name)
         pulumi.export("kubeconfig", kubeconfig)
+        pulumi.export("cluster_id", cluster_id)
 else:
     #
     # Get the cluster name and the config
