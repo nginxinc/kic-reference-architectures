@@ -16,7 +16,7 @@ pipeline {
 
  /*
   * The AWS security credentials are passed in via environment variables that are then made available to the pipeline.
-  * If these are not defined, and if the credential store on the build agent do not exist the process will fail checkout
+  * If these are not defined, and if the credential store on the build agent do not exist the process will fail
   * at this point.
   *
   * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the

@@ -17,6 +17,9 @@ pipeline {
   /*
   * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
   * open source IC.
+  *
+  * The POSTRUN_CMD is used to execute an arbitrary command following the cleanup process; this is just a work-around
+  * for the time being and will be addressed in the future.
   */
 
  environment {
