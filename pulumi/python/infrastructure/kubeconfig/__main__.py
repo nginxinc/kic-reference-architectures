@@ -72,4 +72,4 @@ else:
     # Export the clusters' kubeconfig
     #
     pulumi.export("cluster_name", cluster_name)
-    pulumi.export("kubeconfig",kubeconfig)
+    pulumi.export("kubeconfig", kubeconfig)
