@@ -178,12 +178,6 @@ pipeline {
 
   }
   post {
-        always {
-          /*
-           * We always notify via slack (configured in Jenkins).
-           */
-          slackSend channel: '#jerkins', message: 'Success: $JOB_NAME $BUILD_NUMBER'
-        }
     failure {
 
           /*
@@ -191,7 +185,6 @@ pipeline {
            * status so we can move on to the next step. Hence the "or true" logic below.W
            */
 
-        slackSend channel: '#jerkins', message: 'Failure: $JOB_NAME $BUILD_NUMBER'
           sh '''
               # Destroy our partial build...
               $WORKSPACE/bin/destroy.sh || true

@@ -219,15 +219,6 @@ pipeline {
 
   }
   post {
-    always {
-
-          /*
-           * We always notify via slack (configured in Jenkins).
-           */
-
-          slackSend channel: '#jerkins', message: 'Success: $JOB_NAME $BUILD_NUMBER'
-    }
-
     failure {
 
           /*
@@ -237,7 +228,6 @@ pipeline {
            * We also clean up Microk8s.
            */
 
-        slackSend channel: '#jerkins', message: 'Failure: $JOB_NAME $BUILD_NUMBER'
         sh '''
             # Destroy our partial build...
             $WORKSPACE/bin/destroy.sh || true
