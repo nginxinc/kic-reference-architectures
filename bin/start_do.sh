@@ -161,9 +161,14 @@ else
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
-# Show colorful fun headers if the right utils are installed
+# Show colorful fun headers if the right utils are installed and NO_COLOR is not set
+#
 function header() {
-  "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  if [ -v ${NO_COLOR} ]; then
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
+  else
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  fi
 }
 
 function add_kube_config() {

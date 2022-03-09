@@ -22,6 +22,7 @@ pipeline {
  environment {
         DIGITALOCEAN_TOKEN     = credentials('DO_TOKEN')
         NGINX_JWT              = credentials('NGINX_JWT')
+        NO_COLOR               = "TRUE"
     }
   stages {
 
@@ -177,12 +178,6 @@ pipeline {
 
   }
   post {
-        always {
-          /*
-           * We always notify via slack (configured in Jenkins).
-           */
-          slackSend()
-        }
     failure {
 
           /*

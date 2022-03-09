@@ -30,6 +30,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY  = credentials('AWS_SECRET_ACCESS_KEY')
         AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
         NGINX_JWT              = credentials('NGINX_JWT')
+        NO_COLOR               = "TRUE"
 
     }
 
@@ -189,12 +190,6 @@ pipeline {
   }
 
   post {
-        always {
-          /*
-           * We always notify via slack (configured in Jenkins).
-           */
-          slackSend()
-        }
     failure {
 
           /*

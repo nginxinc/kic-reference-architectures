@@ -105,9 +105,14 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 # Do not change the tools directory of add-ons.
 find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
-# Show colorful fun headers if the right utils are installed
+# Show colorful fun headers if the right utils are installed and NO_COLOR is not set
+#
 function header() {
-  "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  if [ -v ${NO_COLOR} ]; then
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
+  else
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  fi
 }
 
 function retry() {
