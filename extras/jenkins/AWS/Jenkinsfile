@@ -1,0 +1,213 @@
+pipeline {
+  agent {
+
+     /*
+      * Nodes that are configured for Amazon Web Services Ocean are tagged as "aws". We install the aws utility as part
+      * of the venv creation step.
+      *
+      * This has been tested on Ubuntu 20.04. Be sure to check that your Agent has the necessary components installed
+      * if you are using a different OS.
+      */
+
+     node {
+        label 'aws'
+        }
+  }
+
+ /*
+  * The AWS security credentials are passed in via environment variables that are then made available to the pipeline.
+  * If these are not defined, and if the credential store on the build agent do not exist the process will fail
+  * at this point.
+  *
+  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
+  * open source IC.
+  */
+
+   environment {
+        AWS_DEFAULT_REGION     = credentials('AWS_DEFAULT_REGION')
+        AWS_PROFILE            = credentials('AWS_PROFILE')
+        AWS_ACCESS_KEY_ID      = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY  = credentials('AWS_SECRET_ACCESS_KEY')
+        AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
+        NGINX_JWT              = credentials('NGINX_JWT')
+
+    }
+
+    /*
+     * This logic allows any branch to be checked out and built, and is designed to be triggered by a github
+     * webhook. If desired, you can change the branch specification to force the process to only build from a specific
+     * branch.
+     *
+     * Note that we also init the submodule(s).
+     */
+
+  stages {
+    stage('Checkout Scm') {
+      steps {
+        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'], [$class: 'CloneOption', noTags: false, reference: '', shallow: false], [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
+      }
+    }
+
+    stage('Prepping OS') {
+
+        /*
+         * This step handles ensuring the OS has the necessary tooling to build the project. This process has been
+         * built for Ubuntu 20.04 and assumes you have the snap store installed. It also assumes that you are running
+         * with an account that has access to passwordless sudo.
+         *
+         * We also make a few opinionated decisions, such as making sure we are always running on the latest set of
+         * packages for our Jenkins Agent.
+         *
+         * This should work on other Ubuntu related distributions, but most certainly will not work on RHEL or friends.
+         */
+
+      steps {
+          sh '''
+            # Update catalogs
+            sudo apt update
+            # Make sure our deps are installed
+            sudo apt -y install figlet openjdk-11-jdk make docker.io
+            # Upgrade everything; we always run with latest patches.
+            sudo apt -y upgrade
+            '''
+      }
+    }
+
+    stage('Cleaning Up') {
+      steps {
+
+        /*
+         * Run a find and check for any stacks that currently exist with our generated stack name; this should not
+         * happen in normal operation, but could potentially happen if things break so better safe than sorry.
+         *
+         * Other cleanup related functions can be placed here as well.
+         */
+
+          sh '''
+            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
+            '''
+      }
+    }
+
+    stage('Create VENV') {
+      steps {
+
+        /*
+         * Create our virtual environment.
+         */
+
+          sh '''
+            $WORKSPACE/bin/setup_venv.sh
+            '''
+
+      }
+    }
+
+    stage('Copy AWS Credentials') {
+      steps {
+
+        /*
+         * Copy credentials over
+         */
+
+          sh '''
+            $WORKSPACE/bin/aws_write_creds.sh
+            '''
+
+      }
+    }
+
+    stage('Configure Pulumi') {
+      steps {
+
+        /*
+         * This logic sets the necessary variables in the configuration files; this differs from the manual procedure
+         * where we prompt the user for a number of these required variables. This same approach can be used as part
+         * of the manual deployment if required.
+         *
+         * This will likely evolve further as the project does, and we may reach a point where these defaults are assumed
+         * for a given development type.
+         */
+
+          sh '''
+            echo "PULUMI_STACK=marajenkaws${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
+            echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> $WORKSPACE/config/pulumi/environment
+            echo "AWS_PROFILE=${AWS_PROFILE}" >> $WORKSPACE/config/pulumi/environment
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/config
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenks${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "AWS" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "/home/jerkins/.kube/config" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:profile "${AWS_PROFILE}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:region "${AWS_DEFAULT_REGION}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenkaws${BUILD_NUMBER}
+            '''
+      }
+    }
+
+    stage('Deploying Pulumi') {
+      steps {
+
+        /*
+         * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
+         * the credentials file if we have environment variables set. Finally, it moves the JWT into the correct location.
+         */
+
+          sh '''
+            echo "${NGINX_JWT}" > $WORKSPACE/extras/jwt.token
+            $WORKSPACE/bin/start_aws.sh
+            '''
+      }
+    }
+
+    stage('Resetting Environment') {
+      steps {
+
+        /*
+         * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
+         * destroy the deployed infrastructure in AWS
+         *
+         * After that completes, we remove the pulumi stack from the project with the find command; this is because
+         * we need to delete the stack in each project it's been instantiated in.
+         */
+
+          sh '''
+            $WORKSPACE/bin/destroy.sh
+            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
+            '''
+      }
+    }
+
+  }
+
+  post {
+        always {
+          /*
+           * We always notify via slack (configured in Jenkins).
+           */
+          slackSend()
+        }
+    failure {
+
+          /*
+           * On failure we still need to remove the partial build; however, we want to make sure we exit with a zero
+           * status so we can move on to the next step. Hence the "or true" logic below.W
+           */
+
+          sh '''
+              # Destroy our partial build...
+              $WORKSPACE/bin/destroy.sh || true
+              # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
+              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
+              '''
+    }
+   }
+  }

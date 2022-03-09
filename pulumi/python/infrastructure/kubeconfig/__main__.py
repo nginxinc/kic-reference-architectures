@@ -12,7 +12,7 @@ def aws_project_name_from_project_dir(dirname: str):
     return pulumi_config.get_pulumi_project_name(project_path)
 
 # For Digital Ocean
-def aws_project_name_from_project_dir(dirname: str):
+def do_project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'digitalocean', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
@@ -40,28 +40,28 @@ if infra_type == 'AWS':
     k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
     kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
     cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
-    cluster_id = k8_stack_ref.require_output('cluster_id').apply(lambda c: str(c))
     #
     # Export the clusters' kubeconfig
     #
     pulumi.export("cluster_name", cluster_name)
     pulumi.export("kubeconfig", kubeconfig)
-    pulumi.export("cluster_id", cluster_id)
 elif infra_type == 'DO':
         stack_name = pulumi.get_stack()
         project_name = pulumi.get_project()
         pulumi_user = pulumi_config.get_pulumi_user()
 
-        k8_project_name = aws_project_name_from_project_dir('domk8s')
+        k8_project_name = do_project_name_from_project_dir('domk8s')
         k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
         k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
         kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
         cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
+        cluster_id = k8_stack_ref.require_output('cluster_id').apply(lambda c: str(c))
         #
         # Export the clusters' kubeconfig
         #
         pulumi.export("cluster_name", cluster_name)
         pulumi.export("kubeconfig", kubeconfig)
+        pulumi.export("cluster_id", cluster_id)
 else:
     #
     # Get the cluster name and the config
@@ -72,4 +72,4 @@ else:
     # Export the clusters' kubeconfig
     #
     pulumi.export("cluster_name", cluster_name)
-    pulumi.export("kubeconfig",kubeconfig)
+    pulumi.export("kubeconfig", kubeconfig)
