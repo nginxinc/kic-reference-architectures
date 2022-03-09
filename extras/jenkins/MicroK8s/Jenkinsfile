@@ -25,7 +25,7 @@ pipeline {
  environment {
         NGINX_JWT     = credentials('NGINX_JWT')
         POSTRUN_CMD   = credentials('POSTRUN_CMD')
-        NO_COLOR      = TRUE
+        NO_COLOR      = "TRUE"
     }
 
   stages {
@@ -225,7 +225,7 @@ pipeline {
            * We always notify via slack (configured in Jenkins).
            */
 
-      slackSend()
+          slackSend channel: '#jerkins', message: 'Success: $JOB_NAME $BUILD_NUMBER'
     }
 
     failure {
@@ -237,6 +237,7 @@ pipeline {
            * We also clean up Microk8s.
            */
 
+        slackSend channel: '#jerkins', message: 'Failure: $JOB_NAME $BUILD_NUMBER'
         sh '''
             # Destroy our partial build...
             $WORKSPACE/bin/destroy.sh || true

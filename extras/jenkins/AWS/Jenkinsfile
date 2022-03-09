@@ -30,7 +30,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY  = credentials('AWS_SECRET_ACCESS_KEY')
         AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
         NGINX_JWT              = credentials('NGINX_JWT')
-        NO_COLOR               = TRUE
+        NO_COLOR               = "TRUE"
 
     }
 
@@ -194,7 +194,7 @@ pipeline {
           /*
            * We always notify via slack (configured in Jenkins).
            */
-          slackSend()
+          slackSend channel: '#jerkins', message: 'Success: $JOB_NAME $BUILD_NUMBER'
         }
     failure {
 
@@ -202,6 +202,8 @@ pipeline {
            * On failure we still need to remove the partial build; however, we want to make sure we exit with a zero
            * status so we can move on to the next step. Hence the "or true" logic below.W
            */
+
+        slackSend channel: '#jerkins', message: 'Failure: $JOB_NAME $BUILD_NUMBER'
 
           sh '''
               # Destroy our partial build...
