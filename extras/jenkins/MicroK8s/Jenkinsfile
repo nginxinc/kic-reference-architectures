@@ -21,6 +21,7 @@ pipeline {
 
  environment {
         NGINX_JWT              = credentials('NGINX_JWT')
+        POSTRUN_CMD            = credentials('POSTRUN_CMD')
     }
 
   stages {
@@ -201,6 +202,12 @@ pipeline {
             # True if it’s not there…
             sudo snap remove microk8s || true
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER} --force --yes \\;
+            # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
+            # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
+            # runs due to zombie processes and other issues. Long term we want to deploy these VM's via IaaC so the only
+            # exist for the lifetime of the project. We do it this way in order to provide some flexibility for the
+            # jenkins configuration.
+            ${POSTRUN_CMD- true}
             '''
 
       }
@@ -235,6 +242,12 @@ pipeline {
             sudo snap remove microk8s || true
             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
+            # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
+            # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
+            # runs due to zombie processes and other issues. Long term we want to deploy these VM's via IaaC so the only
+            # exist for the lifetime of the project. We do it this way in order to provide some flexibility for the
+            # jenkins configuration.
+            ${POSTRUN_CMD- true}
             '''
     }
   }
