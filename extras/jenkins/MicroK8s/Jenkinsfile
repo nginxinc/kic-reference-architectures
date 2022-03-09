@@ -1,0 +1,241 @@
+pipeline {
+  agent {
+     /*
+      * Nodes that are configured for Microk8s are tagged as "mk8s". Unlike the deployment to cloud providers, this logic
+      * will install Microk8s on the Jenkins Agent. This means that the agent should have sufficient resources available
+      * to run Microk8s. A minimum of 16GB RAM, 2 vCPU, and 20GB of disk is recommended. Testing is done with 20GB of RAM,
+      * 4 vCPU, and 64GB of disk.
+      *
+      * This has been * tested on Ubuntu 20.04. Be sure to check that your Agent has the necessary components installed
+      * if you are using a different OS.
+      */
+     node {
+        label 'microk8s'
+        }
+  }
+
+  /*
+  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
+  * open source IC.
+  */
+
+ environment {
+        NGINX_JWT              = credentials('NGINX_JWT')
+    }
+
+  stages {
+
+    /*
+     * This logic allows any branch to be checked out and built, and is designed to be triggered by a github
+     * webhook. If desired, you can change the branch specification to force the process to only build from a specific
+     * branch.
+     *
+     * Note that we also init the submodule(s).
+     */
+
+    stage('Checkout Scm') {
+      steps {
+        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'], [$class: 'CloneOption', noTags: false, reference: '', shallow: false], [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
+      }
+    }
+
+    stage('Prepping OS') {
+
+        /*
+         * This step handles ensuring the OS has the necessary tooling to build the project. This process has been
+         * built for Ubuntu 20.04. It assumes that you are running  with an account that has access to passwordless sudo.
+         *
+         * We also make a few opinionated decisions, such as making sure we are always running on the latest set of
+         * packages for our Jenkins Agent.
+         *
+         * This should work on other Ubuntu related distributions, but most certainly will not work on RHEL or friends.
+         */
+
+      steps {
+          sh '''
+            # Update catalogs
+            sudo apt update
+            # Make sure our deps are installed
+            sudo apt -y install figlet openjdk-11-jdk make docker.io python3-venv
+            # Upgrade everything; we always run with latest patches.
+            sudo apt -y upgrade
+            # Make sure our kubeconfig dir exists…
+            mkdir ~/.kube || true
+            '''
+      }
+    }
+
+    stage('Cleaning Up') {
+      steps {
+
+        /*
+         * Run a find and check for any stacks that currently exist with our generated stack name; this should not
+         * happen in normal operation, but could potentially happen if things break so better safe than sorry.
+         *
+         * This function also tries to remove both K3S and Microk8s if they are found on the host; this is because we
+         * will be installing Microk8s and we want to both make sure we are removing any previous installations as well as
+         * ensuring this Jenkins Agent does not already have a Microk8s installation on it.
+         */
+
+          sh '''
+            # Reset our K3S Environment
+            /usr/local/bin/k3s-killall.sh || true
+            /usr/local/bin/k3s-uninstall.sh || true
+            # Reset our Microk8s Environment; true if it’s not there
+            microk8s reset --destroy-storage || true
+            # True if it’s not there…
+            sudo snap remove microk8s || true
+            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
+            '''
+      }
+    }
+
+    stage('Microk8s Setup') {
+
+        /*
+         * This step installs Microk8s. This assumes you have the snap store installed and configured properly. Note that
+         * the snap store will always pull the latest version of the software so you may end up with a deployment that
+         * does not work as expected; if this happens please check back with the github repository and verify the known
+         * working configurations.
+         */
+
+      steps {
+          sh '''
+            sudo snap install microk8s --classic
+            microk8s.enable storage dns helm3
+            microk8s.enable metallb 192.168.100.100/30
+            '''
+      }
+    }
+
+    stage('Configure Microk8s') {
+      steps {
+
+        /*
+         * This step configures Microk8s for use with kubectl; we just make sure that the jenkins user has access to the
+         * configuration.
+         */
+
+          sh '''
+            microk8s.config > /home/jerkins/.kube/config
+            '''
+      }
+    }
+
+    stage('Create VENV') {
+      steps {
+
+        /*
+         * Create our virtual environment.
+         */
+
+          sh '''
+            $WORKSPACE/bin/setup_venv.sh
+            '''
+      }
+    }
+
+    stage('Configure Pulumi') {
+      steps {
+
+        /*
+         * This logic sets the necessary variables in the configuration files; this differs from the manual procedure
+         * where we prompt the user for a number of these required variables. This same approach can be used as part
+         * of the manual deployment if required.
+         *
+         * This will likely evolve further as the project does, and we may reach a point where these defaults are assumed
+         * for a given development type.
+         */
+
+          sh '''
+            echo "PULUMI_STACK=marajenk${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenk${BUILD_NUMBER} -C pulumi/python/config
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenk${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenks${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "~/.kube/config" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd --secret "Password" -C pulumi/python/kubernetes/applications/sirius -s marajenk${BUILD_NUMBER}'''
+      }
+    }
+
+    stage('Pulumi Deployment') {
+
+        /*
+         * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
+         * the MARA deployment in Microk8s
+         */
+
+      steps {
+          sh '''
+            echo $NGINX_JWT > $WORKSPACE/extras/jwt.token
+            $WORKSPACE/bin/start_kube.sh
+            '''
+      }
+    }
+
+    stage('Reset Environment') {
+
+        /*
+         * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
+         * destroy the deployed Microk8s installation.
+         *
+         * After that completes, we remove the pulumi stack from the project with the find command; this is because
+         * we need to delete the stack in each project it's been instantiated in.
+         */
+
+      steps {
+          sh '''
+            $WORKSPACE/bin/destroy.sh
+            # Reset our Microk8s Environment; true if it’s not there
+            microk8s reset --destroy-storage || true
+            # True if it’s not there…
+            sudo snap remove microk8s || true
+            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER} --force --yes \\;
+            '''
+
+      }
+    }
+
+  }
+  post {
+    always {
+
+          /*
+           * We always notify via slack (configured in Jenkins).
+           */
+
+      slackSend()
+    }
+
+    failure {
+
+          /*
+           * On failure we still need to remove the partial build; however, we want to make sure we exit with a zero
+           * status so we can move on to the next step. Hence the "or true" logic below.
+           *
+           * We also clean up Microk8s.
+           */
+
+        sh '''
+            # Destroy our partial build...
+            $WORKSPACE/bin/destroy.sh || true
+            # Reset our Microk8s Environment; true if it’s not there
+            microk8s reset --destroy-storage || true
+            # True if it’s not there…
+            sudo snap remove microk8s || true
+            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
+            '''
+    }
+  }
+}
