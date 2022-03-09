@@ -90,9 +90,11 @@ pipeline {
 
     stage('Create VENV') {
       steps {
+
         /*
          * Create our virtual environment.
          */
+
         sh '''
           $WORKSPACE/bin/setup_venv.sh
            '''
@@ -138,7 +140,7 @@ pipeline {
       steps {
 
         /*
-         * This step echoes the JWT into the correct file for the startup to find it and then calls the scrip to build
+         * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
          * the MARA deployment in Digital Ocean.
          */
 
@@ -165,7 +167,13 @@ pipeline {
           find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenkdo${BUILD_NUMBER} --force --yes \\;
            '''
       }
-    }
+            /*
+         * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
+         * destroy the deployed infrastructure in Digital Ocean.
+         *
+         * After that completes, we remove the pulumi stack from the project with the find command; this is because
+         * we need to delete the stack in each project it's been instantiated in.
+         */}
 
   }
   post {
