@@ -263,7 +263,14 @@ if command -v aws >/dev/null; then
   validate_aws_credentials
 fi
 
-pulumi_args="--emoji --stack ${PULUMI_STACK}"
+#
+# Set the headers to respect the NO_COLOR variable
+#
+if [ -z ${NO_COLOR+x} ]; then
+  pulumi_args="--emoji --stack ${PULUMI_STACK}"
+else
+  pulumi_args="--color never --stack ${PULUMI_STACK}"
+fi
 
 # We automatically set this to aws for infra type; since this is a script specific to AWS
 # TODO: combined file should query and manage this

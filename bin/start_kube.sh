@@ -272,8 +272,14 @@ pulumi config set logstore:helm_timeout 600 -C ${script_dir}/../pulumi/python/co
 pulumi config set certmgr:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
 pulumi config set prometheus:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
 
-
-pulumi_args="--emoji --stack ${PULUMI_STACK}"
+#
+# Set the headers to respect the NO_COLOR variable
+#
+if [ -z ${NO_COLOR+x} ]; then
+  pulumi_args="--emoji --stack ${PULUMI_STACK}"
+else
+  pulumi_args="--color never --stack ${PULUMI_STACK}"
+fi
 
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
