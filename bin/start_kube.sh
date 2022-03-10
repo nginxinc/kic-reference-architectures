@@ -108,10 +108,10 @@ find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml
 # Show colorful fun headers if the right utils are installed and NO_COLOR is not set
 #
 function header() {
-  if [ -v ${NO_COLOR} ]; then
-    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
-  else
+  if [ -z ${NO_COLOR+x} ]; then
     "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  else
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
   fi
 }
 
