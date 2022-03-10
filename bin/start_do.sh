@@ -164,10 +164,10 @@ fi
 # Show colorful fun headers if the right utils are installed and NO_COLOR is not set
 #
 function header() {
-  if [ -v ${NO_COLOR} ]; then
-    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
-  else
+  if [ -z ${NO_COLOR+x} ]; then
     "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  else
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
   fi
 }
 
@@ -236,7 +236,14 @@ if command -v doctl >/dev/null; then
   validate_do_credentials
 fi
 
-pulumi_args="--emoji --stack ${PULUMI_STACK}"
+#
+# Set the headers to respect the NO_COLOR variable
+#
+if [ -z ${NO_COLOR+x} ]; then
+  pulumi_args="--emoji --stack ${PULUMI_STACK}"
+else
+  pulumi_args="--color never --stack ${PULUMI_STACK}"
+fi
 
 # We automatically set this to DO for infra type; since this is a script specific to DO
 # TODO: combined file should query and manage this

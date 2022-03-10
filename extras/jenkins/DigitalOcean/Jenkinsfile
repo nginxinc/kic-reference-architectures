@@ -36,7 +36,11 @@ pipeline {
 
     stage('Checkout Scm') {
       steps {
-        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'], [$class: 'CloneOption', noTags: false, reference: '', shallow: false], [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
+        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'],
+        [$class: 'CloneOption', noTags: false, reference: '', shallow: false],
+        [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false,
+        recursiveSubmodules: true, reference: '', trackingSubmodules: false]],
+        userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
       }
     }
 

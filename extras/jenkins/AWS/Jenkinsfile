@@ -34,6 +34,9 @@ pipeline {
 
     }
 
+
+  stages {
+
     /*
      * This logic allows any branch to be checked out and built, and is designed to be triggered by a github
      * webhook. If desired, you can change the branch specification to force the process to only build from a specific
@@ -42,10 +45,13 @@ pipeline {
      * Note that we also init the submodule(s).
      */
 
-  stages {
     stage('Checkout Scm') {
       steps {
-        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'], [$class: 'CloneOption', noTags: false, reference: '', shallow: false], [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
+        checkout([$class: 'GitSCM', branches: [[name: '**']], extensions: [[$class: 'CheckoutOption'],
+        [$class: 'CloneOption', noTags: false, reference: '', shallow: false],
+        [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false,
+        recursiveSubmodules: true, reference: '', trackingSubmodules: false]],
+        userRemoteConfigs: [[url: 'https://github.com/nginxinc/kic-reference-architectures']]])
       }
     }
 

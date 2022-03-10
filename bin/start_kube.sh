@@ -108,10 +108,10 @@ find "${script_dir}/../pulumi" -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml
 # Show colorful fun headers if the right utils are installed and NO_COLOR is not set
 #
 function header() {
-  if [ -v ${NO_COLOR} ]; then
-    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
-  else
+  if [ -z ${NO_COLOR+x} ]; then
     "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1" | "${script_dir}"/../pulumi/python/venv/bin/lolcat
+  else
+    "${script_dir}"/../pulumi/python/venv/bin/fart --no_copy -f standard "$1"
   fi
 }
 
@@ -272,8 +272,14 @@ pulumi config set logstore:helm_timeout 600 -C ${script_dir}/../pulumi/python/co
 pulumi config set certmgr:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
 pulumi config set prometheus:helm_timeout 600 -C ${script_dir}/../pulumi/python/config
 
-
-pulumi_args="--emoji --stack ${PULUMI_STACK}"
+#
+# Set the headers to respect the NO_COLOR variable
+#
+if [ -z ${NO_COLOR+x} ]; then
+  pulumi_args="--emoji --stack ${PULUMI_STACK}"
+else
+  pulumi_args="--color never --stack ${PULUMI_STACK}"
+fi
 
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
