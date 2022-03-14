@@ -106,21 +106,21 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 # kubernetes components for installations without them.
 find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi stack select --create "${PULUMI_STACK}" \;
 
-if [[ -z "${DIGITALOCEAN_TOKEN+x}" ]]; then
-  echo "DIGITALOCEAN_TOKEN not set"
-  if ! grep --quiet '^DIGITALOCEAN_TOKEN=.*' "${script_dir}/../config/pulumi/environment"; then
-    read -r -e -p "Enter the Digital Ocean Token to use in all projects (leave blank for default): " DIGITALOCEAN_TOKEN
-    if [[ -z "${DIGITALOCEAN_TOKEN}" ]]; then
-      echo "No Digital Ocean token found - exiting"
+if [[ -z "${LINODE_TOKEN+x}" ]]; then
+  echo "LINODE_TOKEN not set"
+  if ! grep --quiet '^LINODE_TOKEN=.*' "${script_dir}/../config/pulumi/environment"; then
+    read -r -e -p "Enter the Linode Token to use in all projects (leave blank for default): " LINODE_TOKEN
+    if [[ -z "${LINODE_TOKEN}" ]]; then
+      echo "No Linode Token found - exiting"
       exit 4
     fi
-    echo "DIGITALOCEAN_TOKEN=${DIGITALOCEAN_TOKEN}" >>"${script_dir}/../config/pulumi/environment"
+    echo "LINODE_TOKEN=${LINODE_TOKEN}" >>"${script_dir}/../config/pulumi/environment"
     source "${script_dir}/../config/pulumi/environment"
-    find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set --plaintext digitalocean:token "${DIGITALOCEAN_TOKEN}" \;
+    find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set --plaintext linode:token "${LINODE_TOKEN}" \;
   fi
 else
-  echo "Using DIGITALOCEAN_TOKEN from environment: ${DIGITALOCEAN_TOKEN}"
-  find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set --plaintext digitalocean:token "${DIGITALOCEAN_TOKEN}" \;
+  echo "Using LINODE_TOKEN from environment: ${LINODE_TOKEN}"
+  find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set --plaintext linode:token "${LINODE_TOKEN}" \;
 fi
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -160,6 +160,7 @@ else
   echo "Create a password for the grafana admin user"
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
+
 # TODO: Figure out better way to handle hostname / ip address for exposing our IC #82
 #
 # This version of the code forces you to add a hostname which is used to generate the cert when the application is
@@ -184,6 +185,7 @@ else
   echo "Create a fqdn for your deployment"
   pulumi config set kic-helm:fqdn -C ${script_dir}/../pulumi/python/config
 fi
+
 # Show colorful fun headers if the right utils are installed and NO_COLOR is not set
 #
 function header() {
@@ -196,14 +198,18 @@ function header() {
 
 function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
-  doctl kubernetes cluster config save ${cluster_name}
+  # We don't want to overwrite any existing config files
+  TMPFILE=/tmp/mara.$$
+  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke --show-secrets > $TMPFILE
+  KUBECONFIG=~/.kube/config:$KUBECONFIG:$TMPFILE kubectl config view --flatten >$TMPFILE
+  mv $TMPFILE ~/.kube/config
 }
 
-function validate_do_credentials() {
-  pulumi_do_token="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get digitalocean:token)"
-  echo "Validating Digital Ocean credentials"
-  if ! doctl account get >/dev/null; then
-    echo >&2 "Digital Ocean credentials have expired or are not valid"
+function validate_lke_credentials() {
+  pulumi_lke_token="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get linode:token)"
+  echo "Validating Linode credentials"
+  if ! linode_cli account view >/dev/null; then
+    echo >&2 "Linode credentials have expired or are not valid"
     exit 2
   fi
 }
@@ -227,7 +233,7 @@ function retry() {
 # This deploy only works with the NGINX registries.
 #
 echo " "
-echo "NOTICE! Currently the deployment for Digital Ocean only supports pulling images from the registry! A JWT is "
+echo "NOTICE! Currently the deployment for Linode LKE only supports pulling images from the registry! A JWT is "
 echo "required in order to access the NGINX Plus repository. This should be placed in a file in the extras directory"
 echo "in the project root, in a file named jwt.token"
 echo " "
@@ -255,8 +261,8 @@ else
   ${script_dir}/../pulumi/python/venv/bin/kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=placeholder --docker-password=placeholder -n nginx-ingress --dry-run=client -o yaml >${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
 fi
 
-if command -v doctl >/dev/null; then
-  validate_do_credentials
+if command -v linode_cli >/dev/null; then
+  validate_lke_credentials
 fi
 
 #
@@ -268,20 +274,20 @@ else
   pulumi_args="--color never --stack ${PULUMI_STACK}"
 fi
 
-# We automatically set this to DO for infra type; since this is a script specific to DO
+# We automatically set this to LKE for infra type; since this is a script specific to LKE
 # TODO: combined file should query and manage this
-pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config DO
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config LKE
 # Bit of a gotcha; we need to know what infra type we have when deploying our application (BoS) due to the
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
 # configuration because of the encryption needed for the passwords.
-pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius DO
+pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius LKE
 
-header "DO Kubernetes"
-cd "${script_dir}/../pulumi/python/infrastructure/digitalocean/domk8s"
+header "Linode LKE"
+cd "${script_dir}/../pulumi/python/infrastructure/linode/lke"
 pulumi $pulumi_args up
 
 # pulumi stack output cluster_name
-cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/digitalocean/domk8s)
+cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke)
 add_kube_config
 
 if command -v kubectl >/dev/null; then

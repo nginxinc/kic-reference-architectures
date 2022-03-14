@@ -86,6 +86,11 @@ if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/con
     sleep 5
     ${script_dir}/destroy_do.sh
     exit 0
+  elif [ $INFRA == 'LKE' ]; then
+    echo "Destroying a Linode LKE based stack; if this is not right please type ctrl-c to abort this script."
+    sleep 5
+    ${script_dir}/destroy_lke.sh
+    exit 0
   else
     print "No infrastructure set in config file; aborting!"
     exit 1

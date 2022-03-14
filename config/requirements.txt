@@ -4,7 +4,7 @@ fart~=0.1.5
 lolcat~=1.4
 nodeenv~=1.6.0
 passlib~=1.7.4
-pulumi~=3.25.0
+pulumi==3.26.1
 pulumi-aws>=4.37.5
 pulumi-docker~=3.1.0
 pulumi-eks>=0.37.1
@@ -17,4 +17,4 @@ setuptools-git-versioning==1.9.2
 wheel==0.37.1
 yamlreader==3.0.4
 pulumi-digitalocean==4.11.1
-
+pulumi-linode==3.7.1
