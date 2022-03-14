@@ -16,9 +16,9 @@ if not region:
 node_count = config.get('node_count')
 if not node_count:
     node_count = 3
-kubernetes_version = config.get('kubernetes_version')
-if not kubernetes_version:
-    kubernetes_version = '1.21.10-do.0'
+k8s_version = config.get('k8s_version')
+if not k8s_version:
+    k8s_version = '1.21.10-do.0'
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -32,7 +32,7 @@ pool_name = "do-" + stack_name + "-pool"
 # Create a digital ocean cluster
 cluster = docean.KubernetesCluster(resource_name=resource_name,
                                    region=region,
-                                   version=kubernetes_version,
+                                   version=k8s_version,
                                    node_pool=docean.KubernetesClusterNodePoolArgs(
                                        name=pool_name,
                                        size=instance_size,

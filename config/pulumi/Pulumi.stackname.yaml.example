@@ -285,7 +285,7 @@ config:
   #       within that project.
 
   ############################################################################
-  # Digital Ocean K8
+  # Digital Ocean Managed Kubernetes
   ############################################################################
   # This is the Kubernetes version to install using Digital Ocean K8s. Changing this value may result in bugs in the
   # behavior of the reference architecture because it is designed around the APIs for 1.19.
@@ -296,4 +296,18 @@ config:
   domk8s:node_count: 3
   # The desired node count of the Digital Ocean K8s cluster.
   domk8s:region: sfo3
+  # The region to deploy the cluster
+
+
+  ############################################################################
+  # Linode Kubernetes Engine
+  ############################################################################
+  # This is the Kubernetes version to install using Linode K8s.
+  lke:k8s_version: 1.22
+  # Version of Kubernetes to use
+  lke:instance_type: g6-standard-8
+  # This is the default instance type used Linode K8s.
+  lke:node_count: 3
+  # The desired node count of the Linode K8s cluster.
+  lke:region: us-central
   # The region to deploy the cluster

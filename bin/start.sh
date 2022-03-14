@@ -104,7 +104,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
 fi
 
 while true; do
-  read -e -r -p "Type a for AWS, d for Digital Ocean, k for kubeconfig? " infra
+  read -e -r -p "Type a for AWS, d for Digital Ocean, k for kubeconfig, l for Linode? " infra
   case $infra in
   [Aa]*)
     echo "Calling AWS startup script"
@@ -124,6 +124,12 @@ while true; do
     exit 0
     break
     ;;
-  *) echo "Please answer a, d, or k." ;;
+  [Ll]*)
+    echo "Calling Linode startup script"
+    exec ${script_dir}/start_lke.sh
+    exit 0
+    break
+    ;;
+  *) echo "Please answer a, d, k, or l." ;;
   esac
 done
