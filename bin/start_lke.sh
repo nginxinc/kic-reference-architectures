@@ -196,14 +196,17 @@ function header() {
   fi
 }
 
+#
+# The initial version of this tried to manage the kubernetes configuration file, but for some reason
+# Linode is a bit touchy about this.
+#
+# So, now we just backup the existing file and slide ours in place. This will be streamlined/addressed as
+# part of the rewrite...
+#
 function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
-  # We don't want to overwrite any existing config files
-  TMPFILE=/tmp/mara.$$
   mv ~/.kube/config ~/.kube/config.mara.backup || true
-  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > $TMPFILE
-  KUBECONFIG=~/.kube/config:${KUBECONFIG:-}:$TMPFILE kubectl config view --flatten > ~/.kube/config
-  rm $TMPFILE
+  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > ~/.kube/config
 }
 
 function validate_lke_credentials() {
