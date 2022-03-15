@@ -12,7 +12,7 @@ if not instance_size:
     instance_size = 'g6-standard-4'
 region = config.get('region')
 if not region:
-    region = 'us-central'
+    region = 'us-west'
 node_count = config.get('node_count')
 if not node_count:
     node_count = 3
