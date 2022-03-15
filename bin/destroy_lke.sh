@@ -117,6 +117,20 @@ for project_dir in "${NGINX[@]}" ; do
   fi
 done
 
+#
+# We need to do a cleanup of kubernetes making sure that we get rid of our PV's so they don't hang around
+#
+for NAMESPACE in $(kubectl get namespaces) ; do
+  # Change to a namespace
+  kubectl config set-context --current --namespace=$NAMESPACE
+  # Delete all pods
+  kubectl delete pod --all
+  # Delete all volume claims
+  kubectl delete pvc --all
+  # Delete all persistent volumes
+  kubectl delete pv --all
+done
+
 # Clean up the kubeconfig project
 for project_dir in "${KUBECONFIG[@]}" ; do
   echo "$project_dir"
