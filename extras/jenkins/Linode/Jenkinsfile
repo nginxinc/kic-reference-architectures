@@ -145,7 +145,7 @@ pipeline {
 
         sh '''
           echo $NGINX_JWT > $WORKSPACE/extras/jwt.token
-          $WORKSPACE/bin/start_do.sh
+          $WORKSPACE/bin/start_lke.sh
            '''
       }
     }

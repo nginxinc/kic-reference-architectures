@@ -246,9 +246,21 @@ else
   echo "kubectl is already installed"
 fi
 
-# Add Pulumi to the virtual environment
+#
+# Download Pulumi CLI tooling
+#
+# Added some error checking to handle a failure here since it can be a bit confusing to the user (or at least to me)
+# when this bombs out and you can't figure out why. Note that the logic is specifically looking for "~=" in the
+# requirements file. Other comparisons that are legal in terms of the requirements file WILL fail with this logic.
+#
 echo "Downloading Pulumi CLI into virtual environment"
-PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/../config/requirements.txt" | cut -d '=' -f2)"
+PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/../config/requirements.txt" | cut -d '=' -f2 || true)"
+    if  [ -z $PULUMI_VERSION ] ; then
+      echo "Failed to find Pulumi version - EXITING"
+      exit 5
+    else
+      echo "Pulumi version found"
+    fi
 
 if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then
   echo "Pulumi version ${PULUMI_VERSION} is already installed"
@@ -256,6 +268,8 @@ else
   PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
   PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
   ${download_cmd} "${PULUMI_TARBALL_URL}" >"${PULUMI_TARBALL_DESTTARBALL_DEST}"
+      [ $? -eq 0 ] && echo "Pulumi downloaded successfully" || echo "Failed to download Pulumi"
   tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+      [ $? -eq 0 ] && echo "Pulumi installed successfully" || echo "Failed to install Pulumi"
   rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
 fi
