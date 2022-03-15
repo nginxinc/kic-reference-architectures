@@ -84,6 +84,12 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
         elif [ $INFRA == 'kubeconfig' ]; then
           exec ${script_dir}/start_kube.sh
           exit 0
+        elif [ $INFRA == 'DO' ]; then
+          exec ${script_dir}/start_do.sh
+          exit 0
+        elif [ $INFRA == 'LKE' ]; then
+          exec ${script_dir}/start_lke.sh
+          exit 0
         else
           echo "Corrupt or non-existent configuration file, please restart and delete and reconfigure."
           exit 1
