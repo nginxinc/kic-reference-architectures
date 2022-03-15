@@ -121,6 +121,16 @@ elif infra_type == 'DO':
     config = pulumi.Config('kubernetes')
     lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
     sirius_host = lb_ingress_hostname
+elif infra_type == 'LKE':
+    # Logic to extract the FQDN of the load balancer for Ingress
+    ingress_project_name = pulumi_repo_ingress_project_name()
+    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+    # Set back to kubernetes
+    config = pulumi.Config('kubernetes')
+    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
+    sirius_host = lb_ingress_hostname
 
 
 # Create the namespace for Bank of Sirius
