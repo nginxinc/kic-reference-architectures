@@ -18,3 +18,4 @@ wheel==0.37.1
 yamlreader==3.0.4
 pulumi-digitalocean==4.11.1
 pulumi-linode==3.7.1
+linode-cli~=5.17.2
