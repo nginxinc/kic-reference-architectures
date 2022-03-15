@@ -62,8 +62,9 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 APPLICATIONS=(sirius)
 KUBERNETES=(observability logagent logstore certmgr prometheus)
-NGINX=(kubernetes/nginx/ingress-controller-repo-only)
-INFRA=(linode/lke kubeconfig)
+NGINX=(ingress-controller-repo-only)
+LINODE=(lke)
+KUBECONFIG=(kubeconfig)
 
 #
 # This is a temporary process until we complete the directory reorg and move the start/stop
@@ -108,21 +109,32 @@ kubectl delete crd thanosrulers.monitoring.coreos.com  > /dev/null 2>&1 || true
 # Destroy NGINX components
 for project_dir in "${NGINX[@]}" ; do
   echo "$project_dir"
-  if [ -f "${script_dir}/../pulumi/python/${project_dir}/Pulumi.yaml" ]; then
-    pulumi_args="--cwd ${script_dir}/../pulumi/python/${project_dir} --emoji --stack ${PULUMI_STACK}"
+  if [ -f "${script_dir}/../pulumi/python/kubernetes/nginx/${project_dir}/Pulumi.yaml" ]; then
+    pulumi_args="--cwd ${script_dir}/../pulumi/python/kubernetes/nginx/${project_dir} --emoji --stack ${PULUMI_STACK}"
     pulumi ${pulumi_args} destroy
   else
-    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/${project_dir}"
+    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/kubernetes/nginx/${project_dir}"
   fi
 done
 
 # Clean up the kubeconfig project
-for project_dir in "${INFRA[@]}" ; do
+for project_dir in "${KUBECONFIG[@]}" ; do
   echo "$project_dir"
   if [ -f "${script_dir}/../pulumi/python/infrastructure/${project_dir}/Pulumi.yaml" ]; then
     pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/${project_dir} --emoji --stack ${PULUMI_STACK}"
     pulumi ${pulumi_args} destroy
   else
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/${project_dir}"
+  fi
+done
+
+# Clean up the linode project
+for project_dir in "${LINODE[@]}" ; do
+  echo "$project_dir"
+  if [ -f "${script_dir}/../pulumi/python/infrastructure/linode/${project_dir}/Pulumi.yaml" ]; then
+    pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/linode/${project_dir} --emoji --stack ${PULUMI_STACK}"
+    pulumi ${pulumi_args} destroy
+  else
+    >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/linode/${project_dir}"
   fi
 done
