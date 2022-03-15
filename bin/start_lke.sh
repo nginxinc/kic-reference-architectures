@@ -200,9 +200,9 @@ function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
   # We don't want to overwrite any existing config files
   TMPFILE=/tmp/mara.$$
-  mv ~/.kube/config ~/.kube/config.mara.backup
+  mv ~/.kube/config ~/.kube/config.mara.backup || true
   pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > $TMPFILE
-  KUBECONFIG=~/.kube/config:$KUBECONFIG:$TMPFILE kubectl config view --flatten > ~/.kube/config
+  KUBECONFIG=~/.kube/config:${KUBECONFIG:-}:$TMPFILE kubectl config view --flatten > ~/.kube/config
   rm $TMPFILE
 }
 
