@@ -200,9 +200,10 @@ function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
   # We don't want to overwrite any existing config files
   TMPFILE=/tmp/mara.$$
-  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke --show-secrets > $TMPFILE
-  KUBECONFIG=~/.kube/config:$KUBECONFIG:$TMPFILE kubectl config view --flatten >$TMPFILE
-  mv $TMPFILE ~/.kube/config
+  mv ~/.kube/config ~/.kube/config.mara.backup
+  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > $TMPFILE
+  KUBECONFIG=~/.kube/config:$KUBECONFIG:$TMPFILE kubectl config view --flatten > ~/.kube/config
+  rm $TMPFILE
 }
 
 function validate_lke_credentials() {
@@ -286,6 +287,15 @@ header "Linode LKE"
 cd "${script_dir}/../pulumi/python/infrastructure/linode/lke"
 pulumi $pulumi_args up
 
+#
+# This is used to streamline the pieces that follow. Moving forward we can add new logic behind this and this
+# should abstract away for us. This way we just call the kubeconfig project to get the needed information and
+# let the infrastructure specific parts do their own thing (as long as they work with this module)
+#
+header "Kubeconfig"
+cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
+pulumi $pulumi_args up
+
 # pulumi stack output cluster_name
 cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke)
 add_kube_config
@@ -295,14 +305,6 @@ if command -v kubectl >/dev/null; then
   retry 30 kubectl version >/dev/null
 fi
 
-#
-# This is used to streamline the pieces that follow. Moving forward we can add new logic behind this and this
-# should abstract away for us. This way we just call the kubeconfig project to get the needed information and
-# let the infrastructure specific parts do their own thing (as long as they work with this module)
-#
-header "Kubeconfig"
-cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
-pulumi $pulumi_args up
 
 header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only"
