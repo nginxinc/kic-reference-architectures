@@ -33,9 +33,8 @@ resource_name = "lke-" + stack_name + "-cluster"
 # Create a linode cluster
 cluster = linode.LkeCluster(resource_name,
                             k8s_version=k8s_version,
-                            control_plane={
-                                high_availability=True
-                            },
+                            control_plane=linode.LkeClusterControlPlaneArgs(
+                                high_availability=k8s_ha),
                             label=resource_name,
                             pools=[linode.LkeClusterPoolArgs(
                                 count=node_count,
