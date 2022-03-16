@@ -21,7 +21,7 @@ if not k8s_version:
     k8s_version = '1.22'
 k8s_ha = config.get('k8s_ha')
 if not k8s_ha:
-    k8s_ha = "True"
+    k8s_ha = True
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -33,7 +33,9 @@ resource_name = "lke-" + stack_name + "-cluster"
 # Create a linode cluster
 cluster = linode.LkeCluster(resource_name,
                             k8s_version=k8s_version,
-                            control_plane=k8s_ha,
+                            control_plane={
+                                high_availability=k8s_ha
+                            },
                             label=resource_name,
                             pools=[linode.LkeClusterPoolArgs(
                                 count=node_count,
