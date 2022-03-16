@@ -21,7 +21,7 @@ if not k8s_version:
     k8s_version = '1.22'
 k8s_ha = config.get('k8s_ha')
 if not k8s_ha:
-    k8s_ha = True
+    k8s_ha = "True"
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
