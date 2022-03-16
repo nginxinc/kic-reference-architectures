@@ -174,7 +174,6 @@ servicemon = ConfigGroup(
     'servicemon',
     files=[servicemon_manifests],
     opts=pulumi.ResourceOptions(depends_on=[ns, prometheus_release], custom_timeouts=CustomTimeouts(create='10m')))
-)
 
 #
 # Deploy the statsd collector
