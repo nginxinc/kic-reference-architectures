@@ -34,7 +34,7 @@ resource_name = "lke-" + stack_name + "-cluster"
 cluster = linode.LkeCluster(resource_name,
                             k8s_version=k8s_version,
                             control_plane={
-                                high_availability=k8s_ha
+                                high_availability=True
                             },
                             label=resource_name,
                             pools=[linode.LkeClusterPoolArgs(
