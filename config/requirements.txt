@@ -13,6 +13,7 @@ pycryptodome~=3.14.0
 PyYAML~=5.4.1
 requests~=2.27.1
 setuptools==60.9.3
+setuptools-git-versioning==1.9.2
 wheel==0.37.1
 yamlreader==3.0.4
 pulumi-digitalocean==4.11.1
