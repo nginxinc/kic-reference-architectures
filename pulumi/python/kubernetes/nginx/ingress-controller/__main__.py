@@ -105,7 +105,8 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
                 'annotations': {
                     'co.elastic.logs/module': 'nginx'
                 }
-            }
+            },
+            'nginxplus': False
         },
         'prometheus': {
             'create': True,
@@ -133,8 +134,8 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
                 'tag': image_tag
             })
 
-            values['controller']['nginxplus'] = image_tag.endswith('plus')
-            if values['controller']['nginxplus']:
+            if config.get_bool('enable_plus'):
+                values['controller']['nginxplus'] = True
                 pulumi.log.info("Enabling NGINX Plus")
     else:
         pulumi.log.info(f"Using default ingress controller image as defined in Helm chart")
@@ -207,3 +208,4 @@ ingress_service = srv.status
 pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
 # Print out our status
 pulumi.export("kic_status", pstatus)
+pulumi.export('nginx_plus', pulumi.Output.unsecret(chart_values['controller']['nginxplus']))
