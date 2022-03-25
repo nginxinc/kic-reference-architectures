@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -o errexit  # abort on nonzero exit status
+set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
 
@@ -60,7 +60,7 @@ source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
 function validate_aws_credentials() {
-  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get aws:profile)"
+  pulumi_aws_profile="$(pulumi --cwd "${script_dir}/../pulumi/python/config" config get aws:profile || true)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     profile_arg="--profile ${pulumi_aws_profile}"
   elif [[ -n "${AWS_PROFILE+x}" ]]; then
@@ -116,6 +116,7 @@ done
 # TODO: figure out a more elegant way to do the CRD removal for prometheus #83
 # This is a hack for now to remove the CRD's for prometheus-kube-stack
 # See https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md#uninstall-chart
+set +o errexit  # don't abort on nonzero exit status for these commands
 kubectl delete crd alertmanagerconfigs.monitoring.coreos.com > /dev/null 2>&1
 kubectl delete crd alertmanagers.monitoring.coreos.com > /dev/null 2>&1
 kubectl delete crd podmonitors.monitoring.coreos.com > /dev/null 2>&1
@@ -124,6 +125,7 @@ kubectl delete crd prometheuses.monitoring.coreos.com > /dev/null 2>&1
 kubectl delete crd prometheusrules.monitoring.coreos.com > /dev/null 2>&1
 kubectl delete crd servicemonitors.monitoring.coreos.com > /dev/null 2>&1
 kubectl delete crd thanosrulers.monitoring.coreos.com > /dev/null 2>&1
+set -o errexit  # abort on nonzero exit status
 
 # Destroy NGINX components
 for project_dir in "${NGINX[@]}" ; do
@@ -152,12 +154,9 @@ for project_dir in "${AWSINFRA[@]}" ; do
   echo "$project_dir"
   if [ -f "${script_dir}/../pulumi/python/infrastructure/aws/${project_dir}/Pulumi.yaml" ]; then
     pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/aws/${project_dir} --emoji --stack ${PULUMI_STACK}"
+    echo "Destroying aws/${project_dir}"
     pulumi ${pulumi_args} destroy
   else
     >&2 echo "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/aws/${project_dir}"
   fi
 done
-
-
-
-
