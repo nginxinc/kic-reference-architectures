@@ -91,16 +91,20 @@ config:
   #
 
   # NGINX Kubernetes Ingress Controller (KIC) Configuration
-  kic-helm:chart_name: nginx-ingress
+
   # Chart name for the helm chart for kic
-  kic-helm:chart_version: 0.12.0
+  kic-helm:chart_name: nginx-ingress
   # Chart version for the helm chart for kic
-  kic-helm:helm_repo_name: nginx-stable
+  kic-helm:chart_version: 0.12.0
   # Name of the repo to pull the kic chart from
-  kic-helm:helm_repo_url: https://helm.nginx.com/stable
+  kic-helm:helm_repo_name: nginx-stable
   # URL of the chart repo to pull kic from
-  kic-helm:helm_timeout: 300
+  kic-helm:helm_repo_url: https://helm.nginx.com/stable
   # Timeout value for helm operations in seconds
+  kic-helm:helm_timeout: 300
+  # When set to true, the ingress controller Helm chart will deploy with
+  # NGINX plus support enabled.
+  kic-helm:enable_plus: false
 
   # Acceptable values are default value is (oss_image):
   # source    - build the KIC image from source code
