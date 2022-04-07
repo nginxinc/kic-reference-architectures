@@ -6,26 +6,31 @@ from pulumi_kubernetes.yaml import ConfigGroup
 
 from kic_util import pulumi_config
 
+
 # Removes the status field from the Nginx Ingress Helm Chart, so that i#t is
 # compatible with the Pulumi Chart implementation.
 def remove_status_field(obj):
     if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
         del obj['status']
 
+
 def pulumi_k8_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     eks_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
+
 
 def otel_operator_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     otel_operator_path = os.path.join(script_dir, 'otel-operator', '*.yaml')
     return otel_operator_path
 
+
 def otel_deployment_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     otel_deployment_path = os.path.join(script_dir, 'otel-objects', '*.yaml')
     return otel_deployment_path
+
 
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'observability'
@@ -55,7 +60,7 @@ otel_operator = otel_operator_location()
 otel_op = ConfigGroup(
     'otel-op',
     files=[otel_operator],
-    transformations=[remove_status_field], # Need to review w/ operator
+    transformations=[remove_status_field],  # Need to review w/ operator
     opts=pulumi.ResourceOptions(depends_on=[ns])
 )
 
@@ -65,8 +70,6 @@ otel_deployment = otel_deployment_location()
 otel_dep = ConfigGroup(
     'otel-dep',
     files=[otel_deployment],
-    transformations=[add_namespace, remove_status_field], # Need to review w/ operator
-    opts=pulumi.ResourceOptions(depends_on=[ns,otel_op])
+    transformations=[add_namespace, remove_status_field],  # Need to review w/ operator
+    opts=pulumi.ResourceOptions(depends_on=[ns, otel_op])
 )
-
-

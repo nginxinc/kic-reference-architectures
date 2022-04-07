@@ -21,7 +21,6 @@ helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://helm.elastic.co'
 
-
 #
 # Allow the user to set timeout per helm chart; otherwise
 # we default to 5 minutes.
@@ -29,6 +28,7 @@ if not helm_repo_url:
 helm_timeout = config.get_int('helm_timeout')
 if not helm_timeout:
     helm_timeout = 300
+
 
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
