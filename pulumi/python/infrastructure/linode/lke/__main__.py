@@ -1,6 +1,3 @@
-import collections
-import base64
-
 import pulumi
 import pulumi_linode as linode
 from kic_util import pulumi_config
