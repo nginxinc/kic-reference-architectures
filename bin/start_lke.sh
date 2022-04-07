@@ -208,8 +208,8 @@ function header() {
 #
 function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
-  mv ~/.kube/config ~/.kube/config.mara.backup || true
-  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > ~/.kube/config
+  mv $HOME/.kube/config $HOME/.kube/config.mara.backup || true
+  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > $HOME/.kube/config
 }
 
 function validate_lke_credentials() {
