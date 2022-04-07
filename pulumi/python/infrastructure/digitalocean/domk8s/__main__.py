@@ -18,7 +18,7 @@ if not node_count:
     node_count = 3
 k8s_version = config.get('k8s_version')
 if not k8s_version:
-    k8s_version = '1.21.10-do.0'
+    k8s_version = '1.21.11-do.0'
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
