@@ -172,6 +172,9 @@ echo "NOTICE! Currently we do not automatically pull the hostname of the K8 Load
 echo "you will need to create a FQDN and map the assigned IP address to your FQDN in order to use the deployment. "
 echo "You can then add this mapping to DNS, or locally to your host file"
 echo " "
+echo "See https://networkdynamics.com/2017/05/the-benefits-of-testing-your-website-with-a-local-hosts-file/ for details"
+echo "on how this can be accomplished. "
+echo " "
 echo "This will be streamlined in a future release of MARA."
 echo " "
 
