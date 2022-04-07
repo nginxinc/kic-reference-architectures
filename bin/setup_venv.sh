@@ -184,7 +184,7 @@ pip3 install wheel
 
 # Get nodeenv version so that node can be installed before we install Python
 # dependencies because pulumi_eks depends on the presence of node.
-pip3 install "$(grep nodeenv "${script_dir}/pulumi/python/requirements.txt")"
+pip3 install "$(grep nodeenv "${script_dir}/../pulumi/python/requirements.txt")"
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
@@ -195,7 +195,7 @@ else
 fi
 
 # Install general package requirements
-pip3 install --requirement "${script_dir}/pulumi/python/requirements.txt"
+pip3 install --requirement "${script_dir}/../pulumi/python/requirements.txt"
 # Install local common utilities module
 pip3 install --use-feature=in-tree-build "${script_dir}/../pulumi/python/utility/kic-pulumi-utils" &&
   rm -rf "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/.eggs" \
@@ -254,7 +254,7 @@ fi
 # requirements file. Other comparisons that are legal in terms of the requirements file WILL fail with this logic.
 #
 echo "Downloading Pulumi CLI into virtual environment"
-PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/pulumi/python/requirements.txt" | cut -d '=' -f2 || true)"
+PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/../pulumi/python/requirements.txt" | cut -d '=' -f2 || true)"
     if  [ -z $PULUMI_VERSION ] ; then
       echo "Failed to find Pulumi version - EXITING"
       exit 5
