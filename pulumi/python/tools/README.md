@@ -5,7 +5,7 @@
 ## Purpose
 
 This directory holds common tools that *may* be required by kubernetes installations that do not meet the minimum
-reuqirements of MARA as checked by the [testcap.sh](../../../bin/testcap.sh) script.
+requirements of MARA as checked by the [testcap.sh](../../../bin/testcap.sh) script.
 
 These tools address two main areas:
 

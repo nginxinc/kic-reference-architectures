@@ -3,9 +3,9 @@
 This project is a work in progress and as such there are a number of areas for improvement. As of this writing, the
 development process is primarily using AWS and MicroK8s for development and testing. However, there is manual testing
 being undertaken on several other K8 providers. Current information on known issues, bugs, and open feature requests can
-be seen on the [Project Github Issue Page](https://github.com/nginxinc/kic-reference-architectures/issues).
+be seen on the [Project GitHub Issue Page](https://github.com/nginxinc/kic-reference-architectures/issues).
 Additionally, the core contributors are available for discussion on the
-[Project Github Discussion Page](https://github.com/nginxinc/kic-reference-architectures/discussions)
+[Project GitHub Discussion Page](https://github.com/nginxinc/kic-reference-architectures/discussions)
 
 ## Provider Status
 
@@ -23,7 +23,7 @@ All of these configurations use Pulumi code within Python as the Infrastructure 
 | K8 Provider     | Tested | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
 |-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
 | AWS EKS         | Yes    | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
-| Digtial Ocean         | Yes    | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)||
+| Digtal Ocean   | Yes    | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)||
 | Azure AKS       | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
 | Google GKE      | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
 | MicroK8s        | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
@@ -36,7 +36,7 @@ All of these configurations use Pulumi code within Python as the Infrastructure 
 1. The NGINX IC build/deploy process is currently under active development and support for IC will be standardized across
 all providers. Follow [#81](https://github.com/nginxinc/kic-reference-architectures/issues/81) and 
 [#86](https://github.com/nginxinc/kic-reference-architectures/issues/86) for details. Currently, for all non-AWS environments
-you have the option to specify either NGINX or NGINX Plus as your IC. The later does require an active subscription and a 
+you have the option to specify either NGINX or NGINX Plus as your IC. The latter does require an active subscription and a 
 JWT to be included at build time. Please see the documentation for more details.
 2. The process via which the IP and FQDN are created and used is currently under active development, and will be streamlined
 and standardized for all providers. Follow [#82](https://github.com/nginxinc/kic-reference-architectures/issues/82) for
@@ -60,7 +60,7 @@ for your environment.
 users and spawn rate. This is "normal" and is an area we want to expose and explore for troubleshooting, determining
 which metrics/traces are helpful, etc.
 4. The most common failure modes for non-cloud environments tend towards the following failures:
-   1. Unable to provision persistent storage; correct by ensuring you have a persistent volue provider and can provision a volume.
+   1. Unable to provision persistent storage; correct by ensuring you have a persistent volume provider and can provision a volume.
    2. Unable to provision an External IP; correct by adding an IP provider such as kubevip or metallb.
    3. Resource starvation (not enough CPU, Memory); expand the size of the VM or detune the environment.
    4. Timeouts in helm; increase the helm timeout in the configuration file.

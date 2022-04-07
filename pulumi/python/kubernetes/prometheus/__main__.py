@@ -4,7 +4,6 @@ import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 from pulumi import Output
-from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
 from pulumi import CustomTimeouts
 
@@ -152,7 +151,7 @@ prometheus_release_args = ReleaseArgs(
     },
     # User configurable timeout
     timeout=helm_timeout,
-    # By default Release resource will wait till all created resources
+    # By default, Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
     skip_await=False,
@@ -215,7 +214,7 @@ statsd_release_args = ReleaseArgs(
     },
     # User configurable timeout
     timeout=helm_timeout,
-    # By default Release resource will wait till all created resources
+    # By default, Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
     skip_await=False,
@@ -229,7 +228,8 @@ statsd_release_args = ReleaseArgs(
     force_update=True)
 
 statsd_release = Release("statsd", args=statsd_release_args,
-                         opts=pulumi.ResourceOptions(depends_on=[ns, prometheus_release], custom_timeouts=CustomTimeouts(create='10m')))
+                         opts=pulumi.ResourceOptions(depends_on=[ns, prometheus_release],
+                                                     custom_timeouts=CustomTimeouts(create='10m')))
 
 statsd_status = statsd_release.status
 

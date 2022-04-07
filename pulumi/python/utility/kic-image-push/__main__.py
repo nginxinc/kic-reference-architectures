@@ -14,6 +14,7 @@ def aws_project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', 'infrastructure', 'aws', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', dirname)
