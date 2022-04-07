@@ -28,10 +28,9 @@ def lke_project_name_from_project_dir(dirname: str):
 
 
 def get_kubeconfig():
-    kubeconfig_b64 = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
     decoded = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(base64.b64decode(c), 'utf-8'))
     kubeconfig = pulumi.Output.secret(decoded)
-    return (kubeconfig)
+    return kubeconfig
 
     #
     # There are two paths currently available; if the user has requested that we stand up MARA on AWS
