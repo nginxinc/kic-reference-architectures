@@ -1,7 +1,7 @@
 from pulumi_aws import iam
 import json
 
-## EKS Cluster Role
+# EKS Cluster Role
 
 eks_role = iam.Role(
     'eks-iam-role',
@@ -25,7 +25,6 @@ iam.RolePolicyAttachment(
     role=eks_role.id,
     policy_arn='arn:aws:iam::aws:policy/AmazonEKSServicePolicy',
 )
-
 
 iam.RolePolicyAttachment(
     'eks-cluster-policy-attachment',
@@ -57,7 +56,6 @@ iam.RolePolicyAttachment(
     role=ec2_role.id,
     policy_arn='arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy',
 )
-
 
 iam.RolePolicyAttachment(
     'eks-cni-policy-attachment',

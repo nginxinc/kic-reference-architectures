@@ -5,11 +5,13 @@ from kic_util import pulumi_config
 
 config = pulumi.Config('kubernetes')
 
+
 # Determine directory path
 def project_name_from_project_dir(dirname1: str, dirname2: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname1, dirname2)
     return pulumi_config.get_pulumi_project_name(project_path)
+
 
 def get_kubeconfig():
     decoded = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(base64.b64decode(c), 'utf-8'))
