@@ -1,6 +1,3 @@
-import collections
-import os
-
 import pulumi
 import pulumi_digitalocean as docean
 from kic_util import pulumi_config
@@ -27,7 +24,6 @@ pulumi_user = pulumi_config.get_pulumi_user()
 # Derive our names for the cluster and the pool
 resource_name = "do-" + stack_name + "-cluster"
 pool_name = "do-" + stack_name + "-pool"
-
 
 # Create a digital ocean cluster
 cluster = docean.KubernetesCluster(resource_name=resource_name,
