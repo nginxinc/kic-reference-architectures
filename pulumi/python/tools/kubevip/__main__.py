@@ -1,5 +1,3 @@
-from secrets import token_bytes
-from base64 import b64encode
 import pulumi
 import ipaddress
 import os
@@ -7,21 +5,25 @@ import pulumi_kubernetes as k8s
 from pulumi_kubernetes.yaml import ConfigFile
 from kic_util import pulumi_config
 
+
 def pulumi_kube_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     kube_project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(kube_project_path)
+
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
+
 # Where are our manifests?
 def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     k8_manifest_path = os.path.join(script_dir, 'manifests', 'kube-vip-cloud-controller.yaml')
     return k8_manifest_path
+
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -42,7 +44,6 @@ thecidr = config.require('thecidr')
 thenet = ipaddress.IPv4Network(thecidr, strict=False)
 therange = str(thenet[0]) + "-" + str(thenet[-1])
 
-
 k8_manifest = k8_manifest_location()
 
 kubevip = ConfigFile(
@@ -51,13 +52,12 @@ kubevip = ConfigFile(
 
 # Create a config map
 kube_system_kubevip_config_map = k8s.core.v1.ConfigMap("kube_systemKubevipConfigMap",
-    api_version="v1",
-    data={
-        "cidr-global": thecidr
-    },
-    kind="ConfigMap",
-    metadata=k8s.meta.v1.ObjectMetaArgs(
-        name="kubevip",
-        namespace="kube-system",
-    ))
-
+                                                       api_version="v1",
+                                                       data={
+                                                           "cidr-global": thecidr
+                                                       },
+                                                       kind="ConfigMap",
+                                                       metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                           name="kubevip",
+                                                           namespace="kube-system",
+                                                       ))

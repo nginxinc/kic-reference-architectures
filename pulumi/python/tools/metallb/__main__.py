@@ -13,25 +13,29 @@ cluster_name = config.require('cluster_name')
 context_name = config.require('context_name')
 kubeconfig = config.require('kubeconfig')
 
+
 # Function to add namespace
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'metallb-system'
-    
+
+
 def pulumi_kube_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     kube_project_path = os.path.join(script_dir, '..', 'common')
     return pulumi_config.get_pulumi_project_name(kube_project_path)
 
-#def pulumi_ingress_project_name():
-    #script_dir = os.path.dirname(os.path.abspath(__file__))
-    #ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
-    #return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
+# def pulumi_ingress_project_name():
+# script_dir = os.path.dirname(os.path.abspath(__file__))
+# ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
+# return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 # Where are our manifests?
 def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     k8_manifest_path = os.path.join(script_dir, 'manifests', 'metallb.yaml')
     return k8_manifest_path
+
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -54,7 +58,6 @@ thecidr = config.require('thecidr')
 thenet = ipaddress.IPv4Network(thecidr, strict=False)
 therange = str(thenet[0]) + "-" + str(thenet[-1])
 
-
 k8_manifest = k8_manifest_location()
 
 metallb = ConfigFile(
@@ -68,34 +71,32 @@ secretkey = b64encode(token_bytes(128)).decode()
 
 # Create a secret in K8
 metallb_system_memberlist_secret = k8s.core.v1.Secret("metallb_systemMemberlistSecret",
-    api_version="v1",
-    data={
-        "secretkey": secretkey
-    },
-    kind="Secret",
-    metadata=k8s.meta.v1.ObjectMetaArgs(
-        name="memberlist",
-        namespace="metallb-system",
-    ),
-    opts=pulumi.ResourceOptions(depends_on=[ns])
-    )
-
+                                                      api_version="v1",
+                                                      data={
+                                                          "secretkey": secretkey
+                                                      },
+                                                      kind="Secret",
+                                                      metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                          name="memberlist",
+                                                          namespace="metallb-system",
+                                                      ),
+                                                      opts=pulumi.ResourceOptions(depends_on=[ns])
+                                                      )
 
 # Create a config map
 metallb_system_config_config_map = k8s.core.v1.ConfigMap("metallb_systemConfigConfigMap",
-    api_version="v1",
-    kind="ConfigMap",
-    metadata=k8s.meta.v1.ObjectMetaArgs(
-        namespace="metallb-system",
-        name="config",
-    ),
-    opts=pulumi.ResourceOptions(depends_on=[ns]),
-    data={
-        "config": """address-pools:
+                                                         api_version="v1",
+                                                         kind="ConfigMap",
+                                                         metadata=k8s.meta.v1.ObjectMetaArgs(
+                                                             namespace="metallb-system",
+                                                             name="config",
+                                                         ),
+                                                         opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                         data={
+                                                             "config": """address-pools:
     - name: default
       protocol: layer2
       addresses:
       - """ + therange,
-    }
-    )
-
+                                                         }
+                                                         )

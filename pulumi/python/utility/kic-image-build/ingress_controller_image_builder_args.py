@@ -5,6 +5,7 @@ import pulumi
 @pulumi.input_type
 class IngressControllerImageBuilderArgs:
     """Arguments needed for instantiating the IngressControllerImageBuilderProvider"""
+
     def __init__(self,
                  kic_src_url: Optional[pulumi.Input[str]] = None,
                  make_target: Optional[pulumi.Input[str]] = None,

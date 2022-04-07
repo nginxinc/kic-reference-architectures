@@ -1,9 +1,6 @@
-from secrets import token_bytes
-from base64 import b64encode
 import pulumi
 import os
 import pulumi_kubernetes as k8s
-from pulumi_kubernetes.yaml import ConfigFile
 from kic_util import pulumi_config
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
@@ -12,6 +9,7 @@ config = pulumi.Config('kubernetes')
 cluster_name = config.require('cluster_name')
 context_name = config.require('context_name')
 kubeconfig = config.require('kubeconfig')
+
 
 # Function to add namespace
 def add_namespace(obj):
@@ -23,6 +21,7 @@ def pulumi_kube_project_name():
     kube_project_path = os.path.join(script_dir, '..', 'common')
     return pulumi_config.get_pulumi_project_name(kube_project_path)
 
+
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 kube_project_name = pulumi_kube_project_name()
@@ -30,7 +29,6 @@ pulumi_user = pulumi_config.get_pulumi_user()
 
 kube_stack_ref_id = f"{pulumi_user}/{kube_project_name}/{stack_name}"
 kube_stack_ref = pulumi.StackReference(kube_stack_ref_id)
-
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
@@ -75,7 +73,7 @@ nfsvols_release_args = ReleaseArgs(
     values={
         "storageClass": {
             "defaultClass": True
-            },
+        },
         "nfs": {
             "server": nfsserver,
             "path": nfspath,
@@ -87,7 +85,7 @@ nfsvols_release_args = ReleaseArgs(
     },
     # User configurable timeout
     timeout=helm_timeout,
-    # By default Release resource will wait till all created resources
+    # By default, Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
     skip_await=False,
