@@ -25,11 +25,6 @@ def pulumi_kube_project_name():
     return pulumi_config.get_pulumi_project_name(kube_project_path)
 
 
-# def pulumi_ingress_project_name():
-# script_dir = os.path.dirname(os.path.abspath(__file__))
-# ingress_project_path = os.path.join(script_dir, '..', 'nginx', 'ingress-controller')
-# return pulumi_config.get_pulumi_project_name(ingress_project_path)
-
 # Where are our manifests?
 def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
