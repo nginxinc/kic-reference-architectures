@@ -16,7 +16,7 @@ Each of the sample files is configured to listen on the
 * http on port 9979
 
 ### Logging 
-All of the examples log to the container's stdout. However, the basic configuration is configured to only show the 
+All the examples log to the container's stdout. However, the basic configuration is configured to only show the 
 condensed version of the traces being received. In order to see the full traces, you need to set the logging level to
 `DEBUG`. The basic-debug object is configured to do this automatically.
 
@@ -38,7 +38,7 @@ to the file in the field noted.
 
 ## Usage
 By default, the `otel-collector.yaml.basic` configuration is copied into the live `otel-collector.yaml`. The logic for
-this project runs all files ending in `.yaml` as part of the configuration so you simply need to either rename your 
+this project runs all files ending in `.yaml` as part of the configuration, so you simply need to either rename your 
 chosen file to `otel-collector.yaml` or add ensuring only the files you want to use have the `.yaml` extension. 
 
 

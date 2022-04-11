@@ -114,7 +114,7 @@ elastic_release_args = ReleaseArgs(
     },
     # User configurable timeout
     timeout=helm_timeout,
-    # By default Release resource will wait till all created resources
+    # By default, Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
     skip_await=False,

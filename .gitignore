@@ -265,3 +265,5 @@ override.tf.json
 /pulumi/python/tools/common/config/*.yaml
 /pulumi/python/tools/common/config/environment
 !/pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml
+
+pulumi/python/kubernetes/nginx/ingress-controller-repo-only/manifests/regcred.yaml

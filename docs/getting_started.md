@@ -12,7 +12,7 @@ Here is a rough outline of the steps to get started:
 4. Setup AWS credentials OR Setup `kubectl` to connect to an existing cluster
 5. Run `./bin/start.sh` and answer the prompts.
 
-## Install on MacOS with HomeBrew and Docker Desktop
+## Install on macOS with HomeBrew and Docker Desktop
 
 ```
 # Install Homebrew for the Mac: https://brew.sh/
@@ -20,7 +20,7 @@ Here is a rough outline of the steps to get started:
 $ brew install make git python3
 ```
 
-## Install on MacOS with Docker Desktop
+## Install on macOS with Docker Desktop
 
 ```
 # In a terminal window with the MacOS UI, install developer tools if they haven't already 
@@ -72,7 +72,7 @@ Python 3.
 
 #### Git
 
-The `git` command line tool is required for checking out KIC source code from github and for the KIC image build
+The `git` command line tool is required for checking out KIC source code from GitHub and for the KIC image build
 process.
 
 #### Make
@@ -125,7 +125,7 @@ information to the installer:
 The easiest way to test this is to run the command:
 `kubectl --kubeconfig="yourconfig" --cluster="yourcluster" --context="yourcontext"`
 
-One you have verified you can connect to the cluster you will need to test to make sure your cluster supports the
+Once you have verified you can connect to the cluster you will need to test to make sure your cluster supports the
 minimum required capabilities for MARA. You can test this by running the [`./bin/testcap.sh`](../bin/testcap.sh)
 script.
 
@@ -191,7 +191,7 @@ Pulumi documentation for additional details regarding the command and alternativ
 
 ## Running the Project
 
-The easiest way to run the project is to run [`start.sh`](./start.sh)
+The easiest way to run the project is to run [`start.sh`](../bin/start.sh)
 after you have completed the installation steps. When doing so, be sure to choose the same
 [Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/)
 for all of your projects. Additionally, this script will prompt you for infrastructure specific configuration values. This
@@ -200,7 +200,7 @@ information will be used to populate the `./config/pulumi/Pulumi.<stack>.yaml` f
 Alternatively, you can enter into each Pulumi project directory and execute each project independently by doing
 `pulumi up`. Take a look at `start.sh` and dependent scripts to get a feel for the flow.
 
-If you want to destroy the entire environment you can run [`destroy.sh`](./destroy.sh). This script calls the correct
+If you want to destroy the entire environment you can run [`destroy.sh`](../bin/destroy.sh). This script calls the correct
 destroy script based on the information stored in the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file. 
 Detailed information and warnings are emitted by the script as it runs.
 
@@ -214,7 +214,7 @@ docker run --interactive --tty --volume /var/run/docker.sock:/var/run/docker.soc
      kic-ref-arch-pulumi-aws:<distro>
 ```
 
-If you already have setup Pulumi, kubeconfig information, and/or AWS credentials on the host machine, you can mount them
+If you already have set up Pulumi, kubeconfig information, and/or AWS credentials on the host machine, you can mount them
 into the container using Docker with the following options.
 
 ```

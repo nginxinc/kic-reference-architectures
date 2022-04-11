@@ -84,6 +84,12 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
         elif [ $INFRA == 'kubeconfig' ]; then
           exec ${script_dir}/start_kube.sh
           exit 0
+        elif [ $INFRA == 'DO' ]; then
+          exec ${script_dir}/start_do.sh
+          exit 0
+        elif [ $INFRA == 'LKE' ]; then
+          exec ${script_dir}/start_lke.sh
+          exit 0
         else
           echo "Corrupt or non-existent configuration file, please restart and delete and reconfigure."
           exit 1
@@ -104,7 +110,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
 fi
 
 while true; do
-  read -e -r -p "Type a for AWS, d for Digital Ocean, k for kubeconfig? " infra
+  read -e -r -p "Type a for AWS, d for Digital Ocean, k for kubeconfig, l for Linode? " infra
   case $infra in
   [Aa]*)
     echo "Calling AWS startup script"
@@ -124,6 +130,12 @@ while true; do
     exit 0
     break
     ;;
-  *) echo "Please answer a, d, or k." ;;
+  [Ll]*)
+    echo "Calling Linode startup script"
+    exec ${script_dir}/start_lke.sh
+    exit 0
+    break
+    ;;
+  *) echo "Please answer a, d, k, or l." ;;
   esac
 done
