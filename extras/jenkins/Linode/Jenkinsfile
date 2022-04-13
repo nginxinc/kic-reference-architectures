@@ -66,6 +66,8 @@ pipeline {
             sudo apt -y install figlet openjdk-11-jdk make docker.io
             # Upgrade everything; we always run with latest patches.
             sudo apt -y upgrade
+            # Create the directory for the kubeconfig
+            mkdir -p $HOME/.kube || true
             '''
       }
     }
