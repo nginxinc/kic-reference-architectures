@@ -23,9 +23,10 @@ pipeline {
   */
 
  environment {
-        NGINX_JWT     = credentials('NGINX_JWT')
-        POSTRUN_CMD   = credentials('POSTRUN_CMD')
-        NO_COLOR      = "TRUE"
+        NGINX_JWT               = credentials('NGINX_JWT')
+        POSTRUN_CMD             = credentials('POSTRUN_CMD')
+        NO_COLOR                = "TRUE"
+        PULUMI_ACCESS_TOKEN     = credentials('PULUMI_ACCESS_TOKEN')
     }
 
   stages {

@@ -31,6 +31,8 @@ pipeline {
         AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
         NGINX_JWT              = credentials('NGINX_JWT')
         NO_COLOR               = "TRUE"
+        PULUMI_ACCESS_TOKEN    = credentials('PULUMI_ACCESS_TOKEN')
+
 
     }
 

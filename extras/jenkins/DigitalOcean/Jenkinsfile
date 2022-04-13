@@ -22,6 +22,7 @@ pipeline {
  environment {
         DIGITALOCEAN_TOKEN     = credentials('DO_TOKEN')
         NGINX_JWT              = credentials('NGINX_JWT')
+        PULUMI_ACCESS_TOKEN    = credentials('PULUMI_ACCESS_TOKEN')
         NO_COLOR               = "TRUE"
     }
   stages {
