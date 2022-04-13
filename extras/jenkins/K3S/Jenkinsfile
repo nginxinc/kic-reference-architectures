@@ -70,7 +70,7 @@ pipeline {
             # Upgrade everything; we always run with latest patches.
             sudo apt -y upgrade
             # Make sure our kubeconfig dir exists…
-            mkdir ~/.kube || true
+            mkdir $HOME/.kube || true
             '''
       }
     }
@@ -126,7 +126,7 @@ pipeline {
          */
 
           sh '''
-            sudo k3s kubectl config view --flatten > ~/.kube/config
+            sudo k3s kubectl config view --flatten > $HOME/.kube/config
             '''
       }
     }
@@ -165,7 +165,7 @@ pipeline {
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "~/.kube/config" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
