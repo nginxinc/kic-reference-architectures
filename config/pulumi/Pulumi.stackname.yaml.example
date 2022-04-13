@@ -293,7 +293,7 @@ config:
   ############################################################################
   # This is the Kubernetes version to install using Digital Ocean K8s. Changing this value may result in bugs in the
   # behavior of the reference architecture because it is designed around the APIs for 1.19.
-  domk8s:k8s_version: 1.21.11-do.0
+  domk8s:k8s_version: 1.22.8-do.0
   # Version of Kubernetes to use
   domk8s:instance_type: s-2vcpu-4gb
   # This is the default instance type used by Digital Ocean K8s.
