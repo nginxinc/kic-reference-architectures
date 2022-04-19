@@ -63,13 +63,16 @@ and configured |
    the [example configuration file](../config/pulumi/Pulumi.stackname.yaml.example)
    variables to adjust the helm timeout as required for your environment. These will need to be added/updated in the
    configuration for your stack, which is located in `./config/pulumi` and is named `Pulumi.$STACK.yaml`.
-3. When load testing the Bank of Sirius using Locust, you will likely see a high failure rate as you increase the max
-   users and spawn rate. This is "normal" and is an area we want to expose and explore for troubleshooting, determining
-   which metrics/traces are helpful, etc.
+3. When load testing the Bank of Sirius using [Locust](https://locust.io/), you will likely see a high failure rate as
+   you increase the max users and spawn rate. This is "normal" and is an area we want to expose and explore for
+   troubleshooting, determining which metrics/traces are helpful, etc.
 4. The most common failure modes for non-cloud environments tend towards the following failures:
-    1. Unable to provision persistent storage; correct by ensuring you have a persistent volume provider and can
-       provision a volume.
-    2. Unable to provision an External IP; correct by adding an IP provider such as kubevip or metallb.
+    1. Unable to provision persistent storage; correct by ensuring you have a
+       [persistent volume provider](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) and can provision a
+       volume.
+    2. Unable to provision an External IP; correct by adding an IP provider such
+       as [kubevip](https://kube-vip.chipzoller.dev/)
+       or [metallb](https://metallb.org/).
     3. Resource starvation (not enough CPU, Memory); expand the size of the VM or detune the environment.
     4. Timeouts in helm; increase the helm timeout in the configuration file.
 5. If you are using a cloud provider with timed credentials, such as AWS, one failure mode that can arise is when the
