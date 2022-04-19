@@ -18,19 +18,19 @@ includes the following:
 - FQDN/IP: How does the project handle the IP addressing and FQDN for the certificates?
 - Notes: Any additional information on the provider / project interaction.
 
-All of these configurations use Pulumi code within Python as the Infrastructure as Code (IaC) manager.
-
-| K8 Provider     | Tested | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
+All of these configurations use Pulumi code within Python as the Infrastructand configuredure as Code (
+| K8 Provider | Tested | Infrastructure Support | IC Options | FQDN/IP | Notes |
 |-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
-| AWS EKS         | Yes    | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
-| Digtal Ocean   | Yes    | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)||
-| Azure AKS       | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Google GKE      | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| MicroK8s        | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
-| Harvester/RKE2  | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| K3S             | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Rancher Desktop | No     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| Minikube        | Yes    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Metallb Enabled and configured             |
+| AWS EKS | Yes | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided | | | Digtal Ocean | Yes |
+Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)|| | Azure AKS | Yes | Kubeconfig
+Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | Google GKE | Yes | Kubeconfig Only (3)
+| NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | MicroK8s | Yes | Kubeconfig Only (3)         | NGINX / NGINX
+Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) | | Harvester/RKE2 | Yes |
+Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | | K3S
+| Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | Rancher Desktop | No |
+Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | |
+Minikube | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Metallb Enabled
+and configured |
 
 ### Notes:
 
@@ -54,11 +54,15 @@ All of these configurations use Pulumi code within Python as the Infrastructure 
 ## Known Issues / Caveats
 
 1. Currently, the use of the Elastic tooling has shown to be problematic under heavy load, with containers falling over
-   and causing disruptions. Please see the tuning variables in the configuration file to adjust the number of replicas
-   deployed for the Elastic logstore to tune to your environment.
+   and causing disruptions. Please see the [example configuration file](../config/pulumi/Pulumi.stackname.yaml.example)
+   variables to adjust the number of replicas deployed for the Elastic logstore to tune to your environment. These will
+   need to be added/updated in the configuration for your stack, which is located in `./config/pulumi` and  
+   is named `Pulumi.$STACK.yaml`.
 2. The default Helm timeout is 5 minutes, which is acceptable for most managed clouds but tends to be too short for
-   single-vm or workstation deployments. Please see the configuration file variables to adjust the helm timeout as
-   required for your environment.
+   single-vm or workstation deployments. Please see
+   the [example configuration file](../config/pulumi/Pulumi.stackname.yaml.example)
+   variables to adjust the helm timeout as required for your environment. These will need to be added/updated in the
+   configuration for your stack, which is located in `./config/pulumi` and is named `Pulumi.$STACK.yaml`.
 3. When load testing the Bank of Sirius using Locust, you will likely see a high failure rate as you increase the max
    users and spawn rate. This is "normal" and is an area we want to expose and explore for troubleshooting, determining
    which metrics/traces are helpful, etc.
