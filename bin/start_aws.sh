@@ -151,6 +151,12 @@ else
   pulumi config set aws:region -C "${script_dir}/../pulumi/python/config" "${AWS_DEFAULT_REGION}"
 fi
 
+# Function to auto-generate passwords
+function createpw() {
+  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
+  return 0
+}
+
 # The bank of sirius configuration file is stored in the ./sirius/config
 # directory. This is because we cannot pull secrets from different project
 # directories.
@@ -167,16 +173,18 @@ echo "Checking for required secrets"
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for the sirius accounts database"
 else
-  echo "Create a password for the sirius accounts database"
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  ACCOUNTS_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
+  echo "Created password for the sirius accounts database"
 fi
 
 # Sirius Ledger Database
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for sirius ledger database"
 else
-  echo "Create a password for the sirius ledger database"
-  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
+  echo "Created password for the sirius ledger database"
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
@@ -233,6 +241,11 @@ function validate_aws_credentials() {
   else
     profile_arg=""
   fi
+
+  # Function to auto-generate passwords
+  function createpw() {
+    base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
+  }
 
   echo "Validating AWS credentials"
   if ! aws ${profile_arg} sts get-caller-identity >/dev/null; then

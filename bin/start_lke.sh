@@ -139,16 +139,18 @@ echo "Checking for required secrets"
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for the sirius accounts database"
 else
-  echo "Create a password for the sirius accounts database"
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  ACCOUNTS_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
+  echo "Created password for the sirius accounts database"
 fi
 
 # Sirius Ledger Database
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for sirius ledger database"
 else
-  echo "Create a password for the sirius ledger database"
-  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
+  echo "Created password for the sirius ledger database"
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
@@ -209,7 +211,7 @@ function header() {
 function add_kube_config() {
   echo "adding ${cluster_name} cluster to local kubeconfig"
   mv $HOME/.kube/config $HOME/.kube/config.mara.backup || true
-  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets > $HOME/.kube/config
+  pulumi stack output kubeconfig -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/kubeconfig --show-secrets >$HOME/.kube/config
 }
 
 function validate_lke_credentials() {
@@ -310,7 +312,6 @@ if command -v kubectl >/dev/null; then
   echo "Attempting to connect to newly create kubernetes cluster"
   retry 30 kubectl version >/dev/null
 fi
-
 
 header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only"

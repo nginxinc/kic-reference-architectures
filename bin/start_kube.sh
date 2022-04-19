@@ -130,6 +130,12 @@ function retry() {
   done
 }
 
+# Function to auto-generate passwords
+function createpw() {
+  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
+  return 0
+}
+
 #
 # This deploy only works with the NGINX registries.
 #
@@ -236,16 +242,18 @@ echo "Checking for required secrets"
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for the sirius accounts database"
 else
-  echo "Create a password for the sirius accounts database"
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  ACCOUNTS_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
+  echo "Created password for the sirius accounts database"
 fi
 
 # Sirius Ledger Database
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   echo "Password found for sirius ledger database"
 else
-  echo "Create a password for the sirius ledger database"
-  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
+  echo "Created password for the sirius ledger database"
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
@@ -254,7 +262,8 @@ fi
 if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
   echo "Password found for grafana admin account"
 else
-  echo "Create a password for the grafana admin user"
+  echo "Create a password for the grafana admin user; this password will be used to access the Grafana dashboard"
+  echo "This should be an alphanumeric string without any shell special characters"
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
