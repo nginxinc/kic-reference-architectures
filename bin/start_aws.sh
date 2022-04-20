@@ -171,29 +171,29 @@ echo "Checking for required secrets"
 
 # Sirius Accounts Database
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
-  echo "Password found for the sirius accounts database"
+  true
 else
   ACCOUNTS_PW=$(createpw)
   pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
-  echo "Created password for the sirius accounts database"
 fi
 
 # Sirius Ledger Database
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
-  echo "Password found for sirius ledger database"
+  true
 else
   LEDGER_PW=$(createpw)
   pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
-  echo "Created password for the sirius ledger database"
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
 # This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
 #
 if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
-  echo "Password found for grafana admin account"
+  echo "Existing password found for grafana admin user"
 else
-  echo "Create a password for the grafana admin user"
+  echo "Create a password for the grafana admin user; this password will be used to access the Grafana dashboard"
+  echo "This should be an alphanumeric string without any shell special characters; it is presented in plain text"
+  echo "due to current limitations with Pulumi secrets. You will need this password to access the Grafana dashboard."
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
@@ -241,11 +241,6 @@ function validate_aws_credentials() {
   else
     profile_arg=""
   fi
-
-  # Function to auto-generate passwords
-  function createpw() {
-    base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
-  }
 
   echo "Validating AWS credentials"
   if ! aws ${profile_arg} sts get-caller-identity >/dev/null; then
