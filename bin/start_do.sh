@@ -123,7 +123,6 @@ else
   find "${script_dir}/../pulumi/python" -mindepth 1 -maxdepth 7 -type f -name Pulumi.yaml -not -path "*/tools/*" -execdir pulumi config set --plaintext digitalocean:token "${DIGITALOCEAN_TOKEN}" \;
 fi
 
-# Function to auto-generate passwords
 function createpw() {
   base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
   return 0

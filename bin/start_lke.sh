@@ -98,6 +98,11 @@ else
   exit 3
 fi
 
+function createpw() {
+  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
+  return 0
+}
+
 source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 

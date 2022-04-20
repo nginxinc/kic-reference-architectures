@@ -130,7 +130,6 @@ function retry() {
   done
 }
 
-# Function to auto-generate passwords
 function createpw() {
   base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
   return 0
@@ -340,4 +339,3 @@ echo "Bank of Sirius (Example Application) Configuration: pulumi config -C ${scr
 echo "K8 Loadbalancer IP: kubectl get services --namespace nginx-ingress"
 echo " "
 echo "Please see the documentation in the github repository for more information"
-

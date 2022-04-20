@@ -151,7 +151,6 @@ else
   pulumi config set aws:region -C "${script_dir}/../pulumi/python/config" "${AWS_DEFAULT_REGION}"
 fi
 
-# Function to auto-generate passwords
 function createpw() {
   base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
   return 0
