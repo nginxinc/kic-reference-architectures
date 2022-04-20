@@ -151,6 +151,11 @@ else
   pulumi config set aws:region -C "${script_dir}/../pulumi/python/config" "${AWS_DEFAULT_REGION}"
 fi
 
+function createpw() {
+  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
+  return 0
+}
+
 # The bank of sirius configuration file is stored in the ./sirius/config
 # directory. This is because we cannot pull secrets from different project
 # directories.
@@ -165,27 +170,29 @@ echo "Checking for required secrets"
 
 # Sirius Accounts Database
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
-  echo "Password found for the sirius accounts database"
+  true
 else
-  echo "Create a password for the sirius accounts database"
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  ACCOUNTS_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
 fi
 
 # Sirius Ledger Database
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
-  echo "Password found for sirius ledger database"
+  true
 else
-  echo "Create a password for the sirius ledger database"
-  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
 # This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
 #
 if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
-  echo "Password found for grafana admin account"
+  echo "Existing password found for grafana admin user"
 else
-  echo "Create a password for the grafana admin user"
+  echo "Create a password for the grafana admin user; this password will be used to access the Grafana dashboard"
+  echo "This should be an alphanumeric string without any shell special characters; it is presented in plain text"
+  echo "due to current limitations with Pulumi secrets. You will need this password to access the Grafana dashboard."
   pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
 fi
 
@@ -353,4 +360,20 @@ pulumi $pulumi_args up
 app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
-echo "Application can now be accessed at: ${app_url}"
+echo "The startup process has finished successfully"
+echo " "
+echo "Next Steps:"
+echo " "
+echo "1. The application can now be accessed at: ${app_url}."
+echo "2. Use the ./bin/test-forward.sh program to establish tunnels you can use to connect to the management tools."
+echo "3. Use kubectl, k9s, or the Kubernetes dashboard to explore your deployment."
+echo " "
+echo "To review your configuration options, including the passwords defined, you can access the pulumi secrets via the"
+echo "following commands:"
+echo " "
+echo "Main Configuration: pulumi config -C ${script_dir}/../pulumi/python/config"
+echo "Bank of Sirius (Example Application) Configuration: pulumi config -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius"
+echo "K8 Loadbalancer IP: kubectl get services --namespace nginx-ingress"
+echo " "
+echo "Please see the documentation in the github repository for more information"
+
