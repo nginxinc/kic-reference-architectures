@@ -322,8 +322,8 @@ cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 pulumi $pulumi_args up
 
 header "Finished!!"
-THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config)
-THE_IP=$(kubectl  get service kic_nginx_ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
+THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config || echo "Cannot Retrieve")
+THE_IP=$(kubectl get service kic_nginx_ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
 
 echo " "
 echo "The startup process has finished successfully"
