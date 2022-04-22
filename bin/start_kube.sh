@@ -323,7 +323,7 @@ pulumi $pulumi_args up
 
 header "Finished!!"
 THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config)
-THE_IP=$(kubectl  get service kic  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
+THE_IP=$(kubectl  get service kic_nginx_ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
 
 echo " "
 echo "The startup process has finished successfully"
