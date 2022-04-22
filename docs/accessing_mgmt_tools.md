@@ -2,11 +2,11 @@
 
 Currently, the management tool suite in MARA consists of:
 
-- Prometheus
-- Grafana
-- Locust
-- Elasticsearch
-- Kibana
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com)
+- [Locust](https://locust.io)
+- [Elasticsearch](https://elastic.co)
+- [Kibana](https://www.elastic.co/kibana/)
 
 Each of these tools provides an interface that can be reached through an endpoint exposed by the tool. For security
 reasons these tools are not exposed to the internet, which means you will need to use some form of port forwarding to
