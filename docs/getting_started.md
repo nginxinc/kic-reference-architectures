@@ -169,16 +169,17 @@ kubernetes extras functionality. For more details on those, please see the READM
 
 ### Digital Ocean
 
-If you are using Digital Ocean as your infrastructure provider 
-[configuring Pulumi for Digital Ocean](https://www.pulumi.com/registry/packages/digitalocean/) is necessary. The first step
-is to install the [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/) utility to interact with your
-Digital Ocean account. 
+If you are using Digital Ocean as your infrastructure provider
+[configuring Pulumi for Digital Ocean](https://www.pulumi.com/registry/packages/digitalocean/) is necessary. The first
+step is to install the [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/) utility to interact with
+your Digital Ocean account.
 
-Next, you will need to create a 
+Next, you will need to create a
 [Digital Ocean Personal API Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/)
-for authentication to Digital Ocean. When you run the script [`./bin/start.sh`](../bin/start.sh) and select a
-Digital Ocean deployment, your token will be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration file for the project, although there are two other configuration files kept for the application standup
-and the kubernetes extras functionality. For more details on those, please see the README.md in those directories.
+for authentication to Digital Ocean. When you run the script [`./bin/start.sh`](../bin/start.sh) and select a Digital
+Ocean deployment, your token will be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration
+file for the project, although there are two other configuration files kept for the application standup and the
+kubernetes extras functionality. For more details on those, please see the README.md in those directories.
 
 ### Pulumi
 
@@ -194,14 +195,14 @@ Pulumi documentation for additional details regarding the command and alternativ
 The easiest way to run the project is to run [`start.sh`](../bin/start.sh)
 after you have completed the installation steps. When doing so, be sure to choose the same
 [Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/)
-for all of your projects. Additionally, this script will prompt you for infrastructure specific configuration values. This
-information will be used to populate the `./config/pulumi/Pulumi.<stack>.yaml` file.
+for all of your projects. Additionally, this script will prompt you for infrastructure specific configuration values.
+This information will be used to populate the `./config/pulumi/Pulumi.<stack>.yaml` file.
 
 Alternatively, you can enter into each Pulumi project directory and execute each project independently by doing
 `pulumi up`. Take a look at `start.sh` and dependent scripts to get a feel for the flow.
 
-If you want to destroy the entire environment you can run [`destroy.sh`](../bin/destroy.sh). This script calls the correct
-destroy script based on the information stored in the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file. 
+If you want to destroy the entire environment you can run [`destroy.sh`](../bin/destroy.sh). This script calls the
+correct destroy script based on the information stored in the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file.
 Detailed information and warnings are emitted by the script as it runs.
 
 ### Running the Project in a Docker Container
@@ -214,8 +215,8 @@ docker run --interactive --tty --volume /var/run/docker.sock:/var/run/docker.soc
      kic-ref-arch-pulumi-aws:<distro>
 ```
 
-If you already have set up Pulumi, kubeconfig information, and/or AWS credentials on the host machine, you can mount them
-into the container using Docker with the following options.
+If you already have set up Pulumi, kubeconfig information, and/or AWS credentials on the host machine, you can mount
+them into the container using Docker with the following options.
 
 ```
 docker run --interactive --tty \
@@ -225,6 +226,35 @@ docker run --interactive --tty \
     --volume  $HOME/.kube:/pulumi/projects/kic-reference-architectures/.kube \
     kic-ref-arch-pulumi-aws:debian
 ```
+
+### Accessing the Application
+
+The final output from the startup process will provide you with detailed information on how to access your project. This
+information will vary based on the K8 distribution that you are deploying against; the following output is from a
+deployment against an existing K8 installation using the *kubeconfig* option:
+
+```
+
+Next Steps:
+1. Map the IP address (192.168.100.100) of your Ingress Controller with your FQDN (mara.example.com).
+2. Use the ./bin/test-forward.sh program to establish tunnels you can use to connect to the management tools.
+3. Use kubectl, k9s, or the Kubernetes dashboard to explore your deployment.
+
+To review your configuration options, including the passwords defined, you can access the pulumi secrets via the
+following commands:
+
+Main Configuration: pulumi config -C /jenkins/workspace/jaytest/bin/../pulumi/python/config
+Bank of Sirius (Example Application) Configuration: pulumi config -C /jenkins/workspace/jaytest/bin/../pulumi/python/kubernetes/applications/sirius
+K8 Loadbalancer IP: kubectl get services --namespace nginx-ingress
+
+Please see the documentation in the github repository for more information 
+
+```
+
+### Accessing the Management Tooling
+
+Please see the document [Accessing Management Tools in MARA](./accessing_mgmt_tools.md) for information on how to access
+these tools.
 
 ### Cleaning Up
 

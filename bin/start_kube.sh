@@ -322,12 +322,16 @@ cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 pulumi $pulumi_args up
 
 header "Finished!!"
+THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config)
+THE_IP=$(kubectl  get service kic_nginx_ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
+
 echo " "
 echo "The startup process has finished successfully"
 echo " "
+echo " "
 echo "Next Steps:"
 echo " "
-echo "1. Map the IP address of your Ingress Controller with your FQDN."
+echo "1. Map the IP address ($THE_IP) of your Ingress Controller with your FQDN ($THE_FQDN)."
 echo "2. Use the ./bin/test-forward.sh program to establish tunnels you can use to connect to the management tools."
 echo "3. Use kubectl, k9s, or the Kubernetes dashboard to explore your deployment."
 echo " "
