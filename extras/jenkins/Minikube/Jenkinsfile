@@ -10,7 +10,7 @@ pipeline {
       * if you are using a different OS.
       */
      node {
-        label 'localdeploy'
+        label 'minikube'
         }
   }
 
