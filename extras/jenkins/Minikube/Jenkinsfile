@@ -185,6 +185,7 @@ _EOF_
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            '''
       }
     }
 
