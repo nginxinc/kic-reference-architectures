@@ -153,7 +153,7 @@ if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kuberne
   true
 else
   LEDGER_PW=$(createpw)
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
@@ -336,10 +336,11 @@ pulumi $pulumi_args up
 header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 pulumi $pulumi_args up
-THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config)
-THE_IP=$(kubectl  get service kic_nginx_ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}')
 
 header "Finished!"
+THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config || echo "Cannot Retrieve")
+THE_IP=$(kubectl get service kic-nginx-ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
+
 echo " "
 echo "The startup process has finished successfully"
 echo " "

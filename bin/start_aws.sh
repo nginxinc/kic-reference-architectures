@@ -181,7 +181,7 @@ if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kuberne
   true
 else
   LEDGER_PW=$(createpw)
-  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
 fi
 
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
