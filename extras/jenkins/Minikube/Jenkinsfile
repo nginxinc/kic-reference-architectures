@@ -64,11 +64,11 @@ pipeline {
       steps {
           sh '''
             # Update catalogs
-            sudo apt update
-            # Make sure our deps are installed
-            sudo apt -y install figlet openjdk-11-jdk make docker.io python3-venv expect
+            apt update
             # Upgrade everything; we always run with latest patches.
-            sudo apt -y upgrade
+            DEBIAN_FRONTEND=noninteractive apt -y upgrade
+            # Make sure our deps are installed
+            DEBIAN_FRONTEND=noninteractive apt -y install figlet openjdk-11-jdk make docker.io conntrack expect
             # Make sure our kubeconfig dir exists…
             mkdir $HOME/.kube || true
             '''
@@ -94,7 +94,7 @@ pipeline {
             # Reset our Microk8s Environment; true if it’s not there
             microk8s reset --destroy-storage || true
             # True if it’s not there…
-            sudo snap remove microk8s || true
+            snap remove microk8s || true
             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
             '''
@@ -113,15 +113,10 @@ pipeline {
       steps {
           sh '''
             apt-get install curl wget gnupg2 -y
-            source /etc/os-release
-            sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
-            wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/xUbuntu_${VERSION_ID}/Release.key -O- | apt-key add -
-            apt-get update -qq -y
-            apt-get -qq --yes install podman
             curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64  && chmod +x minikube
             mkdir -p /usr/local/bin/
             install minikube /usr/local/bin/
-            minikube start --vm-driver=podman
+            minikube start --vm-driver=none
             '''
       }
     }
@@ -220,7 +215,7 @@ _EOF_
             # Reset our Microk8s Environment; true if it’s not there
             microk8s reset --destroy-storage || true
             # True if it’s not there…
-            sudo snap remove microk8s || true
+            snap remove microk8s || true
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER} --force --yes \\;
             # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
             # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
@@ -250,7 +245,7 @@ _EOF_
             # Reset our Microk8s Environment; true if it’s not there
             microk8s reset --destroy-storage || true
             # True if it’s not there…
-            sudo snap remove microk8s || true
+            snap remove microk8s || true
             # True if it's not there
             minikube delete || true
             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
