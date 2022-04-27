@@ -1,4 +1,8 @@
-#!/usr/bin/env bash -v -x
+#!/usr/bin/env bash
+
+# Remove...JAS
+set -o verbose
+set -o xtrace
 
 set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
