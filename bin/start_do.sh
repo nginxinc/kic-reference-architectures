@@ -124,7 +124,6 @@ else
 fi
 
 function createpw() {
-  #base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
   base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]'
 }
 
