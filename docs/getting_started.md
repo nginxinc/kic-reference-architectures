@@ -26,7 +26,7 @@ $ brew install make git python3
 # In a terminal window with the MacOS UI, install developer tools if they haven't already 
 # been installed.
 $ xcode-select --install
-$ bash ./setup_venv.sh
+$ bash ./bin/setup_venv.sh
 ```
 
 ## Install with Debian/Ubuntu Linux
@@ -36,10 +36,10 @@ $ sudo apt-get update
 $ sudo apt-get install --no-install-recommends curl ca-certificates git make python3-venv docker.io
 $ sudo usermod -aG docker $USER
 $ newgrp docker
-$ bash ./setup_venv.sh
+$ bash ./bin/setup_venv.sh
 ```
 
-## Install with CentOS/Redhat Linux
+## Install with CentOS/Redhat/Rocky Linux
 
 ```
 # Install Docker Yum repository
@@ -48,7 +48,7 @@ $ sudo yum install python3-pip make git docker-ce
 $ sudo systemctl enable --now docker
 $ sudo usermod -aG docker $USER
 $ newgrp docker
-$ bash ./setup_venv.sh
+$ bash ./bin/setup_venv.sh
 ```
 
 ## Creating a Debian Docker Runtime Environment
@@ -56,19 +56,21 @@ $ bash ./setup_venv.sh
 Run the following helper script to build a Debian container image.
 
 ```
-$ ./build_dev_docker_image.sh debian
+$ ./docker/build_dev_docker_image.sh debian
 ```
 
 ## Stand Alone Install
 
 ### Requirements
 
-#### Python 3 or Prerequisites for Building Python
+#### Python 3.7 or Newer or Prerequisites for Building Python 3.7 or Newer
 
 In this project, Pulumi executes Python code that creates cloud and Kubernetes infrastructure. In order for it to work,
 Python 3 and the [venv module](https://docs.python.org/3/library/venv.html)
 must be installed. Alternative, if GNU make and the gcc compiler are installed the setup script can build and install
 Python 3.
+
+Note that the minimum supported version is 3.7.
 
 #### Git
 
@@ -91,7 +93,8 @@ deploy the NGINX IC or the NGINX Plus IC (with a JWT from your F5 account)
 #### Kubernetes
 
 Although not required, installing the [CLI tool `kubectl`](https://kubernetes.io/docs/tasks/tools/)
-will allow you to interact with the Kubernetes cluster that you have stood up using this project.
+will allow you to interact with the Kubernetes cluster that you have stood up using this project. This 
+tool is also installed as part of the venv that is created and can be used from that directory.
 
 #### Setup
 
