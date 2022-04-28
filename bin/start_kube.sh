@@ -245,7 +245,8 @@ echo "Checking for required secrets"
 if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   true
 else
-  ACCOUNTS_PW=$(createpw)
+  #ACCOUNTS_PW=$(createpw)
+  ACCOUNTS_PW=$(base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]')
   pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
 fi
 
@@ -253,7 +254,8 @@ fi
 if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius >/dev/null 2>&1; then
   true
 else
-  LEDGER_PW=$(createpw)
+  #LEDGER_PW=$(createpw)
+  LEDGER_PWW=$(base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]')
   pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
 fi
 
