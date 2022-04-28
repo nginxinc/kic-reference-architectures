@@ -135,7 +135,8 @@ function retry() {
 }
 
 function createpw() {
-  base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]'
+    PASSWORD=$(base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]')
+    echo $PASSWORD
 }
 
 #
