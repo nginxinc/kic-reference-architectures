@@ -62,7 +62,7 @@ config:
   ############################################################################
 
   # This is the Kubernetes version to install using EKS.
-  eks:k8s_version: 1.22
+  eks:k8s_version: 1.21
   # This is the default instance type used by EKS.
   eks:instance_type: t2.large
   # The minimum number of compute instances to provision for the EKS cluster.
