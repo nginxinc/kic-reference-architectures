@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Remove...JAS
-set -o verbose
-set -o xtrace
-
 set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
@@ -246,8 +242,6 @@ if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kuber
   true
 else
   ACCOUNTS_PW=$(createpw)
-  #ACCOUNTS_PW=$(base64 /dev/random|head -c${1:-16} | sed 's/[^a-zA-Z0-9]//g')
-  #ACCOUNTS_PW=$(dd if=/dev/urandom count=1  2>/dev/null | base64 | head -c16)
   pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $ACCOUNTS_PW
 fi
 
@@ -256,8 +250,6 @@ if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kuberne
   true
 else
   LEDGER_PW=$(createpw)
-  #LEDGER_PWW=$(base64 /dev/random|head -c${1:-16} | sed 's/[^a-zA-Z0-9]//g')
-  #LEDGER_PW=$(dd if=/dev/urandom count=1  2>/dev/null | base64 | head -c16)
   pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius $LEDGER_PW
 fi
 

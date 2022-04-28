@@ -124,7 +124,8 @@ else
 fi
 
 function createpw() {
-  base64 /dev/random|head -c${1:-16} | tr -dc  '[:alnum:]'
+    PWORD=$(dd if=/dev/urandom count=1  2>/dev/null | base64 | head -c16)
+    echo $PWORD
 }
 
 # The bank of sirius configuration file is stored in the ./sirius/config
