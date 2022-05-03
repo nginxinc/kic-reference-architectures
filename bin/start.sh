@@ -60,7 +60,7 @@ fi
 echo " "
 echo "NOTICE! This shell script will call the appropriate helper script depending on your answer to the next question."
 echo " "
-echo "This script currently supports standing up an AWS environment (including ECR, EKS, and VPC resources), provided "
+echo "This script currently supports standing up AWS, Linode, and Digital Ocean kubernetes deployments, provided "
 echo "the correct credentials are supplied. It also supports the user of a kubeconfig file with a defined cluster name"
 echo "and context, which must be provided by the user."
 echo " "
