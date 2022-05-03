@@ -168,13 +168,7 @@ pipeline {
           find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenklke${BUILD_NUMBER} --force --yes \\;
            '''
       }
-            /*
-         * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
-         * destroy the deployed infrastructure in Linode.
-         *
-         * After that completes, we remove the pulumi stack from the project with the find command; this is because
-         * we need to delete the stack in each project it's been instantiated in.
-         */}
+         }
 
   }
   post {
