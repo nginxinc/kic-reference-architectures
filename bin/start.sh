@@ -17,7 +17,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
 # projects.
 #
-if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" > /dev/null ; then
+if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" >/dev/null; then
   echo "NOTICE! Unable to find the venv directory. This is required for the pulumi/python deployment process."
   echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
   echo " "
@@ -57,21 +57,6 @@ if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
 fi
 
 echo " "
-echo " "
-echo "Version and Account Information"
-echo "====================================================================="
-echo "Pulumi version is: $(pulumi version)"
-echo "Pulumi user is: $(pulumi whoami)"
-echo "Python version is: $(python --version)"
-echo "Kubectl version information: "
-echo "$(kubectl version)"
-echo "Python module information: "
-echo "$(pip list)"
-echo "====================================================================="
-echo " "
-
-
-echo " "
 echo "NOTICE! This shell script will call the appropriate helper script depending on your answer to the next question."
 echo " "
 echo "This script currently supports standing up AWS, Linode, and Digital Ocean kubernetes deployments, provided "
@@ -90,7 +75,7 @@ if [ -s "${script_dir}/../config/pulumi/environment" ] && grep --quiet '^PULUMI_
     read -r -e -p "Environment file exists and is not empty. Answer yes to use, no to delete. " yn
     case $yn in
     [Yy]*) # We have an environment file and they want to keep it....
-      if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+      if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
         INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config)"
         if [ $INFRA == 'AWS' ]; then
           exec ${script_dir}/start_aws.sh

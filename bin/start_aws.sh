@@ -98,6 +98,7 @@ else
   exit 3
 fi
 
+
 source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
@@ -283,6 +284,19 @@ pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config
 # way we determine the load balancer FQDN or IP. We can't read the normal config since Sirius uses it's own
 # configuration because of the encryption needed for the passwords.
 pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius AWS
+
+header "Version Info"
+echo "Version and Account Information"
+echo "====================================================================="
+echo "Pulumi version is: $(pulumi version)"
+echo "Pulumi user is: $(pulumi whoami)"
+echo "Python version is: $(python --version)"
+echo "Kubectl version information: "
+echo "$(kubectl version)"
+echo "Python module information: "
+echo "$(pip list)"
+echo "====================================================================="
+echo " "
 
 header "AWS VPC"
 cd "${script_dir}/../pulumi/python/infrastructure/aws/vpc"
