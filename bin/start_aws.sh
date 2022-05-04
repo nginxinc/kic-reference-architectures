@@ -357,7 +357,7 @@ header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
+app_url="$(pulumi ${pulumi_args} stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
 echo "The startup process has finished successfully"
