@@ -238,7 +238,8 @@ fi
 # Add local kubectl to the virtual environment
 if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
   echo "Downloading kubectl into virtual environment"
-  KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
+  KUBECTL_VERSION="1.23.6"
+  #KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
   ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
   KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
   echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
