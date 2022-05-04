@@ -98,7 +98,6 @@ else
   exit 3
 fi
 
-
 source "${script_dir}/../config/pulumi/environment"
 echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 
@@ -153,8 +152,8 @@ else
 fi
 
 function createpw() {
-    PWORD=$(dd if=/dev/urandom count=1  2>/dev/null | base64 | head -c16)
-    echo $PWORD
+  PWORD=$(dd if=/dev/urandom count=1 2>/dev/null | base64 | head -c16)
+  echo $PWORD
 }
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -292,7 +291,7 @@ echo "Pulumi version is: $(pulumi version)"
 echo "Pulumi user is: $(pulumi whoami)"
 echo "Python version is: $(python --version)"
 echo "Kubectl version information: "
-echo "$(kubectl version --short)"
+echo "$(kubectl version -o json)"
 echo "Python module information: "
 echo "$(pip list)"
 echo "====================================================================="
@@ -390,4 +389,3 @@ echo "Bank of Sirius (Example Application) Configuration: pulumi config -C ${scr
 echo "K8 Loadbalancer IP: kubectl get services --namespace nginx-ingress"
 echo " "
 echo "Please see the documentation in the github repository for more information"
-
