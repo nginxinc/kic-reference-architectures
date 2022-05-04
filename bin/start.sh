@@ -31,7 +31,6 @@ if ! command -v pulumi >/dev/null; then
   if [ -x "${script_dir}/../pulumi/python/venv/bin/pulumi" ]; then
     echo "Adding to [${script_dir}/venv/bin] to PATH"
     export PATH="${script_dir}/../pulumi/python/venv/bin:$PATH"
-
     if ! command -v pulumi >/dev/null; then
       echo >&2 "Pulumi must be installed to continue"
       exit 1
@@ -56,6 +55,21 @@ if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
     exit 2
   fi
 fi
+
+echo " "
+echo " "
+echo "Version and Account Information"
+echo "====================================================================="
+echo "Pulumi version is: $(pulumi version)"
+echo "Pulumi user is: $(pulumi whoami)"
+echo "Python version is: $(python --version)"
+echo "Kubectl version information: "
+echo "$(kubectl version)"
+echo "Python module information: "
+echo "$(pip list)"
+echo "====================================================================="
+echo " "
+
 
 echo " "
 echo "NOTICE! This shell script will call the appropriate helper script depending on your answer to the next question."
