@@ -1,4 +1,4 @@
-awscli~=1.22.100
+awscli==1.22.99
 grpcio==1.43.0
 fart~=0.1.5
 lolcat~=1.4
