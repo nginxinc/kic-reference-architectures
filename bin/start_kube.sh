@@ -288,6 +288,11 @@ else
   pulumi_args="--color never --stack ${PULUMI_STACK}"
 fi
 
+#
+# Note that this is somewhat different than the other startup scripts, because at the point we run this
+# here we know that we have a server so we can get the version. The other builds do not have server info
+# at this point in time.
+#
 header "Version Info"
 echo "Version and Account Information"
 echo "====================================================================="

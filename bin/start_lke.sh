@@ -326,6 +326,11 @@ pulumi $pulumi_args up
 cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke)
 add_kube_config
 
+# Display the server information
+echo "Kubernetes client/server version information:"
+kubectl version -o json
+echo " "
+
 if command -v kubectl >/dev/null; then
   echo "Attempting to connect to newly create kubernetes cluster"
   retry 30 kubectl version >/dev/null

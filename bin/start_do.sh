@@ -313,6 +313,12 @@ if command -v kubectl >/dev/null; then
   retry 30 kubectl version >/dev/null
 fi
 
+# Display the server information
+echo "Kubernetes client/server version information:"
+kubectl version -o json
+echo " "
+
+
 #
 # This is used to streamline the pieces that follow. Moving forward we can add new logic behind this and this
 # should abstract away for us. This way we just call the kubeconfig project to get the needed information and
