@@ -36,7 +36,7 @@ def retrieve_vpc_and_subnets(vpc) -> VPCDefinition:
 
 
 config = pulumi.Config("eks")
-k8s_version = config.get('k8s_version') if config.get('k8s_version') else '1.21'
+k8s_version = config.get('k8s_version') if config.get('k8s_version') else '1.22'
 instance_type = config.get('instance_type') if config.get('instance_type') else 't2.large'
 min_size = config.get_int('min_size') if config.get('min_size') else 3
 max_size = config.get_int('max_size') if config.get('max_size') else 12
