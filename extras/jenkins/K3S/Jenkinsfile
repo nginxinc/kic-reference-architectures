@@ -64,11 +64,11 @@ pipeline {
       steps {
           sh '''
             # Update catalogs
-            sudo apt update
-            # Make sure our deps are installed
-            sudo apt -y install figlet openjdk-11-jdk make docker.io python3-venv
+            apt update
             # Upgrade everything; we always run with latest patches.
-            sudo apt -y upgrade
+            DEBIAN_FRONTEND=noninteractive apt -y upgrade
+            # Make sure our deps are installed
+            DEBIAN_FRONTEND=noninteractive apt -y install figlet openjdk-11-jdk make docker.io
             # Make sure our kubeconfig dir exists…
             mkdir $HOME/.kube || true
             '''
@@ -171,6 +171,7 @@ pipeline {
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            '''
       }
     }
 
@@ -205,12 +206,6 @@ pipeline {
             /usr/local/bin/k3s-killall.sh || true
             /usr/local/bin/k3s-uninstall.sh || true
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenk${BUILD_NUMBER} --force --yes \\;
-            # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
-            # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
-            # runs due to zombie processes and other issues. Long term we want to deploy these VM's via IaaC so the only
-            # exist for the lifetime of the project. We do it this way in order to provide some flexibility for the
-            # jenkins configuration.
-            ${POSTRUN_CMD- true}
             '''
       }
     }
@@ -234,12 +229,6 @@ pipeline {
             /usr/local/bin/k3s-uninstall.sh || true
             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
-            # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
-            # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
-            # runs due to zombie processes and other issues. Long term we want to deploy these VM's via IaaC so the only
-            # exist for the lifetime of the project. We do it this way in order to provide some flexibility for the
-            # jenkins configuration.
-            ${POSTRUN_CMD- true}
             '''
     }
   }

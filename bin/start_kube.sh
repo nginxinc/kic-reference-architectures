@@ -131,8 +131,8 @@ function retry() {
 }
 
 function createpw() {
-  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
-  return 0
+  PWORD=$(dd if=/dev/urandom count=1 2>/dev/null | base64 | head -c16)
+  echo $PWORD
 }
 
 #
@@ -288,6 +288,24 @@ else
   pulumi_args="--color never --stack ${PULUMI_STACK}"
 fi
 
+#
+# Note that this is somewhat different than the other startup scripts, because at the point we run this
+# here we know that we have a server so we can get the version. The other builds do not have server info
+# at this point in time.
+#
+header "Version Info"
+echo "Version and Account Information"
+echo "====================================================================="
+echo "Pulumi version is: $(pulumi version)"
+echo "Pulumi user is: $(pulumi whoami)"
+echo "Python version is: $(python --version)"
+echo "Kubectl version information: "
+echo "$(kubectl version -o json)"
+echo "Python module information: "
+echo "$(pip list)"
+echo "====================================================================="
+echo " "
+
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
 pulumi $pulumi_args up
@@ -323,7 +341,7 @@ pulumi $pulumi_args up
 
 header "Finished!!"
 THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config || echo "Cannot Retrieve")
-THE_IP=$(kubectl get service kic-nginx-ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
+THE_IP=$(kubectl get service kic-nginx-ingress --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
 
 echo " "
 echo "The startup process has finished successfully"

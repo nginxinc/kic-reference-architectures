@@ -152,8 +152,8 @@ else
 fi
 
 function createpw() {
-  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
-  return 0
+  PWORD=$(dd if=/dev/urandom count=1 2>/dev/null | base64 | head -c16)
+  echo $PWORD
 }
 
 # The bank of sirius configuration file is stored in the ./sirius/config
@@ -208,13 +208,13 @@ function header() {
 }
 
 function add_kube_config() {
-  pulumi_region="$(pulumi config get aws:region -C ${script_dir}/../pulumi/python/config)"
+  pulumi_region="$(pulumi ${pulumi_args} config get aws:region -C ${script_dir}/../pulumi/python/config)"
   if [ "${pulumi_region}" != "" ]; then
     region_arg="--region ${pulumi_region}"
   else
     region_arg=""
   fi
-  pulumi_aws_profile="$(pulumi config get aws:profile -C ${script_dir}/../pulumi/python/config)"
+  pulumi_aws_profile="$(pulumi ${pulumi_args} config get aws:profile -C ${script_dir}/../pulumi/python/config)"
   if [ "${pulumi_aws_profile}" != "" ]; then
     echo "Using AWS profile [${pulumi_aws_profile}] from Pulumi configuration"
     profile_arg="--profile ${pulumi_aws_profile}"
@@ -225,7 +225,7 @@ function add_kube_config() {
     profile_arg=""
   fi
 
-  cluster_name="$(pulumi stack output cluster_name -C ${script_dir}/../pulumi/python/infrastructure/aws/eks)"
+  cluster_name="$(pulumi ${pulumi_args} stack output cluster_name -C ${script_dir}/../pulumi/python/infrastructure/aws/eks)"
 
   echo "adding ${cluster_name} cluster to local kubeconfig"
   "${script_dir}"/../pulumi/python/venv/bin/aws ${profile_arg} ${region_arg} eks update-kubeconfig --name ${cluster_name}
@@ -284,6 +284,19 @@ pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config
 # configuration because of the encryption needed for the passwords.
 pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius AWS
 
+header "Version Info"
+echo "Version and Account Information"
+echo "====================================================================="
+echo "Pulumi version is: $(pulumi version)"
+echo "Pulumi user is: $(pulumi whoami)"
+echo "Python version is: $(python --version)"
+echo "Kubectl version information: "
+echo "$(kubectl version -o json)"
+echo "Python module information: "
+echo "$(pip list)"
+echo "====================================================================="
+echo " "
+
 header "AWS VPC"
 cd "${script_dir}/../pulumi/python/infrastructure/aws/vpc"
 pulumi $pulumi_args up
@@ -299,6 +312,11 @@ if command -v kubectl >/dev/null; then
   echo "Attempting to connect to newly create kubernetes cluster"
   retry 30 kubectl version >/dev/null
 fi
+
+# Display the server information
+echo "Kubernetes client/server version information:"
+kubectl version -o json
+echo " "
 
 #
 # This is used to streamline the pieces that follow. Moving forward we can add new logic behind this and this
@@ -357,7 +375,7 @@ header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
 
 pulumi $pulumi_args up
-app_url="$(pulumi stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
+app_url="$(pulumi ${pulumi_args} stack output --json | python3 "${script_dir}"/../pulumi/python/kubernetes/applications/sirius/verify.py)"
 
 header "Finished!"
 echo "The startup process has finished successfully"
@@ -376,4 +394,3 @@ echo "Bank of Sirius (Example Application) Configuration: pulumi config -C ${scr
 echo "K8 Loadbalancer IP: kubectl get services --namespace nginx-ingress"
 echo " "
 echo "Please see the documentation in the github repository for more information"
-

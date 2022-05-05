@@ -1,4 +1,4 @@
--#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 set -o errexit  # abort on nonzero exit status
 set -o nounset  # abort on unbound variable
@@ -99,8 +99,8 @@ else
 fi
 
 function createpw() {
-  base64 /dev/random | tr -dc '[:alnum:]' | head -c${1:-16}
-  return 0
+  PWORD=$(dd if=/dev/urandom count=1 2>/dev/null | base64 | head -c16)
+  echo $PWORD
 }
 
 source "${script_dir}/../config/pulumi/environment"
@@ -296,6 +296,19 @@ pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/config
 # configuration because of the encryption needed for the passwords.
 pulumi config set kubernetes:infra_type -C ${script_dir}/../pulumi/python/kubernetes/applications/sirius LKE
 
+header "Version Info"
+echo "Version and Account Information"
+echo "====================================================================="
+echo "Pulumi version is: $(pulumi version)"
+echo "Pulumi user is: $(pulumi whoami)"
+echo "Python version is: $(python --version)"
+echo "Kubectl version information: "
+echo "$(kubectl version -o json)"
+echo "Python module information: "
+echo "$(pip list)"
+echo "====================================================================="
+echo " "
+
 header "Linode LKE"
 cd "${script_dir}/../pulumi/python/infrastructure/linode/lke"
 pulumi $pulumi_args up
@@ -312,6 +325,11 @@ pulumi $pulumi_args up
 # pulumi stack output cluster_name
 cluster_name=$(pulumi stack output cluster_id -s "${PULUMI_STACK}" -C ${script_dir}/../pulumi/python/infrastructure/linode/lke)
 add_kube_config
+
+# Display the server information
+echo "Kubernetes client/server version information:"
+kubectl version -o json
+echo " "
 
 if command -v kubectl >/dev/null; then
   echo "Attempting to connect to newly create kubernetes cluster"
@@ -348,7 +366,7 @@ pulumi $pulumi_args up
 
 header "Finished!"
 THE_FQDN=$(pulumi config get kic-helm:fqdn -C ${script_dir}/../pulumi/python/config || echo "Cannot Retrieve")
-THE_IP=$(kubectl get service kic-nginx-ingress  --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
+THE_IP=$(kubectl get service kic-nginx-ingress --namespace nginx-ingress --output=jsonpath='{.status.loadBalancer.ingress[*].ip}' || echo "Cannot Retrieve")
 
 echo " "
 echo "The startup process has finished successfully"

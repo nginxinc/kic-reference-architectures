@@ -235,16 +235,34 @@ else
   exit 1
 fi
 
-# Add local kubectl to the virtual environment
+#
+# This section originally pulled the most recent version of Kubectl down; however it turned out that
+# was causing isues with our AWS deploy (see the issues in the repo). Addtionally, this was only
+# downloading the kubectl if it did not exist; this could result in versions not being updated if the
+# MARA project was run in the same environment w/o a refresh.
+#
+# The two fixes here are to hardcode (For now) to a known good version (1.23.6) and force the script to
+# always download this version.
+#
+# TODO: Figure out a way to not hardocde the kubectl version
+# TODO: Should not always download if the versions match; need a version check
+#
+#
 if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
   echo "Downloading kubectl into virtual environment"
-  KUBECTL_VERSION="$(${download_cmd} https://dl.k8s.io/release/stable.txt)"
+  KUBECTL_VERSION="v1.23.6"
   ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
   KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
   echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
   chmod +x "${VIRTUAL_ENV}/bin/kubectl"
 else
-  echo "kubectl is already installed"
+  echo "kubectl is already installed, but will overwrite to ensure correct version"
+  echo "Downloading kubectl into virtual environment"
+  KUBECTL_VERSION="v1.23.6"
+  ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
+  KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
+  echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
+  chmod +x "${VIRTUAL_ENV}/bin/kubectl"
 fi
 
 #

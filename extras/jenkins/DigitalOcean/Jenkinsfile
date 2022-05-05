@@ -24,6 +24,7 @@ pipeline {
         NGINX_JWT              = credentials('NGINX_JWT')
         PULUMI_ACCESS_TOKEN    = credentials('PULUMI_ACCESS_TOKEN')
         NO_COLOR               = "TRUE"
+        DEBIAN_FRONTEND        = "noninteractive"
     }
   stages {
 
@@ -61,20 +62,20 @@ pipeline {
 
           sh '''
             # Update catalogs
-            sudo apt update
-            # Make sure our deps are installed
-            sudo apt -y install figlet openjdk-11-jdk make docker.io
+            apt update
             # Upgrade everything; we always run with latest patches.
-            sudo apt -y upgrade
+            DEBIAN_FRONTEND=noninteractive apt -y upgrade
+            # Make sure our deps are installed
+            DEBIAN_FRONTEND=noninteractive apt -y install figlet openjdk-11-jdk make docker.io
             # Create the directory for the kubeconfig
             mkdir -p $HOME/.kube || true
             chmod 777 $HOME/.kube || true
             # Make sure doctl is installed
-            sudo snap install doctl
+            snap install doctl
             # Auth to Digital Ocean
             doctl auth init -t $DIGITALOCEAN_TOKEN
             # Fix perms for the snap....
-            sudo snap connect doctl:kube-config
+            snap connect doctl:kube-config
             '''
       }
     }

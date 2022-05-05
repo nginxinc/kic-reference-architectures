@@ -18,19 +18,19 @@ includes the following:
 - FQDN/IP: How does the project handle the IP addressing and FQDN for the certificates?
 - Notes: Any additional information on the provider / project interaction.
 
-All of these configurations use Pulumi code within Python as the Infrastructand configuredure as Code (
+All of these configurations use Pulumi code within Python as the Infrastructure as Code (IaaC) provider.
+
 | K8 Provider | Tested | Infrastructure Support | IC Options | FQDN/IP | Notes |
 |-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
-| AWS EKS | Yes | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided | | | Digtal Ocean | Yes |
-Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)|| | Azure AKS | Yes | Kubeconfig
-Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | Google GKE | Yes | Kubeconfig Only (3)
-| NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | MicroK8s | Yes | Kubeconfig Only (3)         | NGINX / NGINX
-Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) | | Harvester/RKE2 | Yes |
-Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | | K3S
-| Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | | Rancher Desktop | No |
-Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | |
-Minikube | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Metallb Enabled
-and configured |
+| AWS EKS | Yes | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided | | 
+| Digtal Ocean | Yes | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)|| 
+| Azure AKS | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
+| Google GKE | Yes | Kubeconfig Only (3) | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
+| MicroK8s | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) | 
+| Harvester/RKE2 | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | 
+| K3S | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
+| Rancher Desktop | No | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | 
+| Minikube | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Metallb Enabled and configured |
 
 ### Notes:
 
