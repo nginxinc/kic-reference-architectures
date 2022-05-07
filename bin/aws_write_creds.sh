@@ -32,7 +32,7 @@ else
     echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $CREDS
     # This is if we have non-temp credentials...
     if [[ -z "${AWS_SESSION_TOKEN+x}" ]]; then
-      echo "Not using AWS Session Token"
+      echo "Variable AWS_SESSION_TOKEN was unset; not adding to credentials"
     else
       echo "aws_session_token=$AWS_SESSION_TOKEN"         >> $CREDS
     fi
