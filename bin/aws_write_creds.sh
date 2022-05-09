@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-set -x
-set -v
-
 set -o errexit  # abort on nonzero exit status
-set -o nounset  # abort on unbound variable
 set -o pipefail # don't hide errors within pipes
 
 # 
@@ -25,7 +21,7 @@ if [ ${#missing_auth_vars[@]} -ne 0 ]
 then
     echo "Did not find values for:" 
     printf ' %q\n' "${missing_vars[@]}"
-    echo "Will assume they are in credentials file"
+    echo "Will assume they are in credentials file or not needed"
 else
     echo "Creating credentials file"
     # Create the directory....
@@ -33,8 +29,13 @@ else
     CREDS=~/.aws/credentials
     echo "[default]"                                    >  $CREDS
     echo "aws_access_key_id=$AWS_ACCESS_KEY_ID"         >> $CREDS 
-    echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $CREDS 
-    echo "aws_session_token=$AWS_SESSION_TOKEN"         >> $CREDS 
+    echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $CREDS
+    # This is if we have non-temp credentials...
+    if [[ -z "${AWS_SESSION_TOKEN+x}" ]]; then
+      echo "Variable AWS_SESSION_TOKEN was unset; not adding to credentials"
+    else
+      echo "aws_session_token=$AWS_SESSION_TOKEN"         >> $CREDS
+    fi
 
 fi
 
