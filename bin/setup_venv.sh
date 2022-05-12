@@ -104,7 +104,7 @@ fi
 if command -v pyenv >/dev/null; then
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
-  pyenv install --skip-existing <"${script_dir}/../pulumi/python/.python-version"
+  pyenv install --skip-existing <"${script_dir}/../.python-version"
 
   # If the pyenv-virtualenv tools are installed, prompt the user if they want to
   # use them.
