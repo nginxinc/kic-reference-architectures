@@ -197,7 +197,7 @@ fi
 # Install general package requirements
 pip3 install --requirement "${script_dir}/../pulumi/python/requirements.txt"
 # Install local common utilities module
-pip3 install --use-feature=in-tree-build "${script_dir}/../pulumi/python/utility/kic-pulumi-utils" &&
+pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils" &&
   rm -rf "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/.eggs" \
     "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/build" \
     "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/kic_pulumi_utils.egg-info"
