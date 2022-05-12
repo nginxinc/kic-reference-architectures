@@ -20,17 +20,18 @@ includes the following:
 
 All of these configurations use Pulumi code within Python as the Infrastructure as Code (IaaC) provider.
 
-| K8 Provider | Tested | Infrastructure Support | IC Options | FQDN/IP | Notes |
-|-----------------|--------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
-| AWS EKS | Yes | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided | | 
-| Digtal Ocean | Yes | Full Infrastructure Standup |NGINX / NGINX Plus (w/ JWT) (1)     | Manual FQDN (2)|| 
-| Azure AKS | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
-| Google GKE | Yes | Kubeconfig Only (3) | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
-| MicroK8s | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) | 
-| Harvester/RKE2 | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | 
-| K3S | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | | 
-| Rancher Desktop | No | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer | 
-| Minikube | Yes | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Metallb Enabled and configured |
+| K8 Provider     | Tested / Deploy Status                                                                                 | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
+|-----------------|--------------------------------------------------------------------------------------------------------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
+| AWS EKS         | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_aws_prod&subject=Deploy)      | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
+| Azure AKS       | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Digtal Ocean    | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_do_prod&subject=Deploy)       | Full Infrastructure Standup | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Google GKE      | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Harvester/RKE2  | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| K3S             | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_k3s_prod&subject=Deploy)      | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Linode          | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_lke_prod&subject=Deploy)      | Full Infrastructure Standup | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| MicroK8s        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=Deploy)     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
+| Minikube        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Deploy) | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
+| Rancher Desktop | No                                                                                                     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
 
 ### Notes:
 
