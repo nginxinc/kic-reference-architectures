@@ -1,4 +1,10 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git?ref=badge_shield)
+![AWS Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_aws_prod&subject=AWS) 
+![DO Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_do_prod&subject=DigitalOcean) 
+![LKE Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_lke_prod&subject=Linode) 
+![K3s Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_k3s_prod&subject=K3s)
+![MicroK8s Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=MicroK8s)
+![Minikube Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Minikube) 
 
 # NGINX Modern Reference Architectures
 
