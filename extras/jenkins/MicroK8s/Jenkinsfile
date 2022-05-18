@@ -112,7 +112,7 @@ pipeline {
 
       steps {
           sh '''
-            snap install microk8s --classic
+            snap install microk8s --classic --channel=1.23/stable
             microk8s.enable storage dns helm3
             microk8s.enable metallb 192.168.100.100/30
             '''
