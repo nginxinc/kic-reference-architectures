@@ -176,15 +176,14 @@ source "${VIRTUAL_ENV}/bin/activate"
 
 set -o nounset # abort on unbound variable
 
-# Use the latest version of pip
+# Use the latest version of pip and pipenv
 pip3 install --upgrade pip
+pip3 install pipenv
 
-# Installs wheel package management, so that pulumi requirements install quickly
-pip3 install wheel
-
-# Get nodeenv version so that node can be installed before we install Python
-# dependencies because pulumi_eks depends on the presence of node.
-pip3 install "$(grep nodeenv "${script_dir}/../pulumi/python/requirements.txt")"
+# Install certain utility packages like `nodeenv` and `wheel` that aid
+# in the installation of other build tools and dependencies
+# required by the other python packages.
+PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv install --dev
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
@@ -195,12 +194,15 @@ else
 fi
 
 # Install general package requirements
-pip3 install --requirement "${script_dir}/../pulumi/python/requirements.txt"
+PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv install
+
 # Install local common utilities module
-pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils" &&
-  rm -rf "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/.eggs" \
-    "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/build" \
-    "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/kic_pulumi_utils.egg-info"
+pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils"
+
+rm -rf "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/.eggs" \
+  "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/build" \
+  "${script_dir}/../pulumi/python/utility/kic-pulumi-utils/kic_pulumi_utils.egg-info"
+
 
 ARCH=""
 case $(uname -m) in
@@ -265,20 +267,15 @@ else
   chmod +x "${VIRTUAL_ENV}/bin/kubectl"
 fi
 
-#
 # Download Pulumi CLI tooling
-#
-# Added some error checking to handle a failure here since it can be a bit confusing to the user (or at least to me)
-# when this bombs out and you can't figure out why. Note that the logic is specifically looking for "~=" in the
-# requirements file. Other comparisons that are legal in terms of the requirements file WILL fail with this logic.
-#
+# Regular expression and sed command from https://superuser.com/a/363878
 echo "Downloading Pulumi CLI into virtual environment"
-PULUMI_VERSION="$(grep '^pulumi~=.*$' "${script_dir}/../pulumi/python/requirements.txt" | cut -d '=' -f2 || true)"
+PULUMI_VERSION="$(pip3 list | grep 'pulumi ' | sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p')"
     if  [ -z $PULUMI_VERSION ] ; then
       echo "Failed to find Pulumi version - EXITING"
       exit 5
     else
-      echo "Pulumi version found"
+      echo "Pulumi version found: $PULUMI_VERSION"
     fi
 
 if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "${VIRTUAL_ENV}/bin/pulumi" version)" == "v${PULUMI_VERSION}" ]]; then

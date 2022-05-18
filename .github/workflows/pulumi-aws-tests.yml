@@ -13,7 +13,7 @@ jobs:
     - uses: syphar/restore-virtualenv@v1
       id: pulumi-aws-tests-cache-virtualenv
       with:
-        requirement_files: pulumi/python/requirements.txt
+        requirement_files: pulumi/python/Pipfile.lock
 
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
@@ -33,7 +33,7 @@ jobs:
     - uses: syphar/restore-virtualenv@v1
       id: pulumi-aws-tests-cache-virtualenv
       with:
-        requirement_files: pulumi/python/requirements.txt
+        requirement_files: pulumi/python/Pipfile.lock
 
     - uses: syphar/restore-pip-download-cache@v1
       if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
