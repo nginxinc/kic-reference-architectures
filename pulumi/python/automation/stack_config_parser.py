@@ -23,6 +23,8 @@ class PulumiStackConfig(dict):
         for key, val in config.items():
             if type(val) in [str, int, float]:
                 pulumi_config[key] = ConfigValue(value=val)
+            elif type(val) is dict and 'secure' in val:
+                pulumi_config[key] = ConfigValue(value=val['secure'], secret=True)
             else:
                 json_val = json.dumps(val)
                 pulumi_config[key] = ConfigValue(value=json_val)

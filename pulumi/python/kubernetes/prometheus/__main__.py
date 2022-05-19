@@ -1,8 +1,10 @@
 import os
-
+import base64
+from typing import Mapping
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
+from pulumi_kubernetes.core.v1 import Secret
 from pulumi import Output
 from pulumi_kubernetes.yaml import ConfigGroup
 from pulumi import CustomTimeouts
@@ -10,9 +12,15 @@ from pulumi import CustomTimeouts
 from kic_util import pulumi_config
 
 
-def project_name_from_project_dir(dirname: str):
+def project_name_from_infrastructure_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname)
+    return pulumi_config.get_pulumi_project_name(project_path)
+
+
+def project_name_from_kubernetes_dir(dirname: str):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_path = os.path.join(script_dir, '..', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
@@ -22,14 +30,28 @@ def servicemon_manifests_location():
     return servicemon_manifests_path
 
 
+def extract_adminpass_from_k8s_secrets(secrets: Mapping[str, str]) -> str:
+    if 'adminpass' not in secrets:
+        raise 'Secret [adminpass] not found in Kubernetes secret store'
+    base64_string = secrets['adminpass']
+    byte_data = base64.b64decode(base64_string)
+    password = str(byte_data, 'utf-8')
+    return password
+
+
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-k8_project_name = project_name_from_project_dir('kubeconfig')
+k8_project_name = project_name_from_infrastructure_dir('kubeconfig')
 k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
 k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
 kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
+
+secrets_project_name = project_name_from_kubernetes_dir('secrets')
+secrets_stack_ref_id = f"{pulumi_user}/{secrets_project_name}/{stack_name}"
+secrets_stack_ref = pulumi.StackReference(secrets_stack_ref_id)
+pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
@@ -60,10 +82,11 @@ helm_timeout = config.get_int('helm_timeout')
 if not helm_timeout:
     helm_timeout = 300
 
-# Require an admin password, but do not encrypt it due to the
-# issues we experienced with Anthos; this can be adjusted at the
-# same time that we fix the Anthos issues.
-adminpass = config.require('adminpass')
+# Use Prometheus administrator password stored in Kubernetes secrets
+prometheus_secrets = Secret.get(resource_name='pulumi-secret-prometheus',
+                                id=pulumi_secrets['prometheus'],
+                                opts=pulumi.ResourceOptions(provider=k8s_provider)).data
+adminpass = pulumi.Output.unsecret(prometheus_secrets).apply(extract_adminpass_from_k8s_secrets)
 
 prometheus_release_args = ReleaseArgs(
     chart=chart_name,

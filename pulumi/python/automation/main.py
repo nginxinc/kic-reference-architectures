@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import getopt
+import getpass
 import importlib
 import importlib.util
 import logging
@@ -13,6 +14,7 @@ import yaml
 import colorize
 import env_config_parser
 from typing import List, Optional
+from getpass import getpass
 from fart import fart
 from providers.base_provider import Provider
 from providers.pulumi_project import PulumiProject
@@ -22,10 +24,14 @@ from typing import Any, Hashable, Dict, Union
 import stack_config_parser
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..']))
 OPERATIONS: List[str] = ['down', 'destroy', 'refresh', 'show-execution', 'up', 'validate', 'list-providers']
 PROVIDERS: typing.Iterable[str] = Provider.list_providers()
-PROJECT_ROOT = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..']))
+BANNER_TYPES: List[str] = ['fabulous', 'boring']
 FART_FONT = fart.load_font('standard')
+
+banner_type = BANNER_TYPES[0]
+debug_on = False
 
 
 def usage():
@@ -35,9 +41,10 @@ USAGE:
     main.py [FLAGS] [OPERATION]
 
 FLAGS:
-    -d, --debug     Enable debug output on all of the commands executed
-    -h, --help      Prints help information
-    -p, --provider= Specifies the provider used (e.g. {', '.join(PROVIDERS)})
+    -d, --debug        Enable debug output on all of the commands executed
+    -b, --banner-type= Banner type to indicate which project is being executed (e.g. {', '.join(BANNER_TYPES)})
+    -h, --help         Prints help information
+    -p, --provider=    Specifies the provider used (e.g. {', '.join(PROVIDERS)})
 
 OPERATIONS:
     down/destroy    Destroys all provisioned infrastructure
@@ -57,8 +64,8 @@ def provider_instance(provider_name: str) -> Provider:
 
 def main():
     try:
-        shortopts = 'hdp:'
-        longopts = ["help", 'debug', 'provider=']
+        shortopts = 'hdp:b:'
+        longopts = ["help", 'debug', 'banner-type', 'provider=']
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
         print(err)  # will print something like "option -a not recognized"
@@ -66,7 +73,8 @@ def main():
         sys.exit(2)
 
     provider_name: Optional[str] = None
-    debug_on = False
+
+    global banner_type, debug_on
 
     # Parse flags
     for opt, value in opts:
@@ -78,6 +86,9 @@ def main():
                 provider_name = value.lower()
         elif opt in ('-d', '--debug'):
             debug_on = True
+        elif opt in ('-b', '--banner-type'):
+            if value in BANNER_TYPES:
+                banner_type = value
 
     # Make sure we got an operation - it is the last string passed as an argument
     if len(sys.argv) > 1:
@@ -114,7 +125,6 @@ def main():
 
     env_config = env_config_parser.read()
     stack_config = read_or_prompt_for_stack_config(provider=provider, env_config=env_config)
-
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
         validate(provider=provider, env_config=env_config, stack_config=stack_config,
@@ -124,12 +134,17 @@ def main():
         sys.exit(3)
 
     if operation == 'refresh':
-        refresh(provider=provider, env_config=env_config, stack_config=stack_config)
+        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        refresh(provider=provider, env_config=env_config)
     elif operation == 'up':
-        up(provider=provider, env_config=env_config, stack_config=stack_config)
+        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        up(provider=provider, env_config=env_config)
     elif operation == 'down' or operation == 'destroy':
-        down(provider=provider, env_config=env_config, stack_config=stack_config)
-    elif operation != 'validate':
+        down(provider=provider, env_config=env_config)
+    elif operation == 'validate':
+        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        # validate was already run above
+    else:
         print(f'Unknown operation: {operation}')
         sys.exit(2)
 
@@ -158,9 +173,13 @@ def read_or_prompt_for_stack_config(provider: Provider,
     return stack_config
 
 
-def render_header(text: str):
-    header = fart.render_fart(text=text, font=FART_FONT)
-    colorize.PRINTLN_FUNC(header)
+def render_header(text: str, env_config: env_config_parser.EnvConfigParser):
+    if banner_type == 'fabulous':
+        header = fart.render_fart(text=text, font=FART_FONT)
+        if not env_config.no_color():
+            colorize.PRINTLN_FUNC(header)
+    else:
+        print(f'* {text}')
 
 
 def validate(provider: Provider,
@@ -211,42 +230,70 @@ def validate(provider: Provider,
     print(' > configuration is OK')
 
 
-def build_pulumi_stack(pulumi_project: PulumiProject,
-                       stack_name: str,
-                       stack_config: stack_config_parser.PulumiStackConfig) -> auto.Stack:
-    print(f'project: {pulumi_project.name()} path: {pulumi_project.path()}')
-    stack = auto.create_or_select_stack(stack_name=stack_name,
+def init_secrets(env_config: env_config_parser.EnvConfigParser,
+                 pulumi_projects: List[PulumiProject]):
+    env_vars = {
+        'PULUMI_SKIP_UPDATE_CHECK': 'true'
+    }
+    env_vars.update(env_config.main_section())
+    secrets_work_dir = os.path.sep.join([SCRIPT_DIR, '..', 'kubernetes', 'secrets'])
+    stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
-                                            env_vars={
-                                                'PULUMI_SKIP_UPDATE_CHECK': 'true'
-                                            }
+                                            env_vars=env_vars,
+                                        ),
+                                        project_name='secrets',
+                                        work_dir=secrets_work_dir)
+
+    for project in pulumi_projects:
+        if not project.config_keys_with_secrets:
+            continue
+        for secret_config_key in project.config_keys_with_secrets:
+            if secret_config_key.key_name not in stack.get_all_config().keys():
+                if secret_config_key.default:
+                    prompt = f'{secret_config_key.prompt} [{secret_config_key.default}]: '
+                else:
+                    prompt = f'{secret_config_key.prompt}: '
+
+                value = getpass(prompt)
+                if secret_config_key.default and value.strip() == '':
+                    value = secret_config_key.default
+
+                config_value = auto.ConfigValue(secret=True, value=value)
+                stack.set_config(secret_config_key.key_name, value=config_value)
+
+
+def build_pulumi_stack(pulumi_project: PulumiProject,
+                       env_config: env_config_parser.EnvConfigParser) -> auto.Stack:
+    print(f'project: {pulumi_project.name()} path: {pulumi_project.path()}')
+    env_vars = {
+        'PULUMI_SKIP_UPDATE_CHECK': 'true'
+    }
+    env_vars.update(env_config.main_section())
+    stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
+                                        opts=auto.LocalWorkspaceOptions(
+                                            env_vars=env_vars,
                                         ),
                                         project_name=pulumi_project.name(),
                                         work_dir=pulumi_project.path())
-    stack.set_all_config(stack_config.to_pulumi_config_value())
     return stack
 
 
 def refresh(provider: Provider,
-            env_config: env_config_parser.EnvConfigParser,
-            stack_config: stack_config_parser.PulumiStackConfig):
+            env_config: env_config_parser.EnvConfigParser):
     for pulumi_project in provider.execution_order():
-        render_header(pulumi_project.description)
+        render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
-                                   stack_name=env_config.stack_name(),
-                                   stack_config=stack_config)
+                                   env_config=env_config)
         stack.refresh_config()
         stack.refresh(on_output=print)
 
 
 def up(provider: Provider,
-       env_config: env_config_parser.EnvConfigParser,
-       stack_config: stack_config_parser.PulumiStackConfig):
+       env_config: env_config_parser.EnvConfigParser):
     for pulumi_project in provider.execution_order():
-        render_header(pulumi_project.description)
+        render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
-                                   stack_name=env_config.stack_name(),
-                                   stack_config=stack_config)
+                                   env_config=env_config)
         stackUpResult = stack.up(on_output=print)
 
         if pulumi_project.on_success:
@@ -254,13 +301,11 @@ def up(provider: Provider,
 
 
 def down(provider: Provider,
-         env_config: env_config_parser.EnvConfigParser,
-         stack_config: stack_config_parser.PulumiStackConfig):
+         env_config: env_config_parser.EnvConfigParser):
     for pulumi_project in reversed(provider.execution_order()):
-        render_header(pulumi_project.description)
+        render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
-                                   stack_name=env_config.stack_name(),
-                                   stack_config=stack_config)
+                                   env_config=env_config)
         stackDownResult = stack.destroy(on_output=print)
 
 

@@ -117,7 +117,7 @@ class AwsProvider(Provider):
         print(f"AWS availability zones: {', '.join(config['vpc:azs'])}")
 
         # EKS version
-        default_version = defaults['eks:k8s_version'] or '1.22'
+        default_version = defaults['eks:k8s_version'] or '1.21'
         config['eks:k8s_version'] = input(f'EKS Kubernetes version [{default_version}]: ').strip() or default_version
         print(f"EKS Kubernetes version: {config['eks:k8s_version']}")
 

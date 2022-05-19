@@ -2,11 +2,9 @@ import abc
 import os
 import pathlib
 import sys
-from typing import List, Mapping, MutableMapping, Iterable, TextIO, Union, Dict, Any, Hashable, Callable, Optional
+from typing import List, Mapping, Iterable, TextIO, Union, Dict, Any, Hashable
 
-from pulumi import automation as auto
-
-from .pulumi_project import PulumiProject
+from .pulumi_project import PulumiProject, SecretConfigKey
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,7 +36,8 @@ class Provider:
 
     def new_stack_config(self, env_config, defaults: Union[Dict[Hashable, Any], list, None]) -> \
             Union[Dict[Hashable, Any], list, None]:
-        return {}
+        config = {}
+        return {'config': config}
 
     def validate_env_config(self, config: Mapping[str, str]):
         Provider.validate_env_config_required_keys(['PULUMI_STACK'], config)
@@ -49,15 +48,28 @@ class Provider:
     def k8s_execution_order(self) -> List[PulumiProject]:
         return [
             PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
+            PulumiProject(path='kubernetes/secrets', description='Secrets'),
             PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
             PulumiProject(path='utility/kic-image-push', description='KIC Image Build'),
             PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
             PulumiProject(path='kubernetes/logstore', description='Logstore'),
             PulumiProject(path='kubernetes/logagent', description='Log Agent'),
             PulumiProject(path='kubernetes/certmgr', description='Cert Manager'),
-            PulumiProject(path='kubernetes/prometheus', description='Prometheus'),
+            PulumiProject(path='kubernetes/prometheus', description='Prometheus',
+                          config_keys_with_secrets=[SecretConfigKey(key_name='prometheus:adminpass',
+                                                                    prompt='Prometheus administrator password')]),
             PulumiProject(path='kubernetes/observability', description='Observability'),
-            PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius')
+            PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius',
+                          config_keys_with_secrets=[SecretConfigKey(key_name='sirius:accounts_pwd',
+                                                                    prompt='Bank of Sirius Accounts Database password'),
+                                                    SecretConfigKey(key_name='sirius:ledger_pwd',
+                                                                    prompt='Bank of Sirius Ledger Database password'),
+                                                    SecretConfigKey(key_name='sirius:demo_login_user',
+                                                                    prompt='Bank of Sirius demo site login username',
+                                                                    default='testuser'),
+                                                    SecretConfigKey(key_name='sirius:demo_login_pwd',
+                                                                    prompt='Bank of Sirius demo site login password',
+                                                                    default='password')])
         ]
 
     def execution_order(self) -> List[PulumiProject]:

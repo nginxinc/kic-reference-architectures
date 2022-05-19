@@ -19,6 +19,9 @@ class EnvConfigParser(ConfigParser):
     def stack_name(self) -> str:
         return self.get(section='main', option='PULUMI_STACK')
 
+    def no_color(self) -> bool:
+        return 'NO_COLOR' in self.main_section()
+
     def main_section(self) -> Mapping[str, str]:
         return self['main']
 
