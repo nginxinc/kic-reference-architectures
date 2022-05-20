@@ -169,10 +169,10 @@ class AwsProvider(Provider):
             raise InvalidConfigurationException('When using the AWS provider, the region must be specified')
 
         aws_cli = AwsCli(region=config['aws:region'], profile=config['aws:profile'])
-        try:
-            _, err = external_process.run(cmd=aws_cli.validate_aws_credentials_cmd())
-        except Exception as e:
-            raise AwsProviderException('Unable to authenticate against AWS') from e
+        _, err = external_process.run(cmd=aws_cli.validate_aws_credentials_cmd(), suppress_error=True)
+        if err:
+            print(f'AWS authentication error: {err}', file=sys.stderr)
+            sys.exit(3)
 
     @staticmethod
     def _update_kubeconfig(stack_outputs: MutableMapping[str, auto._output.OutputValue],
