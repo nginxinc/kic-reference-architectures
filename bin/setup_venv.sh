@@ -183,7 +183,8 @@ pip3 install pipenv
 # Install certain utility packages like `nodeenv` and `wheel` that aid
 # in the installation of other build tools and dependencies
 # required by the other python packages.
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv install --dev
+# `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
+PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --dev
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
@@ -194,7 +195,8 @@ else
 fi
 
 # Install general package requirements
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv install
+# `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
+PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync
 
 # Install local common utilities module
 pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils"
