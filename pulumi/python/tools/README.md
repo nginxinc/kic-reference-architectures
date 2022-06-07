@@ -2,6 +2,10 @@
 
 `<repository-root>/pulumi/python/tools`
 
+## Deprecation Notice
+These tools are no longer supported by the MARA team and will be removed in a future release. They *should* work
+correctly, but this is not guaranteed. Any use is at your own risk.
+
 ## Purpose
 
 This directory holds common tools that *may* be required by kubernetes installations that do not meet the minimum
