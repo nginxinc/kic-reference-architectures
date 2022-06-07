@@ -11,6 +11,19 @@ export PULUMI_SKIP_CONFIRMATIONS=true
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+echo " "
+echo "IMPORTANT NOTICE!"
+echo "===================================================================================================="
+echo " This script and the associated Pulumi projects are deprecated and will be removed in a future "
+echo " release as they are outside of the scope of the MARA project."
+echo " "
+echo " The MARA team no longer tests or updates these scripts, so please review before running if you "
+echo " decide that you want to use them."
+echo " "
+echo " For more information, please see Discussion #155 in the repository (nginx.com/mara)"
+echo "===================================================================================================="
+sleep 5
+
 
 # Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
 # projects.
