@@ -30,6 +30,16 @@ cleanitup() {
   fi
 }
 
+echo " "
+echo "IMPORTANT NOTICE!"
+echo "===================================================================================================="
+echo " This script is deprecated and will be removed in a future release. "
+echo " "
+echo " This script may not function properly in your environment; run at your own risk. "
+echo " "
+echo " For more information, please see Discussion #155 in the repository (nginx.com/mara)"
+echo "===================================================================================================="
+sleep 5
 
 echo " "
 echo "This script will perform testing on the current kubernetes installation using the currently active kubernetes"
