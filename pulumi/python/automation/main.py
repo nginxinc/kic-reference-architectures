@@ -117,7 +117,7 @@ def main():
         print(f'Unknown provider specified: {provider_name}')
         sys.exit(2)
 
-    provider = provider_instance(provider_name)
+    provider = provider_instance(provider_name.lower())
 
     if operation == 'show-execution':
         provider.display_execution_order(output=sys.stdout)
@@ -134,23 +134,31 @@ def main():
         sys.exit(3)
 
     if operation == 'refresh':
-        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
-        refresh(provider=provider, env_config=env_config)
+        pulumi_cmd = refresh
     elif operation == 'up':
-        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
-        up(provider=provider, env_config=env_config)
+        pulumi_cmd = up
     elif operation == 'down' or operation == 'destroy':
-        down(provider=provider, env_config=env_config)
+        pulumi_cmd = down
     elif operation == 'validate':
         init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        pulumi_cmd = None
         # validate was already run above
     else:
         print(f'Unknown operation: {operation}')
         sys.exit(2)
 
+    if pulumi_cmd:
+        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        try:
+            pulumi_cmd(provider=provider, env_config=env_config)
+        except Exception as e:
+            logging.error('Error running Pulumi operation with provider [%s] for stack [%s]',
+                          provider_name, env_config.stack_name())
+            raise e
+
 
 def read_or_prompt_for_stack_config(provider: Provider,
-                                    env_config: env_config_parser.EnvConfigParser) -> stack_config_parser.PulumiStackConfig:
+                                    env_config: env_config_parser.EnvConfig) -> stack_config_parser.PulumiStackConfig:
     try:
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
     except FileNotFoundError as e:
@@ -164,8 +172,9 @@ def read_or_prompt_for_stack_config(provider: Provider,
         with open(stack_defaults_path, 'r') as f:
             stack_defaults = yaml.safe_load(stream=f)
 
-        stack_config_values = provider.new_stack_config(env_config=env_config, defaults=stack_defaults['config'])
-
+        stack_config_values = {
+            'config': provider.new_stack_config(env_config=env_config, defaults=stack_defaults['config'])
+        }
         with open(e.filename, 'w') as f:
             yaml.safe_dump(data=stack_config_values, stream=f)
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
@@ -173,7 +182,7 @@ def read_or_prompt_for_stack_config(provider: Provider,
     return stack_config
 
 
-def render_header(text: str, env_config: env_config_parser.EnvConfigParser):
+def render_header(text: str, env_config: env_config_parser.EnvConfig):
     if banner_type == 'fabulous':
         header = fart.render_fart(text=text, font=FART_FONT)
         if not env_config.no_color():
@@ -183,7 +192,7 @@ def render_header(text: str, env_config: env_config_parser.EnvConfigParser):
 
 
 def validate(provider: Provider,
-             env_config: env_config_parser.EnvConfigParser,
+             env_config: env_config_parser.EnvConfig,
              stack_config: stack_config_parser.PulumiStackConfig,
              verbose: Optional[bool] = False):
     # First, we validate that we have the right tools installed
@@ -210,9 +219,17 @@ def validate(provider: Provider,
     if not success:
         sys.exit(3)
 
+    if 'kubernetes:infra_type' in stack_config['config']:
+        previous_provider = stack_config['config']['kubernetes:infra_type']
+        if previous_provider.lower() != provider.infra_type().lower():
+            print(f'Stack has already been used with the provider [{previous_provider}], so it cannot '
+                  f'be run with the specified provider [{provider.infra_type()}]. Destroy all resources '
+                  'and remove the kubernetes:infra_type key from the stack configuration.', file=sys.stderr)
+            sys.exit(3)
+
     # Next, we validate that the environment file has the required values
     try:
-        provider.validate_env_config(env_config.main_section())
+        provider.validate_env_config(env_config)
     except Exception as e:
         print(f' > environment file at path failed validation: {env_config.config_path}')
         raise e
@@ -220,7 +237,7 @@ def validate(provider: Provider,
         print(f' > environment file validated at path: {env_config.config_path}')
 
     try:
-        provider.validate_stack_config(stack_config)
+        provider.validate_stack_config(stack_config, env_config)
     except Exception as e:
         print(f' > stack configuration file at path failed validation: {stack_config.config_path}')
         raise e
@@ -230,16 +247,12 @@ def validate(provider: Provider,
     print(' > configuration is OK')
 
 
-def init_secrets(env_config: env_config_parser.EnvConfigParser,
+def init_secrets(env_config: env_config_parser.EnvConfig,
                  pulumi_projects: List[PulumiProject]):
-    env_vars = {
-        'PULUMI_SKIP_UPDATE_CHECK': 'true'
-    }
-    env_vars.update(env_config.main_section())
     secrets_work_dir = os.path.sep.join([SCRIPT_DIR, '..', 'kubernetes', 'secrets'])
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
-                                            env_vars=env_vars,
+                                            env_vars=env_config,
                                         ),
                                         project_name='secrets',
                                         work_dir=secrets_work_dir)
@@ -263,15 +276,11 @@ def init_secrets(env_config: env_config_parser.EnvConfigParser,
 
 
 def build_pulumi_stack(pulumi_project: PulumiProject,
-                       env_config: env_config_parser.EnvConfigParser) -> auto.Stack:
+                       env_config: env_config_parser.EnvConfig) -> auto.Stack:
     print(f'project: {pulumi_project.name()} path: {pulumi_project.path()}')
-    env_vars = {
-        'PULUMI_SKIP_UPDATE_CHECK': 'true'
-    }
-    env_vars.update(env_config.main_section())
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
-                                            env_vars=env_vars,
+                                            env_vars=env_config,
                                         ),
                                         project_name=pulumi_project.name(),
                                         work_dir=pulumi_project.path())
@@ -279,34 +288,44 @@ def build_pulumi_stack(pulumi_project: PulumiProject,
 
 
 def refresh(provider: Provider,
-            env_config: env_config_parser.EnvConfigParser):
+            env_config: env_config_parser.EnvConfig):
     for pulumi_project in provider.execution_order():
         render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack.refresh_config()
-        stack.refresh(on_output=print)
+        stack.refresh(color=pulumi_color_settings(env_config),
+                      on_output=print)
 
 
 def up(provider: Provider,
-       env_config: env_config_parser.EnvConfigParser):
+       env_config: env_config_parser.EnvConfig):
     for pulumi_project in provider.execution_order():
         render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
-        stackUpResult = stack.up(on_output=print)
+        stackUpResult = stack.up(color=pulumi_color_settings(env_config),
+                                 on_output=print)
 
         if pulumi_project.on_success:
-            pulumi_project.on_success(stackUpResult.outputs, stack.get_all_config())
+            pulumi_project.on_success(stackUpResult.outputs, stack.get_all_config(), env_config)
 
 
 def down(provider: Provider,
-         env_config: env_config_parser.EnvConfigParser):
+         env_config: env_config_parser.EnvConfig):
     for pulumi_project in reversed(provider.execution_order()):
         render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
-        stackDownResult = stack.destroy(on_output=print)
+        stackDownResult = stack.destroy(color=pulumi_color_settings(env_config),
+                                        on_output=print)
+
+
+def pulumi_color_settings(env_config: env_config_parser.EnvConfig):
+    if env_config.no_color():
+        return 'never'
+    else:
+        return 'auto'
 
 
 if __name__ == "__main__":

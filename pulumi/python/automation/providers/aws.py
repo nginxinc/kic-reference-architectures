@@ -1,8 +1,9 @@
 import json
 import os
+import sys
 
 from kic_util import external_process
-from typing import List, Optional, MutableMapping, Union, Hashable, Dict, Any
+from typing import List, Optional, MutableMapping, Union, Hashable, Dict, Any, Mapping
 
 from pulumi import automation as auto
 
@@ -40,7 +41,7 @@ class AwsCli:
         """
         return f'{self.base_cmd()} eks update-kubeconfig --name {cluster_name}'
 
-    def validate_aws_credentials_cmd(self) -> str:
+    def validate_credentials_cmd(self) -> str:
         """
         Returns the command used to verify that AWS has valid credentials
         :return: command to be executed
@@ -53,6 +54,9 @@ class AwsCli:
 
 
 class AwsProvider(Provider):
+    def infra_type(self) -> str:
+        return 'AWS'
+
     def infra_execution_order(self) -> List[PulumiProject]:
         return [
             PulumiProject(path='infrastructure/aws/vpc', description='VPC'),
@@ -63,14 +67,11 @@ class AwsProvider(Provider):
 
     def new_stack_config(self, env_config, defaults: Union[Dict[Hashable, Any], list, None]) -> Union[
         Dict[Hashable, Any], list, None]:
-        config = {
-            'kubernetes:infra_type': 'AWS'
-        }
-        envcfg = env_config.main_section()
+        config = super().new_stack_config(env_config, defaults)
 
         # AWS region
-        if 'AWS_DEFAULT_REGION' in envcfg:
-            default_region = envcfg['AWS_DEFAULT_REGION']
+        if 'AWS_DEFAULT_REGION' in env_config:
+            default_region = env_config['AWS_DEFAULT_REGION']
         else:
             default_region = defaults['aws:region']
 
@@ -79,8 +80,8 @@ class AwsProvider(Provider):
         print(f"AWS region: {config['aws:region']}")
 
         # AWS profile
-        if 'AWS_PROFILE' in envcfg:
-            default_profile = envcfg['AWS_PROFILE']
+        if 'AWS_PROFILE' in env_config:
+            default_profile = env_config['AWS_PROFILE']
         else:
             default_profile = 'none'
         aws_profile = input(
@@ -153,30 +154,28 @@ class AwsProvider(Provider):
                 config['eks:desired_capacity'] = int(desired_capacity)
         print(f"EKS maximum cluster size: {config['eks:desired_capacity']}")
 
-        parent_config = super().new_stack_config(env_config, defaults)
-        if 'config' in parent_config:
-            parent_config['config'].update(config)
-        else:
-            parent_config['config'] = config
+        return config
 
-        return parent_config
-
-    def validate_stack_config(self, stack_config: Union[Dict[Hashable, Any], list, None]):
-        super().validate_stack_config(stack_config)
+    def validate_stack_config(self,
+                              stack_config: Union[Dict[Hashable, Any], list, None],
+                              env_config: Mapping[str, str]):
+        super().validate_stack_config(stack_config=stack_config, env_config=env_config)
         config = stack_config['config']
 
         if 'aws:region' not in config:
-            raise InvalidConfigurationException('When using the AWS provider, the region must be specified')
+            raise InvalidConfigurationException('When using the AWS provider, the region [aws:region] '
+                                                'must be specified')
 
         aws_cli = AwsCli(region=config['aws:region'], profile=config['aws:profile'])
-        _, err = external_process.run(cmd=aws_cli.validate_aws_credentials_cmd(), suppress_error=True)
+        _, err = external_process.run(cmd=aws_cli.validate_credentials_cmd(), suppress_error=True)
         if err:
             print(f'AWS authentication error: {err}', file=sys.stderr)
             sys.exit(3)
 
     @staticmethod
     def _update_kubeconfig(stack_outputs: MutableMapping[str, auto._output.OutputValue],
-                           config: MutableMapping[str, auto._config.ConfigValue]):
+                           config: MutableMapping[str, auto._config.ConfigValue],
+                           _env_config: Mapping[str, str]):
         if 'cluster_name' not in stack_outputs:
             raise AwsProviderException('Cannot find key [cluster_name] in stack output')
 

@@ -31,18 +31,29 @@ class Provider:
                 raise InvalidConfigurationException(f'Required configuration key [{key}] not found')
 
     @abc.abstractmethod
+    def infra_type(self) -> str:
+        """
+        :return string representing the type of underlying infrastructure used to stand up Kubernetes
+        """
+        pass
+
+    @abc.abstractmethod
     def infra_execution_order(self) -> List[PulumiProject]:
         pass
 
-    def new_stack_config(self, env_config, defaults: Union[Dict[Hashable, Any], list, None]) -> \
-            Union[Dict[Hashable, Any], list, None]:
-        config = {}
-        return {'config': config}
+    def new_stack_config(self, env_config: Mapping[str, str],
+                         defaults: Union[Dict[Hashable, Any], list, None]) -> Union[Dict[Hashable, Any], list, None]:
+        config = {
+            'kubernetes:infra_type': self.infra_type()
+        }
+        return config
 
-    def validate_env_config(self, config: Mapping[str, str]):
-        Provider.validate_env_config_required_keys(['PULUMI_STACK'], config)
+    def validate_env_config(self, env_config: Mapping[str, str]):
+        Provider.validate_env_config_required_keys(['PULUMI_STACK'], env_config)
 
-    def validate_stack_config(self, stack_config: Union[Dict[Hashable, Any], list, None]):
+    def validate_stack_config(self,
+                              stack_config: Union[Dict[Hashable, Any], list, None],
+                              env_config: Mapping[str, str]):
         pass
 
     def k8s_execution_order(self) -> List[PulumiProject]:
@@ -50,7 +61,7 @@ class Provider:
             PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
             PulumiProject(path='kubernetes/secrets', description='Secrets'),
             PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
-            PulumiProject(path='utility/kic-image-push', description='KIC Image Build'),
+            PulumiProject(path='utility/kic-image-push', description='KIC Image Push'),
             PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
             PulumiProject(path='kubernetes/logstore', description='Logstore'),
             PulumiProject(path='kubernetes/logagent', description='Log Agent'),
