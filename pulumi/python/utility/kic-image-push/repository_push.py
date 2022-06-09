@@ -1,8 +1,6 @@
 import uuid
-from typing import Any, List, Optional
-import urllib.parse
+from typing import Any, List, Optional, Callable
 
-import requests
 from pulumi.dynamic import ResourceProvider, Resource, CreateResult, CheckResult, ReadResult, CheckFailure, DiffResult, \
     UpdateResult
 import pulumi
@@ -11,31 +9,20 @@ import pulumi_docker as docker
 from kic_util.docker_image_name import DockerImageName
 
 __all__ = [
-    'RepositoryCredentialsArgs',
     'RepositoryPush',
     'RepositoryPushArgs'
 ]
-
-
-class RepositoryCredentialsArgs:
-    def __init__(self,
-                 username: pulumi.Input[str],
-                 password: pulumi.Input[str]):
-        self.username = username
-        self.password = password
 
 
 @pulumi.input_type
 class RepositoryPushArgs(dict):
     def __init__(self,
                  repository_url: pulumi.Input[str],
-                 credentials: pulumi.Input[pulumi.InputType['RepositoryCredentialsArgs']],
                  image_id: pulumi.Input[str],
                  image_name: pulumi.Input[str],
                  image_tag: pulumi.Input[str],
                  image_tag_alias: Optional[pulumi.Input[str]] = None):
         self.repository_url = repository_url
-        self.credentials = credentials
         self.image_id = image_id
         self.image_name = image_name
         self.image_tag = image_tag
@@ -43,8 +30,6 @@ class RepositoryPushArgs(dict):
 
         dict_init = {
             'repository_url': self.repository_url,
-            'repository_username': self.credentials.username,
-            'repository_password': self.credentials.password,
             'image_id': self.image_id,
             'image_name': self.image_name,
             'image_tag': self.image_tag,
@@ -58,30 +43,24 @@ class RepositoryPushArgs(dict):
 
 class RepositoryPushProvider(ResourceProvider):
     resource: Resource
+    check_if_id_matches_tag_func: Callable[[str, str], bool]
     REQUIRED_PROPS: List[str] = [
         'repository_url',
         'image_id',
         'image_name',
         'image_tag',
-        'repository_username',
-        'repository_password'
     ]
 
-    def __init__(self, resource: pulumi.Resource) -> None:
+    def __init__(self,
+                 resource: pulumi.Resource,
+                 check_if_id_matches_tag_func: Optional[Callable[[str, str], bool]] = None) -> None:
         self.resource = resource
+
+        if check_if_id_matches_tag_func:
+            self.check_if_id_matches_tag_func = check_if_id_matches_tag_func
+        else:
+            self.check_if_id_matches_tag_func = lambda image_tag, new_image_id: False
         super().__init__()
-
-    def login_to_ecr_repo(self, repository_url: str, username: str, password: str) -> docker.Registry:
-        # We assume that the scheme is https because that's what is used most everywhere
-        repo_host_url = urllib.parse.urlparse(f'https://{repository_url}')
-        # We strip out the path from the URL because it isn't used when logging into a repository
-        repo_host = f'{repo_host_url.scheme}://{repo_host_url.hostname}'
-
-        registry = docker.Registry(registry=repo_host,
-                                   username=username,
-                                   password=password)
-        docker.login_to_registry(registry=registry, log_resource=self.resource)
-        return registry
 
     def push_image_to_repo(self,
                            repository_url: str,
@@ -136,8 +115,6 @@ class RepositoryPushProvider(ResourceProvider):
 
     def create(self, props: Any) -> CreateResult:
         repository_url = props['repository_url']
-        repository_username = props['repository_username']
-        repository_password = props['repository_password']
         image_name = props['image_name']
         image_tag = props['image_tag']
 
@@ -146,28 +123,24 @@ class RepositoryPushProvider(ResourceProvider):
         else:
             image_tag_alias = None
 
-        self.login_to_ecr_repo(repository_url=repository_url,
-                               username=repository_username,
-                               password=repository_password)
-
         # Push the KIC tag and tag_alias, so that the KIC image can be easily identified on the repository
-        ecr_image_name = self.push_image_to_repo(repository_url=repository_url,
-                                                 # source image ref
-                                                 image_name=image_name,
-                                                 image_tag=image_tag)
-        pulumi.log.info(msg=f'Tagged and pushed image [{image_name}] to [{ecr_image_name}]',
+        repo_image_name = self.push_image_to_repo(repository_url=repository_url,
+                                                  # source image ref
+                                                  image_name=image_name,
+                                                  image_tag=image_tag)
+        pulumi.log.info(msg=f'Tagged and pushed image [{image_name}] to [{repo_image_name}]',
                         resource=self.resource)
 
-        outputs = {'ecr_image_name': str(ecr_image_name),
-                   'ecr_image_id': props['image_id']}
+        outputs = {'repo_image_name': str(repo_image_name),
+                   'repo_image_id': props['image_id']}
 
         if image_tag_alias:
-            ecr_image_name_alias = self.push_image_to_repo(repository_url=repository_url,
-                                                           # source image ref
-                                                           image_name=image_name,
-                                                           image_tag=image_tag_alias)
-            outputs['ecr_image_name_alias'] = str(ecr_image_name_alias)
-            pulumi.log.info(msg=f'Tagged and pushed image alias [{image_name}] to [{ecr_image_name_alias}]',
+            repo_image_name_alias = self.push_image_to_repo(repository_url=repository_url,
+                                                            # source image ref
+                                                            image_name=image_name,
+                                                            image_tag=image_tag_alias)
+            outputs['repo_image_name_alias'] = str(repo_image_name_alias)
+            pulumi.log.info(msg=f'Tagged and pushed image alias [{image_name}] to [{repo_image_name_alias}]',
                             resource=self.resource)
 
         id_ = str(uuid.uuid4())
@@ -175,28 +148,12 @@ class RepositoryPushProvider(ResourceProvider):
 
     def update(self, _id: str, _olds: Any, _news: Any) -> UpdateResult:
         repository_url: str = _news['repository_url']
-        repository_url_parts = repository_url.split('/')
-        ecr_host = repository_url_parts[0]
-        ecr_path = repository_url_parts[1]
-        ecr_docker_api_url = f'https://{ecr_host}/v2/{ecr_path}'
-
-        def check_if_id_matches_tag_in_ecr(image_tag: str) -> bool:
-            pulumi.log.debug(f'Querying for latest image id: {ecr_docker_api_url}/manifests/{image_tag}')
-            with requests.get(f'{ecr_docker_api_url}/manifests/{image_tag}',
-                              auth=(_news['repository_username'], _news['repository_password'])) as response:
-                json_response = response.json()
-                if 'config' in json_response and 'digest' in json_response['config']:
-                    remote_image_id = json_response['config']['digest']
-                    return remote_image_id != _news['image_id']
-                else:
-                    return True
-
-        image_tag_outdated = check_if_id_matches_tag_in_ecr(_news['image_tag'])
+        image_tag_outdated = self.check_if_id_matches_tag_func(_news['image_tag'], _news['image_id'])
 
         has_tag_alias = 'image_tag_alias' in _news and _news['image_tag_alias']
 
         if has_tag_alias:
-            image_tag_alias_outdated = check_if_id_matches_tag_in_ecr(_news['image_tag_alias'])
+            image_tag_alias_outdated = self.check_if_id_matches_tag_func(_news['image_tag_alias'], _news['image_id'])
         else:
             image_tag_alias_outdated = False
 
@@ -205,37 +162,33 @@ class RepositoryPushProvider(ResourceProvider):
                 pulumi.log.info(msg=f"Tags [{_news['image_tag']}] and [{_news['image_tag_alias']}] "
                                     f"are up to date", resource=self.resource)
             else:
-                pulumi.log.info(msg=f"Tag [{_news['image_tag']}] is up to date", resource=self.resource)
+                pulumi.log.info(msg=f"Tag [{_news['image_tag']}] on remote registry is up to date", resource=self.resource)
 
             return UpdateResult()
 
         outputs = {
-            'ecr_image_id': _news['image_id']
+            'repo_image_id': _news['image_id']
         }
 
-        self.login_to_ecr_repo(repository_url=repository_url,
-                               username=_news['repository_username'],
-                               password=_news['repository_password'])
-
         if image_tag_outdated:
-            ecr_image_name = self.push_image_to_repo(repository_url=repository_url,
-                                                     # source image ref
-                                                     image_name=_news['image_name'],
-                                                     image_tag=_news['image_tag'])
-            pulumi.log.info(msg=f"Tagged and pushed image [{_news['image_name']}] to [{ecr_image_name}]",
+            repo_image_name = self.push_image_to_repo(repository_url=repository_url,
+                                                      # source image ref
+                                                      image_name=_news['image_name'],
+                                                      image_tag=_news['image_tag'])
+            pulumi.log.info(msg=f"Tagged and pushed image [{_news['image_name']}] to [{repo_image_name}]",
                             resource=self.resource)
-            outputs['ecr_image_name'] = str(ecr_image_name)
+            outputs['repo_image_name'] = str(repo_image_name)
         else:
             pulumi.log.info(msg=f"Tag [{_news['image_tag']}] is up to date", resource=self.resource)
 
         if has_tag_alias and image_tag_alias_outdated:
-            ecr_image_name_alias = self.push_image_to_repo(repository_url=repository_url,
-                                                           # source image ref
-                                                           image_name=_news['image_name'],
-                                                           image_tag=_news['image_tag_alias'])
-            pulumi.log.info(msg=f"Tagged and pushed image alias [{_news['image_name']}] to [{ecr_image_name_alias}]",
+            repo_image_name_alias = self.push_image_to_repo(repository_url=repository_url,
+                                                            # source image ref
+                                                            image_name=_news['image_name'],
+                                                            image_tag=_news['image_tag_alias'])
+            pulumi.log.info(msg=f"Tagged and pushed image alias [{_news['image_name']}] to [{repo_image_name_alias}]",
                             resource=self.resource)
-            outputs['ecr_image_name_alias'] = str(ecr_image_name_alias)
+            outputs['repo_image_name_alias'] = str(repo_image_name_alias)
         elif has_tag_alias:
             pulumi.log.info(msg=f"Tag alias [{_news['image_tag_alias']}] is up to date", resource=self.resource)
 
@@ -246,11 +199,12 @@ class RepositoryPush(Resource):
     def __init__(self,
                  name: str,
                  repository_args: pulumi.InputType['RepositoryPushArgs'],
+                 check_if_id_matches_tag_func: Callable[[str, str], bool] = None,
                  opts: Optional[pulumi.ResourceOptions] = None) -> None:
         props = dict()
         props.update(repository_args)
 
-        def build_ecr_image_alias(args):
+        def build_repo_image_alias(args):
             repository_url = args[0]
             image_tag = args[1]
 
@@ -259,18 +213,21 @@ class RepositoryPush(Resource):
             else:
                 return f'{repository_url}:{image_tag}'
 
-        if 'ecr_image_name' not in props:
-            props['ecr_image_name'] = pulumi.Output.concat(repository_args.repository_url,
-                                                           ':',
-                                                           repository_args.image_tag)
-        if 'ecr_image_name_alias' not in props and repository_args.image_tag_alias:
-            ecr_image_alias_args = pulumi.Output.all(repository_args.repository_url,
-                                                     repository_args.image_tag_alias)
-            props['ecr_image_name_alias'] = ecr_image_alias_args.apply(build_ecr_image_alias)
-        if 'ecr_image_id' not in props:
-            props['ecr_image_id'] = repository_args.image_id
+        if 'repo_image_name' not in props:
+            props['repo_image_name'] = pulumi.Output.concat(repository_args.repository_url,
+                                                            ':',
+                                                            repository_args.image_tag)
+        if 'repo_image_name_alias' not in props and repository_args.image_tag_alias:
+            repo_image_alias_args = pulumi.Output.all(repository_args.repository_url,
+                                                      repository_args.image_tag_alias)
+            props['repo_image_name_alias'] = repo_image_alias_args.apply(build_repo_image_alias)
+        if 'repo_image_id' not in props:
+            props['repo_image_id'] = repository_args.image_id
 
         if not opts:
             opts = pulumi.ResourceOptions()
 
-        super().__init__(name=name, opts=opts, props=props, provider=RepositoryPushProvider(resource=self))
+        provider = RepositoryPushProvider(resource=self,
+                                          check_if_id_matches_tag_func=check_if_id_matches_tag_func)
+
+        super().__init__(name=name, opts=opts, props=props, provider=provider)
