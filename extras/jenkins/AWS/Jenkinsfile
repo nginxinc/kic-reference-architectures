@@ -188,7 +188,7 @@ pipeline {
 
           sh '''
             $WORKSPACE/bin/destroy.sh
-            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
+            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \;
             '''
       }
     }
