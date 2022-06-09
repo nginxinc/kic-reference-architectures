@@ -62,7 +62,7 @@ def find_image_tag(repository: dict) -> typing.Optional[str]:
     return None
 
 
-def build_chart_values(repository: dict) -> helm.ChartOpts:
+def build_chart_values(repo_push: dict) -> helm.ChartOpts:
     values: Dict[str, Dict[str, typing.Any]] = {
         'controller': {
             'healthStatus': True,
@@ -117,12 +117,12 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
         "opentracing": True
     }
 
-    image_tag = find_image_tag(repository)
+    image_tag = find_image_tag(repo_push)
     if not image_tag:
         pulumi.log.debug('No image_tag or image_tag_alias found')
 
-    if 'repository_url' in repository and image_tag:
-        repository_url = repository['repository_url']
+    if 'repository_url' in repo_push and image_tag:
+        repository_url = repo_push['repository_url']
 
         if 'image' not in values['controller']:
             values['controller']['image'] = {}
@@ -156,7 +156,7 @@ cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c
 image_push_project_name = project_name_from_project_dir('kic-image-push')
 image_push_ref_id = f"{pulumi_user}/{image_push_project_name}/{stack_name}"
 image_push_ref = pulumi.StackReference(image_push_ref_id)
-ecr_repository = image_push_ref.get_output('ecr_repository')
+container_repo_push = image_push_ref.get_output('container_repo_push')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
@@ -168,7 +168,7 @@ ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
                                      },
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-chart_values = ecr_repository.apply(build_chart_values)
+chart_values = container_repo_push.apply(build_chart_values)
 
 kic_release_args = ReleaseArgs(
     chart=chart_name,
