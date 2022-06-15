@@ -5,7 +5,7 @@ from pulumi_digitalocean import KubernetesCluster, KubernetesClusterNodePoolArgs
 
 from kic_util import pulumi_config
 # Configuration details for the K8 cluster
-config = pulumi.Config('domk8s')
+config = pulumi.Config('digitalocean')
 instance_size = config.get('instance_size')
 if not instance_size:
     instance_size = 's-2vcpu-4gb'

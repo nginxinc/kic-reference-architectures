@@ -9,7 +9,7 @@ config = pulumi.Config('digitalocean')
 # valid values: starter, basic, professional
 subscription_tier = config.get('container_registry_subscription_tier')
 if not subscription_tier:
-    subscription_tier = 'basic'
+    subscription_tier = 'starter'
 region = config.get('region')
 if not region:
     region = 'sfo3'

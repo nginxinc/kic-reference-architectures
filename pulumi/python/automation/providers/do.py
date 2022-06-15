@@ -36,6 +36,12 @@ class DoctlCli:
     def get_kubernetes_versions_json(self) -> str:
         return f'{self.base_cmd()} kubernetes options versions --output json'
 
+    def get_kubernetes_regions_json(self) -> str:
+        return f'{self.base_cmd()} kubernetes options regions --output json'
+
+    def get_kubernetes_instance_sizes_json(self) -> str:
+        return f'{self.base_cmd()} kubernetes options sizes --output json'
+
 
 class DigitalOceanProvider(Provider):
     def infra_type(self) -> str:
@@ -86,6 +92,54 @@ class DigitalOceanProvider(Provider):
                                                  "DIGITALOCEAN_TOKEN): ")
 
         config['kic-helm:fqdn'] = input(f'Fully qualified domain name (FQDN) for application: ')
+
+        token = DigitalOceanProvider.token(stack_config={ 'config': config }, env_config=env_config)
+        do_cli = DoctlCli(access_token=token)
+
+        # Kubernetes versions
+        k8s_versions_json_str, _ = external_process.run(do_cli.get_kubernetes_versions_json())
+        k8s_versions_json = json.loads(k8s_versions_json_str)
+        k8s_version_slugs = [version['slug'] for version in k8s_versions_json]
+
+        print('Supported Kubernetes versions:')
+        for slug in k8s_version_slugs:
+            print(f'  {slug}')
+        default_version = defaults['digitalocean:k8s_version'] or k8s_version_slugs[0]
+        config['digitalocean:k8s_version'] = input(f'Kubernetes version [{default_version}]: ').strip() or default_version
+        print(f"Kubernetes version: {config['digitalocean:k8s_version']}")
+
+        # Kubernetes regions
+        k8s_regions_json_str, _ = external_process.run(do_cli.get_kubernetes_regions_json())
+        k8s_regions_json = json.loads(k8s_regions_json_str)
+        default_region = defaults['digitalocean:region'] or k8s_regions_json[-1]['slug']
+
+        print('Supported Regions:')
+        for item in k8s_regions_json:
+            print(f"  {item['name']}: {item['slug']}")
+        config['digitalocean:region'] = input(f'Region [{default_region}]: ').strip() or default_region
+        print(f"Region: {config['digitalocean:region']}")
+
+        # Kubernetes instance size
+        k8s_sizes_json_str, _ = external_process.run(do_cli.get_kubernetes_instance_sizes_json())
+        k8s_sizes_json = json.loads(k8s_sizes_json_str)
+        k8s_sizes_slugs = [size['slug'] for size in k8s_sizes_json]
+        default_size = defaults['digitalocean:instance_size'] or 's-2vcpu-4gb'
+
+        print('Supported Instance Sizes:')
+        for slug in k8s_sizes_slugs:
+            print(f'  {slug}')
+
+        config['digitalocean:instance_size'] = input(f'Instance size [{default_size}]: ').strip() or default_size
+        print(f"Instance size: {config['digitalocean:instance_size']}")
+
+        # Kubernetes instance count
+        default_node_count = defaults['digitalocean:node_count'] or 3
+        while 'digitalocean:node_count' not in config:
+            node_count = input('Node count for Kubernetes cluster '
+                               f'[{default_node_count}]: ').strip() or default_node_count
+            if type(node_count) == int or node_count.isdigit():
+                config['digitalocean:node_count'] = int(node_count)
+        print(f"Node count: {config['digitalocean:node_count']}")
 
         return config
 

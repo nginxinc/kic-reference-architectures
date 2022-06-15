@@ -321,18 +321,18 @@ config:
   #       within that project.
 
   ############################################################################
-  # Digital Ocean Managed Kubernetes
+  # Digital Ocean Managed Kubernetes and Container Registry
   ############################################################################
   # This is the Kubernetes version to install using Digital Ocean K8s.
-  domk8s:k8s_version: latest
-  # Version of Kubernetes to use
-  domk8s:instance_type: s-2vcpu-4gb
+  digitalocean:k8s_version: 1.22.8-do.1
   # This is the default instance type used by Digital Ocean K8s.
-  domk8s:node_count: 3
+  digitalocean:instance_size: s-2vcpu-4gb
   # The desired node count of the Digital Ocean K8s cluster.
-  domk8s:region: sfo3
+  digitalocean:node_count: 3
   # The region to deploy the cluster
-
+  digitalocean:region: sfo3
+  # Subscription tier for container registry
+  digitalocean:container_registry_subscription_tier: starter
 
   ############################################################################
   # Linode Kubernetes Engine
