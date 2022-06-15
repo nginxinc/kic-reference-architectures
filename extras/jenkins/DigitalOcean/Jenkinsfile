@@ -190,7 +190,6 @@ pipeline {
           sh '''
              # Destroy our partial build...
              $WORKSPACE/bin/destroy.sh || true
-             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
               '''
     }
