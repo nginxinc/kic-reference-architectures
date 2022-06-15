@@ -227,8 +227,7 @@ pipeline {
             # Reset our K3S Environment
             /usr/local/bin/k3s-killall.sh || true
             /usr/local/bin/k3s-uninstall.sh || true
-            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \;
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
             '''
     }
   }

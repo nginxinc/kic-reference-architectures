@@ -69,7 +69,7 @@ pipeline {
             # Create the directory for the kubeconfig
             mkdir -p $HOME/.kube || true
             chmod 777 $HOME/.kube || true
-            '''
+             '''
       }
     }
 
@@ -77,15 +77,15 @@ pipeline {
       steps {
 
         /*
-         * Run a find and check for any stacks that currently exist with our generated stack name; this should not
-         * happen in normal operation, but could potentially happen if things break so better safe than sorry.
+         * This is currently empty since we are building a new executor for each run. However, maintaining
+         * here for anyone who wants to add cleanup steps for their environment
          *
          * Other cleanup related functions can be placed here as well.
          */
 
         sh '''
-          # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-          find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenklke${BUILD_NUMBER}  --force --yes  \\;
+          # Just return...
+          true
            '''
 
       }
@@ -132,7 +132,7 @@ pipeline {
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:token "${LINODE_TOKEN}" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
-          '''
+           '''
 
       }
     }
@@ -165,7 +165,7 @@ pipeline {
 
         sh '''
           PATH=$WORKSPACE/pulumi/python/venv/bin:$PATH $WORKSPACE/bin/destroy.sh
-          find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenklke${BUILD_NUMBER} --force --yes \\;
+          find $WORKSPACE -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenklke${BUILD_NUMBER} --force --yes \\;
            '''
       }
          }
@@ -180,11 +180,10 @@ pipeline {
            */
 
           sh '''
-              # Destroy our partial build...
-              $WORKSPACE/bin/destroy.sh || true
-              # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \;
-              '''
+            # Destroy our partial build...
+            $WORKSPACE/bin/destroy.sh || true
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenklke${BUILD_NUMBER}  --force --yes  \\;
+             '''
     }
    }
   }
