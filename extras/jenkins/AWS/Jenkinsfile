@@ -78,7 +78,7 @@ pipeline {
             DEBIAN_FRONTEND=noninteractive apt -y upgrade
             # Make sure our deps are installed
             DEBIAN_FRONTEND=noninteractive apt -y install figlet openjdk-11-jdk make docker.io
-            '''
+             '''
       }
     }
 
@@ -95,7 +95,7 @@ pipeline {
           sh '''
             # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
-            '''
+             '''
       }
     }
 
@@ -108,7 +108,7 @@ pipeline {
 
           sh '''
             $WORKSPACE/bin/setup_venv.sh
-            '''
+             '''
 
       }
     }
@@ -122,7 +122,7 @@ pipeline {
 
           sh '''
             $WORKSPACE/bin/aws_write_creds.sh
-            '''
+             '''
 
       }
     }
@@ -156,7 +156,7 @@ pipeline {
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:profile "${AWS_PROFILE}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:region "${AWS_DEFAULT_REGION}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
-            '''
+             '''
       }
     }
 
@@ -171,7 +171,7 @@ pipeline {
           sh '''
             echo "${NGINX_JWT}" > $WORKSPACE/extras/jwt.token
             $WORKSPACE/bin/start_aws.sh
-            '''
+             '''
       }
     }
 
@@ -188,8 +188,8 @@ pipeline {
 
           sh '''
             $WORKSPACE/bin/destroy.sh
-            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \;
-            '''
+            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
+             '''
       }
     }
 
@@ -204,10 +204,9 @@ pipeline {
            */
 
           sh '''
-              # Destroy our partial build...
-              $WORKSPACE/bin/destroy.sh || true
-              # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
+             # Destroy our partial build...
+             $WORKSPACE/bin/destroy.sh || true
+             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
               '''
     }
    }
