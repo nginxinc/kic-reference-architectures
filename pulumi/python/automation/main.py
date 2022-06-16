@@ -11,11 +11,11 @@ import typing
 
 import yaml
 
-import colorize
 import env_config_parser
+import headers
 from typing import List, Optional
 from getpass import getpass
-from fart import fart
+
 from providers.base_provider import Provider
 from providers.pulumi_project import PulumiProject
 from pulumi import automation as auto
@@ -28,7 +28,6 @@ PROJECT_ROOT = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..']))
 OPERATIONS: List[str] = ['down', 'destroy', 'refresh', 'show-execution', 'up', 'validate', 'list-providers']
 PROVIDERS: typing.Iterable[str] = Provider.list_providers()
 BANNER_TYPES: List[str] = ['fabulous', 'boring']
-FART_FONT = fart.load_font('standard')
 
 banner_type = BANNER_TYPES[0]
 debug_on = False
@@ -74,7 +73,7 @@ def main():
 
     provider_name: Optional[str] = None
 
-    global banner_type, debug_on
+    global debug_on
 
     # Parse flags
     for opt, value in opts:
@@ -88,7 +87,7 @@ def main():
             debug_on = True
         elif opt in ('-b', '--banner-type'):
             if value in BANNER_TYPES:
-                banner_type = value
+                headers.banner_type = value
 
     # Make sure we got an operation - it is the last string passed as an argument
     if len(sys.argv) > 1:
@@ -180,15 +179,6 @@ def read_or_prompt_for_stack_config(provider: Provider,
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
 
     return stack_config
-
-
-def render_header(text: str, env_config: env_config_parser.EnvConfig):
-    if banner_type == 'fabulous':
-        header = fart.render_fart(text=text, font=FART_FONT)
-        if not env_config.no_color():
-            colorize.PRINTLN_FUNC(header)
-    else:
-        print(f'* {text}')
 
 
 def validate(provider: Provider,
@@ -290,7 +280,7 @@ def build_pulumi_stack(pulumi_project: PulumiProject,
 def refresh(provider: Provider,
             env_config: env_config_parser.EnvConfig):
     for pulumi_project in provider.execution_order():
-        render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack.refresh_config()
@@ -301,7 +291,7 @@ def refresh(provider: Provider,
 def up(provider: Provider,
        env_config: env_config_parser.EnvConfig):
     for pulumi_project in provider.execution_order():
-        render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stackUpResult = stack.up(color=pulumi_color_settings(env_config),
@@ -314,7 +304,7 @@ def up(provider: Provider,
 def down(provider: Provider,
          env_config: env_config_parser.EnvConfig):
     for pulumi_project in reversed(provider.execution_order()):
-        render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stackDownResult = stack.destroy(color=pulumi_color_settings(env_config),
