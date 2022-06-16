@@ -127,7 +127,7 @@ config:
   # Chart name for the helm chart for kic
   kic-helm:chart_name: nginx-ingress
   # Chart version for the helm chart for kic
-  kic-helm:chart_version: 0.13.1
+  kic-helm:chart_version: 0.13.2
   # Name of the repo to pull the kic chart from
   kic-helm:helm_repo_name: nginx-stable
   # URL of the chart repo to pull kic from
