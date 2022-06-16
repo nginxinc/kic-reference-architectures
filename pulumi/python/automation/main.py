@@ -17,7 +17,7 @@ from typing import List, Optional
 from getpass import getpass
 
 from providers.base_provider import Provider
-from providers.pulumi_project import PulumiProject
+from providers.pulumi_project import PulumiProject, PulumiProjectEventParams
 from pulumi import automation as auto
 from typing import Any, Hashable, Dict, Union
 
@@ -298,7 +298,10 @@ def up(provider: Provider,
                                  on_output=print)
 
         if pulumi_project.on_success:
-            pulumi_project.on_success(stackUpResult.outputs, stack.get_all_config(), env_config)
+            params = PulumiProjectEventParams(stack_outputs=stack_up_result.outputs,
+                                              config=stack.get_all_config(),
+                                              env_config=env_config)
+            pulumi_project.on_success(params)
 
 
 def down(provider: Provider,

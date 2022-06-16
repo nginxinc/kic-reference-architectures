@@ -7,6 +7,7 @@ from pulumi import automation as auto
 from kic_util import external_process
 
 from .base_provider import PulumiProject, Provider, InvalidConfigurationException
+from .pulumi_project import PulumiProjectEventParams
 
 
 class DigitalOceanProviderException(Exception):
@@ -85,13 +86,11 @@ class DigitalOceanProvider(Provider):
         # DigitalOceanProvider._add_container_registry_support(stack_outputs, config, env_config)
 
     @staticmethod
-    def _update_kubeconfig(stack_outputs: MutableMapping[str, auto._output.OutputValue],
-                           config: MutableMapping[str, auto._config.ConfigValue],
-                           env_config: Mapping[str, str]):
-        if 'cluster_name' not in stack_outputs:
+    def _update_kubeconfig(params: PulumiProjectEventParams):
+        if 'cluster_name' not in params.stack_outputs:
             raise DigitalOceanProviderException('Cannot find key [cluster_name] in stack output')
 
-        kubeconfig = yaml.safe_load(stack_outputs['kubeconfig'].value)
+        kubeconfig = yaml.safe_load(params.stack_outputs['kubeconfig'].value)
         full_cluster_name = kubeconfig['clusters'][0]['name']
 
         res, _ = external_process.run('kubectl config get-clusters')
@@ -101,8 +100,8 @@ class DigitalOceanProvider(Provider):
             print(f'Local kubectl configuration already has credentials for cluster {full_cluster_name}')
         else:
             print(f'Adding credentials for cluster {full_cluster_name} to local kubectl configuration')
-            cluster_name = stack_outputs['cluster_name'].value
-            token = DigitalOceanProvider.token(stack_config=config, env_config=env_config)
+            cluster_name = params.stack_outputs['cluster_name'].value
+            token = DigitalOceanProvider.token(stack_config=params.config, env_config=params.env_config)
             do_cli = DoctlCli(access_token=token)
 
             res, _ = external_process.run(do_cli.save_kubernetes_cluster_cmd(cluster_name))

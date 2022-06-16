@@ -3,11 +3,10 @@ import os
 import sys
 
 from kic_util import external_process
-from typing import List, Optional, MutableMapping, Union, Hashable, Dict, Any, Mapping
-
-from pulumi import automation as auto
+from typing import List, Optional, Union, Hashable, Dict, Any, Mapping
 
 from .base_provider import PulumiProject, Provider, InvalidConfigurationException
+from .pulumi_project import PulumiProjectEventParams
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -173,14 +172,13 @@ class AwsProvider(Provider):
             sys.exit(3)
 
     @staticmethod
-    def _update_kubeconfig(stack_outputs: MutableMapping[str, auto._output.OutputValue],
-                           config: MutableMapping[str, auto._config.ConfigValue],
-                           _env_config: Mapping[str, str]):
-        if 'cluster_name' not in stack_outputs:
+    def _update_kubeconfig(params: PulumiProjectEventParams):
+        if 'cluster_name' not in params.stack_outputs:
             raise AwsProviderException('Cannot find key [cluster_name] in stack output')
 
-        aws_cli = AwsCli(region=config.get('aws:region').value, profile=config.get('aws:profile').value)
-        cluster_name = stack_outputs['cluster_name'].value
+        aws_cli = AwsCli(region=params.config.get('aws:region').value,
+                         profile=params.config.get('aws:profile').value)
+        cluster_name = params.stack_outputs['cluster_name'].value
         cmd = aws_cli.update_kubeconfig_cmd(cluster_name)
         res, err = external_process.run(cmd)
         print(res)

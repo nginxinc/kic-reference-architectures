@@ -67,3 +67,17 @@ class PulumiProject:
             raise PulumiConfigException('Pulumi configuration did not contain required "name" key')
 
         return config_data['name']
+
+
+class PulumiProjectEventParams:
+    stack_outputs: MutableMapping[str, auto._output.OutputValue]
+    config: MutableMapping[str, auto._config.ConfigValue]
+    env_config: Mapping[str, str]
+
+    def __init__(self,
+                 stack_outputs: MutableMapping[str, auto._output.OutputValue],
+                 config: MutableMapping[str, auto._config.ConfigValue],
+                 env_config: Mapping[str, str]) -> None:
+        self.stack_outputs = stack_outputs
+        self.config = config
+        self.env_config = env_config
