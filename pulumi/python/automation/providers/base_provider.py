@@ -91,7 +91,7 @@ class Provider:
         last_prefix = ''
 
         for index, pulumi_project in enumerate(execution_order):
-            path_parts = pulumi_project.root_path.split(os.path.sep)
+            path_parts = pulumi_project.path.split(os.path.sep)
             project = f'{path_parts[-1]} [{pulumi_project.description}]'
             prefix = os.path.sep.join(path_parts[:-1])
 
@@ -108,7 +108,7 @@ class Provider:
                 print(f' ├── {prefix}', file=output)
 
                 peek = execution_order[index + 1]
-                splitted = peek.root_path.split(f'{prefix}{os.path.sep}')[0]
+                splitted = peek.path.split(f'{prefix}{os.path.sep}')[0]
                 # item is not the last item with the prefix
                 if os.path.sep not in splitted:
                     print(f' │   ├── {project}', file=output)

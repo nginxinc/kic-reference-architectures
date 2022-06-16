@@ -267,13 +267,13 @@ def init_secrets(env_config: env_config_parser.EnvConfig,
 
 def build_pulumi_stack(pulumi_project: PulumiProject,
                        env_config: env_config_parser.EnvConfig) -> auto.Stack:
-    print(f'project: {pulumi_project.name()} path: {pulumi_project.path()}')
+    print(f'project: {pulumi_project.name()} path: {pulumi_project.abspath()}')
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
                                             env_vars=env_config,
                                         ),
                                         project_name=pulumi_project.name(),
-                                        work_dir=pulumi_project.path())
+                                        work_dir=pulumi_project.abspath())
     return stack
 
 

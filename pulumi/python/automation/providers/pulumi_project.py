@@ -43,18 +43,18 @@ class PulumiProject:
                  config_keys_with_secrets: Optional[List[SecretConfigKey]] = None,
                  on_success: Optional[Callable] = None) -> None:
         super().__init__()
-        self.root_path = path
+        self.path = path
         self.description = description
         self.config_keys_with_secrets = config_keys_with_secrets or []
         self.on_success = on_success
 
-    def path(self) -> str:
-        relative_path = os.path.sep.join([SCRIPT_DIR, '..', '..', self.root_path])
+    def abspath(self) -> str:
+        relative_path = os.path.sep.join([SCRIPT_DIR, '..', '..', self.path])
         return os.path.abspath(relative_path)
 
     def config(self) -> Mapping[str, str]:
         if not self._config_data:
-            config_path = os.path.sep.join([self.path(), 'Pulumi.yaml'])
+            config_path = os.path.sep.join([self.abspath(), 'Pulumi.yaml'])
             with open(config_path, 'r') as f:
                 self._config_data = yaml.safe_load(f)
 
