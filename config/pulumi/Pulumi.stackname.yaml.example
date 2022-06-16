@@ -151,12 +151,12 @@ config:
   # https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/
   #
   # The following are all valid image names:
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.0
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.0-ot
-  # kic:image_name: docker.io/nginx/nginx-ingress:2.2.0
-  # kic:image_name: nginx/nginx-ingress:2.2.0
-  # kic:image_name: nginx/nginx-ingress:2.2.0-alpine
-  kic:image_name: nginx/nginx-ingress:2.2.0
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.2
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.2-ot
+  # kic:image_name: docker.io/nginx/nginx-ingress:2.2.2
+  # kic:image_name: nginx/nginx-ingress:2.2.2
+  # kic:image_name: nginx/nginx-ingress:2.2.2-alpine
+  kic:image_name: nginx/nginx-ingress:2.2.2
 
 
   ############################################################################
