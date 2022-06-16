@@ -1,12 +1,9 @@
 import os
 
 import pulumi
-from pulumi import StackReference
-from pulumi_digitalocean import KubernetesCluster, KubernetesClusterNodePoolArgs, ContainerRegistryDockerCredentials
-from kic_util import pulumi_config
-import pulumi_kubernetes as k8s
-from pulumi_kubernetes.core.v1 import Secret, SecretInitArgs
+from pulumi_digitalocean import KubernetesCluster, KubernetesClusterNodePoolArgs
 
+from kic_util import pulumi_config
 # Configuration details for the K8 cluster
 config = pulumi.Config('domk8s')
 instance_size = config.get('instance_size')
@@ -47,23 +44,7 @@ cluster = KubernetesCluster(resource_name=resource_name,
                                 node_count=node_count,
                             ))
 
-# Insert Digital Ocean Container Registry Secrets into the cluster
 kubeconfig = cluster.kube_configs[0].raw_config
-container_registry_stack_ref_id = f"{pulumi_user}/{container_registry_project_name()}/{stack_name}"
-stack_ref = StackReference(container_registry_stack_ref_id)
-container_registry_output = stack_ref.require_output('container_registry')
-registry_name_output = stack_ref.require_output('container_registry_name')
-
-registry_credentials = ContainerRegistryDockerCredentials(resource_name='do_k8s_docker_credentials',
-                                                          registry_name=registry_name_output,
-                                                          write=False)
-docker_credentials = registry_credentials.docker_credentials
-
-k8s_provider = k8s.Provider(resource_name='kubernetes', kubeconfig=kubeconfig)
-secret = Secret(resource_name='shared-global-container-registry',
-                args=SecretInitArgs(string_data={'.dockerconfigjson': docker_credentials},
-                                    type='kubernetes.io/dockerconfigjson'),
-                opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 # Export the clusters' kubeconfig
 pulumi.export("cluster_name", cluster.name)

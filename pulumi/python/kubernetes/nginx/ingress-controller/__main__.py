@@ -3,13 +3,15 @@ import typing
 from typing import Dict
 
 import pulumi
-from pulumi import Output
+from pulumi import Output, StackReference
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.core.v1 import Service
 import pulumi_kubernetes.helm.v3 as helm
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 config = pulumi.Config('kic-helm')
 chart_name = config.get('chart_name')
@@ -83,6 +85,12 @@ def build_chart_values(repo_push: dict) -> helm.ChartOpts:
                                   '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
                                   '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
                 }
+            },
+            'serviceAccount': {
+                # This references the name of the secret used to pull the ingress container image
+                # from a remote repository. When using EKS on AWS, authentication to ECR happens
+                # via a different mechanism, so this value is ignored.
+                'imagePullSecretName': 'ingress-controller-registry',
             },
             'service': {
                 'annotations': {

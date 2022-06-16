@@ -33,14 +33,8 @@ class DoctlCli:
     def save_kubernetes_cluster_cmd(self, cluster_name: str) -> str:
         return f'{self.base_cmd()} kubernetes cluster config save {cluster_name}'
 
-    def add_container_registry_support_to_kubernetes(self, cluster_name: str) -> str:
-        return f'{self.base_cmd()} kubernetes cluster registry add {cluster_name}'
-
     def get_kubernetes_versions_json(self) -> str:
         return f'{self.base_cmd()} kubernetes options versions --output json'
-
-    def get_registry_name(self) -> str:
-        return f'{self.base_cmd()} registry get --format Name --no-header'
 
 
 class DigitalOceanProvider(Provider):
@@ -51,8 +45,36 @@ class DigitalOceanProvider(Provider):
         return [
             PulumiProject(path='infrastructure/digitalocean/container-registry', description='DO Container Registry'),
             PulumiProject(path='infrastructure/digitalocean/domk8s', description='DO Kubernetes',
-                          on_success=DigitalOceanProvider._after_k8s_stand_up),
+                          on_success=DigitalOceanProvider._update_kubeconfig),
         ]
+
+    def k8s_execution_order(self) -> List[PulumiProject]:
+        # The default Kubernetes Pulumi project instantiation order must be modified because
+        # the Digital Ocean Container Registry login credentials *must* be added under the
+        # Ingress Controller's namespace. As such, we insert a Digital Ocean specific
+        # Pulumi project that gets the credentials and adds them to the Kubernete's cluster
+        # under the appropriate namespace.
+        original_order = super().k8s_execution_order()
+
+        def find_position_of_project_by_path(path: str) -> int:
+            for index, project in enumerate(original_order):
+                if project.path == path:
+                    return index
+            return -1
+
+        namespace_project_path = 'kubernetes/nginx/ingress-controller-namespace'
+        namespace_project_position = find_position_of_project_by_path(namespace_project_path)
+
+        if namespace_project_position < 0:
+            raise ValueError('Could not find project that creates the nginx-ingress namespace at '
+                             f'path {namespace_project_path}')
+
+        add_credentials_project = PulumiProject(path='infrastructure/digitalocean/add-container-registry-credentials',
+                                                description='Registry Credentials')
+        new_order = original_order.copy()
+        new_order.insert(namespace_project_position + 1, add_credentials_project)
+
+        return new_order
 
     def new_stack_config(self, env_config, defaults: Union[Dict[Hashable, Any], list, None]) -> \
             Union[Dict[Hashable, Any], list, None]:
@@ -79,13 +101,6 @@ class DigitalOceanProvider(Provider):
             sys.exit(3)
 
     @staticmethod
-    def _after_k8s_stand_up(stack_outputs: MutableMapping[str, auto._output.OutputValue],
-                            config: MutableMapping[str, auto._config.ConfigValue],
-                            env_config: Mapping[str, str]):
-        DigitalOceanProvider._update_kubeconfig(stack_outputs, config, env_config)
-        # DigitalOceanProvider._add_container_registry_support(stack_outputs, config, env_config)
-
-    @staticmethod
     def _update_kubeconfig(params: PulumiProjectEventParams):
         if 'cluster_name' not in params.stack_outputs:
             raise DigitalOceanProviderException('Cannot find key [cluster_name] in stack output')
@@ -105,31 +120,6 @@ class DigitalOceanProvider(Provider):
             do_cli = DoctlCli(access_token=token)
 
             res, _ = external_process.run(do_cli.save_kubernetes_cluster_cmd(cluster_name))
-            if res:
-                print(res)
-
-    @staticmethod
-    def _add_container_registry_support(stack_outputs: MutableMapping[str, auto._output.OutputValue],
-                           config: MutableMapping[str, auto._config.ConfigValue],
-                           env_config: Mapping[str, str]):
-        if 'cluster_name' not in stack_outputs:
-            raise DigitalOceanProviderException('Cannot find key [cluster_name] in stack output')
-
-        cluster_name = stack_outputs['cluster_name'].value
-        token = DigitalOceanProvider.token(stack_config=config, env_config=env_config)
-        do_cli = DoctlCli(access_token=token)
-
-        res, _ = external_process.run(cmd='kubectl get secrets --output=name')
-        secrets = res.splitlines()
-
-        res, _ = external_process.run(cmd=do_cli.get_registry_name())
-        registry_name = res.strip()
-
-        if f'secret/{registry_name}' in secrets:
-            print('Container registry secrets have already been added to Kubernetes cluster')
-        else:
-            print('Adding container registry support (via secrets) to Kubernetes cluster')
-            res, _ = external_process.run(do_cli.add_container_registry_support_to_kubernetes(cluster_name))
             if res:
                 print(res)
 

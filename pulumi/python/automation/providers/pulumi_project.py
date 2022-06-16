@@ -1,6 +1,8 @@
 import os.path
-from typing import Optional, Callable, Mapping, List
+from typing import Optional, Callable, Mapping, List, MutableMapping
 import yaml
+from pulumi import automation as auto
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 

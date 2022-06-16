@@ -1,0 +1,7 @@
+name: add-container-registry-credentials
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Adds container registry login credentials to the k8s cluster
