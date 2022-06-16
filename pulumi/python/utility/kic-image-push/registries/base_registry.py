@@ -65,6 +65,9 @@ class ContainerRegistry:
     def check_if_id_matches_tag(self, image_tag: str, new_image_id: str) -> bool:
         return False
 
+    def registry_implementation_name(self) -> str:
+        raise NotImplemented
+
     @classmethod
     def instance(cls, stack_name: str, pulumi_user: str):
         pass

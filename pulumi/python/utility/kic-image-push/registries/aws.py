@@ -39,6 +39,9 @@ class ElasticContainerRegistry(ContainerRegistry):
         token = credentials.authorization_token
         return ContainerRegistry.decode_credentials(token)
 
+    def registry_implementation_name(self) -> str:
+        return 'AWS Elastic Container Registry (ECR)'
+
     def _ecr_docker_api_url(self, ) -> str:
         registry_url_parts = self.registry_url.split('/')
         ecr_host = registry_url_parts[0]

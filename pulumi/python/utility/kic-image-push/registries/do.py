@@ -41,7 +41,10 @@ class DigitalOceanContainerRegistry(ContainerRegistry):
                        registry_url=registry_url, credentials=_credentials)
 
         return Output.all(container_registry_output, _docker_credentials()).apply(_make_instance)
-        
+
+    def registry_implementation_name(self) -> str:
+        return 'Digital Ocean Container Registry'
+
     @staticmethod
     def do_project_name_from_project_dir(dirname: str):
         script_dir = os.path.dirname(os.path.abspath(__file__))
