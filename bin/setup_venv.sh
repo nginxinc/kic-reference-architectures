@@ -248,7 +248,7 @@ fi
 # The two fixes here are to hardcode (For now) to a known good version (1.23.6) and force the script to
 # always download this version.
 #
-# TODO: Figure out a way to not hardocde the kubectl version
+# TODO: Figure out a way to not hardcode the kubectl version
 # TODO: Should not always download if the versions match; need a version check
 #
 #
@@ -284,10 +284,10 @@ if [[ -x "${VIRTUAL_ENV}/bin/pulumi" ]] && [[ "$(PULUMI_SKIP_UPDATE_CHECK=true "
   echo "Pulumi version ${PULUMI_VERSION} is already installed"
 else
   PULUMI_TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${PULUMI_VERSION}-${OS}-${ARCH/amd64/x64}.tar.gz"
-  PULUMI_TARBALL_DESTTARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
-  ${download_cmd} "${PULUMI_TARBALL_URL}" >"${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  PULUMI_TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
+  ${download_cmd} "${PULUMI_TARBALL_URL}" > "${PULUMI_TARBALL_DEST}"
       [ $? -eq 0 ] && echo "Pulumi downloaded successfully" || echo "Failed to download Pulumi"
-  tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --strip-components 1 --file "${PULUMI_TARBALL_DEST}"
       [ $? -eq 0 ] && echo "Pulumi installed successfully" || echo "Failed to install Pulumi"
-  rm "${PULUMI_TARBALL_DESTTARBALL_DEST}"
+  rm "${PULUMI_TARBALL_DEST}"
 fi
