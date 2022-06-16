@@ -34,6 +34,13 @@ class EnvConfig(dict):
     def no_color(self) -> bool:
         return self.get('NO_COLOR') is not None
 
+    def pulumi_color_settings(self):
+        if self.no_color():
+            return 'never'
+        else:
+            return 'auto'
+
+
 def read(config_file_path: str = DEFAULT_PATH) -> EnvConfig:
     config_parser = ConfigParser()
     config_parser.optionxform = lambda option: option

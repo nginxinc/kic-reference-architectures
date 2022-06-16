@@ -284,7 +284,7 @@ def refresh(provider: Provider,
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack.refresh_config()
-        stack.refresh(color=pulumi_color_settings(env_config),
+        stack.refresh(color=env_config.pulumi_color_settings(),
                       on_output=print)
 
 
@@ -294,8 +294,8 @@ def up(provider: Provider,
         headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
-        stackUpResult = stack.up(color=pulumi_color_settings(env_config),
-                                 on_output=print)
+        stack_up_result = stack.up(color=env_config.pulumi_color_settings(),
+                                   on_output=print)
 
         if pulumi_project.on_success:
             params = PulumiProjectEventParams(stack_outputs=stack_up_result.outputs,
@@ -310,15 +310,8 @@ def down(provider: Provider,
         headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
-        stackDownResult = stack.destroy(color=pulumi_color_settings(env_config),
-                                        on_output=print)
-
-
-def pulumi_color_settings(env_config: env_config_parser.EnvConfig):
-    if env_config.no_color():
-        return 'never'
-    else:
-        return 'auto'
+        stack_down_result = stack.destroy(color=env_config.pulumi_color_settings(),
+                                          on_output=print)
 
 
 if __name__ == "__main__":
