@@ -19,13 +19,15 @@ class ElasticContainerRegistry(ContainerRegistry):
         # Async query for credentials from stack reference
         ecr_registry_id = stack_ref.require_output('registry_id')
         credentials_output = ecr_registry_id.apply(ElasticContainerRegistry.get_ecr_credentials)
-        # Async query for registry url from stack reference
-        registry_url_output = stack_ref.require_output('registry_url')
+        # Async query for repository url from stack reference
+        # Note that AWS ECR refers to itself as a repository and not a registry, we aim to keep
+        # that naming consistent when referring directly to ECR nouns
+        repository_url_output = stack_ref.require_output('repository_url')
 
         def _make_instance(params: List[Any]) -> ElasticContainerRegistry:
             return cls(stack_name=stack_name, pulumi_user=pulumi_user, registry_url=params[0], credentials=params[1])
 
-        return Output.all(registry_url_output, credentials_output).apply(_make_instance)
+        return Output.all(repository_url_output, credentials_output).apply(_make_instance)
 
     @staticmethod
     def aws_project_name_from_project_dir(dirname: str):

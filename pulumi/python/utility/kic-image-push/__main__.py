@@ -70,6 +70,10 @@ def push_to_container_registry(container_registry: ContainerRegistry) -> Reposit
         _repo_push = RepositoryPush(name='ingress-controller-registry-push',
                                     repository_args=repo_args,
                                     check_if_id_matches_tag_func=container_registry.check_if_id_matches_tag)
+
+        pulumi.info('Pushing NGINX Ingress Controller container image to '
+                    f'{container_registry.registry_implementation_name()}')
+
         return _repo_push
     else:
         raise 'Unable to log into container registry'
