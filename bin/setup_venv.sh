@@ -291,3 +291,15 @@ else
       [ $? -eq 0 ] && echo "Pulumi installed successfully" || echo "Failed to install Pulumi"
   rm "${PULUMI_TARBALL_DEST}"
 fi
+
+if [ ! -x "${VIRTUAL_ENV}/bin/doctl" ]; then
+  echo "Downloading Digital Ocean CLI"
+  DOCTL_VERSION="1.75.0"
+  DOCTL_TARBALL_URL="https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-${OS}-${ARCH}.tar.gz"
+  DOCTL_TARBALL_DEST=$(mktemp -t doctl.tar.gz.XXXXXXXXXX)
+  ${download_cmd} "${DOCTL_TARBALL_URL}" > "${DOCTL_TARBALL_DEST}"
+        [ $? -eq 0 ] && echo "Digital Ocean CLI downloaded successfully" || echo "Failed to download Digital Ocean CLI"
+  tar --extract --gunzip --directory "${VIRTUAL_ENV}/bin" --file "${DOCTL_TARBALL_DEST}"
+      [ $? -eq 0 ] && echo "Digital Ocean CLI installed successfully" || echo "Failed to install Digital Ocean CLI"
+  rm "${DOCTL_TARBALL_DEST}"
+fi
