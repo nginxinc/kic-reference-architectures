@@ -24,6 +24,9 @@ if not helm_repo_name:
 helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
+
+pulumi.log.info(f'NGINX Ingress Controller will be deployed with the Helm Chart [{chart_name}@{chart_version}]')
+
 #
 # Allow the user to set timeout per helm chart; otherwise
 # we default to 5 minutes.
@@ -33,15 +36,18 @@ if not helm_timeout:
     helm_timeout = 300
 
 
-def aws_project_name_from_project_dir(dirname: str):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def infrastructure_project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
-def project_name_from_project_dir(dirname: str):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def project_name_from_utility_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'utility', dirname)
+    return pulumi_config.get_pulumi_project_name(project_path)
+
+
+def project_name_from_same_parent(directory: str):
+    project_path = os.path.join(script_dir, '..', directory)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
@@ -128,7 +134,7 @@ def build_chart_values(repo_push: dict) -> helm.ChartOpts:
             values['controller']['image'] = {}
 
         if repository_url and image_tag:
-            pulumi.log.info(f"Using ingress controller image: {repository_url}:{image_tag}")
+            pulumi.log.info(f"Using Ingress Controller image: {repository_url}:{image_tag}")
             values['controller']['image'].update({
                 'repository': repository_url,
                 'tag': image_tag
@@ -147,26 +153,32 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-k8_project_name = aws_project_name_from_project_dir('kubeconfig')
+k8_project_name = infrastructure_project_name_from_project_dir('kubeconfig')
 k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
-k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
+k8_stack_ref = StackReference(k8_stack_ref_id)
 kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
 
-image_push_project_name = project_name_from_project_dir('kic-image-push')
+namespace_stack_ref_id = f"{pulumi_user}/{project_name_from_same_parent('ingress-controller-namespace')}/{stack_name}"
+ns_stack_ref = StackReference(namespace_stack_ref_id)
+ns_name_output = ns_stack_ref.require_output('ingress_namespace_name')
+
+image_push_project_name = project_name_from_utility_dir('kic-image-push')
 image_push_ref_id = f"{pulumi_user}/{image_push_project_name}/{stack_name}"
-image_push_ref = pulumi.StackReference(image_push_ref_id)
+image_push_ref = StackReference(image_push_ref_id)
 container_repo_push = image_push_ref.get_output('container_repo_push')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
 
-ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
-                           metadata={'name': 'nginx-ingress',
-                                     'labels': {
-                                         'prometheus': 'scrape'}
-                                     },
-                           opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+def namespace_by_name(name):
+    return k8s.core.v1.Namespace.get(resource_name=name,
+                                     id=name,
+                                     opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+
+ns = ns_name_output.apply(namespace_by_name)
 
 chart_values = container_repo_push.apply(build_chart_values)
 

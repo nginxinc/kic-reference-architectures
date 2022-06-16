@@ -62,6 +62,8 @@ class Provider:
             PulumiProject(path='kubernetes/secrets', description='Secrets'),
             PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
             PulumiProject(path='utility/kic-image-push', description='KIC Image Push'),
+            PulumiProject(path='kubernetes/nginx/ingress-controller-namespace',
+                          description='K8S Ingress NS'),
             PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
             PulumiProject(path='kubernetes/logstore', description='Logstore'),
             PulumiProject(path='kubernetes/logagent', description='Log Agent'),
