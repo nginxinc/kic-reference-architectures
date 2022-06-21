@@ -225,7 +225,23 @@ srv = Service.get("nginx-ingress",
 
 ingress_service = srv.status
 
-pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
+
+def ingress_hostname(_ingress_service):
+    # Attempt to get the hostname as returned from the helm chart
+    if 'load_balancer' in _ingress_service:
+        load_balancer = _ingress_service['load_balancer']
+        if 'ingress' in load_balancer and len(load_balancer['ingress']) > 0:
+            first_ingress = load_balancer['ingress'][0]
+            if 'hostname' in first_ingress:
+                return first_ingress['hostname']
+
+    # If we can't get the hostname, then use the FQDN coded in the config file
+    fqdn = config.require('fqdn')
+    return fqdn
+
+
+pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service).apply(ingress_hostname))
+pulumi.export('lb_ingress', pulumi.Output.unsecret(ingress_service))
 # Print out our status
 pulumi.export("kic_status", pstatus)
 pulumi.export('nginx_plus', pulumi.Output.unsecret(chart_values['controller']['nginxplus']))

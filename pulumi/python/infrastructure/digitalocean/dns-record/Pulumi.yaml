@@ -1,0 +1,7 @@
+name: dns-record
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Creates new DNS record for Ingress Controller
