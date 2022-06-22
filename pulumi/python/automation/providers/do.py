@@ -77,7 +77,7 @@ class DigitalOceanProvider(Provider):
             raise ValueError('Could not find project that creates the nginx-ingress namespace at '
                              f'path {namespace_project_path}')
 
-        add_credentials_project = PulumiProject(path='infrastructure/digitalocean/add-container-registry-credentials',
+        add_credentials_project = PulumiProject(path='infrastructure/digitalocean/container-registry-credentials',
                                                 description='Registry Credentials')
         new_order.insert(namespace_project_position + 1, add_credentials_project)
 

@@ -1,4 +1,4 @@
-name: add-container-registry-credentials
+name: container-registry-credentials
 runtime:
   name: python
   options:
