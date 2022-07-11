@@ -292,6 +292,7 @@ else
   rm "${PULUMI_TARBALL_DEST}"
 fi
 
+# Digital Ocean CLI
 if [ ! -x "${VIRTUAL_ENV}/bin/doctl" ]; then
   echo "Downloading Digital Ocean CLI"
   DOCTL_VERSION="1.75.0"
