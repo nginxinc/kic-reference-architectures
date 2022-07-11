@@ -80,7 +80,7 @@ if not helm_repo_url:
 #
 helm_timeout = config.get_int('helm_timeout')
 if not helm_timeout:
-    helm_timeout = 300
+    helm_timeout = 600
 
 # Use Prometheus administrator password stored in Kubernetes secrets
 prometheus_secrets = Secret.get(resource_name='pulumi-secret-prometheus',
