@@ -1,44 +1,42 @@
+import os
 import pulumi
 import pulumi_linode as linode
-from kic_util import pulumi_config
 
 # Configuration details for the K8 cluster
-config = pulumi.Config('lke')
-instance_size = config.get('instance_size')
-if not instance_size:
-    instance_size = 'g6-standard-4'
-region = config.get('region')
-if not region:
-    region = 'us-west'
-node_count = config.get('node_count')
-if not node_count:
-    node_count = 3
-k8s_version = config.get('k8s_version')
-if not k8s_version:
-    k8s_version = '1.22'
-k8s_ha = config.get('k8s_ha')
-if not k8s_ha:
-    k8s_ha = True
+config = pulumi.Config('linode')
 
-stack_name = pulumi.get_stack()
-project_name = pulumi.get_project()
-pulumi_user = pulumi_config.get_pulumi_user()
+api_token = config.get('token') or \
+            config.get_secret('token') or \
+            os.getenv('LINODE_TOKEN') or \
+            os.getenv('LINODE_CLI_TOKEN')
 
-# Derive our names for the cluster and the pool
-resource_name = "lke-" + stack_name + "-cluster"
+# For whatever reason, the Linode provider does not pickup the token from the
+# stack configuration nor from the environment variables, so we do that work
+# here.
+provider = linode.Provider(resource_name='linode_provider', token=api_token)
+
+instance_type = config.require('instance_type')
+region = config.require('region')
+node_count = config.require_int('node_count')
+k8s_version = config.require('k8s_version')
+k8s_ha = config.require_bool('k8s_ha')
+
+stack = pulumi.get_stack()
+resource_name = f'lke-{stack}-cluster'
 
 # Create a linode cluster
-cluster = linode.LkeCluster(resource_name,
+cluster = linode.LkeCluster(resource_name=resource_name,
                             k8s_version=k8s_version,
                             control_plane=linode.LkeClusterControlPlaneArgs(
                                 high_availability=k8s_ha),
-                            label=resource_name,
+                            label=f'MARA [{stack}]',
                             pools=[linode.LkeClusterPoolArgs(
                                 count=node_count,
-                                type=instance_size,
+                                type=instance_type,
                             )],
                             region=region,
-                            tags=["mara"])
+                            tags=["mara"],
+                            opts=pulumi.ResourceOptions(provider=provider))
 
 # Export the clusters' kubeconfig
 pulumi.export("cluster_name", resource_name)

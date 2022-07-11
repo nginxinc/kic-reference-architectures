@@ -1,0 +1,7 @@
+name: harbor
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Creates new Harbor Container Registry

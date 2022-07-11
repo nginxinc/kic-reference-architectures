@@ -1,12 +1,10 @@
 import os
-import typing
-from typing import Dict
+from typing import Dict, Mapping, Any, Optional
 
 import pulumi
 from pulumi import Output, StackReference
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.core.v1 import Service
-import pulumi_kubernetes.helm.v3 as helm
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
@@ -53,7 +51,7 @@ def project_name_from_same_parent(directory: str):
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
-def find_image_tag(repository: dict) -> typing.Optional[str]:
+def find_image_tag(repository: dict) -> Optional[str]:
     """
     Inspect the repository dictionary as returned from a stack reference for a valid image_tag_alias or image_tag.
     If found, return the image_tag_alias or image_tag if found, otherwise return None
@@ -70,8 +68,8 @@ def find_image_tag(repository: dict) -> typing.Optional[str]:
     return None
 
 
-def build_chart_values(repo_push: dict) -> helm.ChartOpts:
-    values: Dict[str, Dict[str, typing.Any]] = {
+def build_chart_values(repo_push: dict) -> Mapping[str, Any]:
+    values: Dict[str, Dict[str, Any]] = {
         'controller': {
             'healthStatus': True,
             'appprotect': {
@@ -216,12 +214,14 @@ kic_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(depends_on=[ns]))
+kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(depends_on=[ns],
+                                                                              provider=k8s_provider))
 
 pstatus = kic_chart.status
 
-srv = Service.get("nginx-ingress",
-                  Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress"))
+srv = Service.get(resource_name="nginx-ingress",
+                  id=Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress"),
+                  opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 ingress_service = srv.status
 

@@ -338,11 +338,12 @@ config:
   # Linode Kubernetes Engine
   ############################################################################
   # This is the Kubernetes version to install using Linode K8s.
-  lke:k8s_version: 1.22
-  # Version of Kubernetes to use
-  lke:instance_type: g6-standard-8
-  # This is the default instance type used Linode K8s.
-  lke:node_count: 3
+  linode:k8s_version: 1.22
+  # This is the default instance type used Linode Kubernetes
+  linode:instance_type: g6-standard-8
   # The desired node count of the Linode K8s cluster.
-  lke:region: us-central
+  linode:node_count: 3
   # The region to deploy the cluster
+  linode:region: us-central
+  # Flag to enable or disable HA mode for the Kubernetes cluster
+  linode:k8s_ha: true
