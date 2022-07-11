@@ -10,6 +10,14 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_DIR_PATH = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..', '..', '..', 'config', 'pulumi']))
 
 
+class EmptyConfigurationException(RuntimeError):
+    filename: str
+
+    def __init__(self, filename: str, *args: object) -> None:
+        super().__init__(*args)
+        self.filename = filename
+
+
 class PulumiStackConfig(dict):
     config_path: Optional[str] = None
 
@@ -37,6 +45,10 @@ def _stack_config_path(stack_name: str) -> str:
 
 
 def _read(config_file_path: str) -> PulumiStackConfig:
+    # Return empty config for empty config files
+    if os.path.getsize(config_file_path) == 0:
+        raise EmptyConfigurationException(filename=config_file_path)
+
     with open(config_file_path, 'r') as f:
         stack_config = PulumiStackConfig()
         stack_config.config_path = config_file_path
