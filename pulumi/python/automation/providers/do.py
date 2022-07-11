@@ -63,34 +63,18 @@ class DigitalOceanProvider(Provider):
         original_order = super().k8s_execution_order()
         new_order = original_order.copy()
 
-        def find_position_of_project_by_path(path: str) -> int:
-            for index, project in enumerate(new_order):
-                if project.path == path:
-                    return index
-            return -1
-
         # Add container registry credentials project after ingress controller namespace project
-        namespace_project_path = 'kubernetes/nginx/ingress-controller-namespace'
-        namespace_project_position = find_position_of_project_by_path(namespace_project_path)
-
-        if namespace_project_position < 0:
-            raise ValueError('Could not find project that creates the nginx-ingress namespace at '
-                             f'path {namespace_project_path}')
-
         add_credentials_project = PulumiProject(path='infrastructure/digitalocean/container-registry-credentials',
                                                 description='Registry Credentials')
-        new_order.insert(namespace_project_position + 1, add_credentials_project)
+        Provider._insert_project(project_path_to_insert_after='kubernetes/nginx/ingress-controller-namespace',
+                                 project=add_credentials_project,
+                                 k8s_execution_order=new_order)
 
         # Add DNS record project after ingress controller project
-        ingress_controller_project_path = 'kubernetes/nginx/ingress-controller'
-        ingress_controller_project_position = find_position_of_project_by_path(ingress_controller_project_path)
-
-        if namespace_project_position < 0:
-            raise ValueError('Could not find project that creates the nginx ingress controller at '
-                             f'path {ingress_controller_project_path}')
-
         dns_record_project = PulumiProject(path='infrastructure/digitalocean/dns-record', description='DNS Record')
-        new_order.insert(ingress_controller_project_position + 1, dns_record_project)
+        Provider._insert_project(project_path_to_insert_after='kubernetes/nginx/ingress-controller',
+                                 project=dns_record_project,
+                                 k8s_execution_order=new_order)
 
         return new_order
 
@@ -103,10 +87,11 @@ class DigitalOceanProvider(Provider):
                                                  "alternatively this can be specified as the environment variable "
                                                  "DIGITALOCEAN_TOKEN): ")
 
-        config['kic-helm:fqdn'] = input(f'Fully qualified domain name (FQDN) for application: ')
-
-        token = DigitalOceanProvider.token(stack_config={ 'config': config }, env_config=env_config)
+        token = DigitalOceanProvider.token(stack_config={'config': config}, env_config=env_config)
         do_cli = DoctlCli(access_token=token)
+
+        # FQDN
+        config['kic-helm:fqdn'] = input(f'Fully qualified domain name (FQDN) for application: ')
 
         # Kubernetes versions
         k8s_versions_json_str, _ = external_process.run(do_cli.get_kubernetes_versions_json())

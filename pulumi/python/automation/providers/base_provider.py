@@ -125,3 +125,22 @@ class Provider:
 
             if last_prefix != prefix:
                 last_prefix = prefix
+
+    @staticmethod
+    def _find_position_of_project_by_path(path: str, k8s_execution_order: List[PulumiProject]) -> int:
+        for index, project in enumerate(k8s_execution_order):
+            if project.path == path:
+                return index
+        return -1
+
+    @staticmethod
+    def _insert_project(project_path_to_insert_after: str,
+                        project: PulumiProject,
+                        k8s_execution_order: List[PulumiProject]):
+        project_position = Provider._find_position_of_project_by_path(project_path_to_insert_after,
+                                                                      k8s_execution_order)
+
+        if project_position < 0:
+            raise ValueError(f'Could not find project at path {project_path_to_insert_after}')
+
+        k8s_execution_order.insert(project_position + 1, project)
