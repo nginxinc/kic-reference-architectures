@@ -123,7 +123,7 @@ def main():
         sys.exit(0)
 
     env_config = env_config_parser.read()
-    stack_config = read_or_prompt_for_stack_config(provider=provider, env_config=env_config)
+    stack_config = read_stack_config(provider=provider, env_config=env_config)
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
         validate(provider=provider, env_config=env_config, stack_config=stack_config,
@@ -156,28 +156,38 @@ def main():
             raise e
 
 
-def read_or_prompt_for_stack_config(provider: Provider,
-                                    env_config: env_config_parser.EnvConfig) -> stack_config_parser.PulumiStackConfig:
+def read_stack_config(provider: Provider,
+                      env_config: env_config_parser.EnvConfig) -> stack_config_parser.PulumiStackConfig:
     try:
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
     except FileNotFoundError as e:
-        print(f' > stack configuration file at path does not exist: {e.filename}')
-        print(f'   creating new configuration based on user input')
+        print(f' > stack configuration file does not exist: {e.filename}')
+        stack_config = prompt_for_stack_config(provider, env_config, e.filename)
+    except stack_config_parser.EmptyConfigurationException as e:
+        print(f' > stack configuration file is empty: {e.filename}')
+        stack_config = prompt_for_stack_config(provider, env_config, e.filename)
 
-        stack_defaults_path = os.path.sep.join([os.path.dirname(e.filename),
-                                                'Pulumi.stackname.yaml.example'])
+    return stack_config
 
-        stack_defaults: Union[Dict[Hashable, Any], list, None]
-        with open(stack_defaults_path, 'r') as f:
-            stack_defaults = yaml.safe_load(stream=f)
 
-        stack_config_values = {
-            'config': provider.new_stack_config(env_config=env_config, defaults=stack_defaults['config'])
-        }
-        with open(e.filename, 'w') as f:
-            yaml.safe_dump(data=stack_config_values, stream=f)
-        stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
+def prompt_for_stack_config(provider: Provider,
+                            env_config: env_config_parser.EnvConfig,
+                            filename: str) -> stack_config_parser.PulumiStackConfig:
+    print(f'   creating new configuration based on user input')
 
+    stack_defaults_path = os.path.sep.join([os.path.dirname(filename),
+                                            'Pulumi.stackname.yaml.example'])
+
+    stack_defaults: Union[Dict[Hashable, Any], list, None]
+    with open(stack_defaults_path, 'r') as f:
+        stack_defaults = yaml.safe_load(stream=f)
+
+    stack_config_values = {
+        'config': provider.new_stack_config(env_config=env_config, defaults=stack_defaults['config'])
+    }
+    with open(filename, 'w') as f:
+        yaml.safe_dump(data=stack_config_values, stream=f)
+    stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
     return stack_config
 
 
