@@ -1,8 +1,8 @@
 import json
 import os
 from typing import List, Any
-from pulumi import Output, StackReference, ResourceOptions, log
-from pulumi_digitalocean import ContainerRegistry as DoContainerRegistry, ContainerRegistryDockerCredentials
+from pulumi import Output, StackReference, ResourceOptions
+from pulumi_digitalocean import ContainerRegistryDockerCredentials
 
 from kic_util import pulumi_config
 from registries.base_registry import ContainerRegistry, RegistryCredentials
@@ -13,7 +13,7 @@ class DigitalOceanContainerRegistry(ContainerRegistry):
     def instance(cls, stack_name: str, pulumi_user: str) -> Output[ContainerRegistry]:
         super().instance(stack_name, pulumi_user)
         # Pull properties from the Pulumi project that defines the Digital Ocean repository
-        container_registry_project_name = DigitalOceanContainerRegistry.do_project_name_from_project_dir(
+        container_registry_project_name = DigitalOceanContainerRegistry.project_name_from_do_dir(
             'container-registry')
         container_registry_stack_ref_id = f"{pulumi_user}/{container_registry_project_name}/{stack_name}"
         stack_ref = StackReference(container_registry_stack_ref_id)
@@ -46,7 +46,7 @@ class DigitalOceanContainerRegistry(ContainerRegistry):
         return 'Digital Ocean Container Registry'
 
     @staticmethod
-    def do_project_name_from_project_dir(dirname: str):
+    def project_name_from_do_dir(dirname: str):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'digitalocean', dirname)
         return pulumi_config.get_pulumi_project_name(project_path)
