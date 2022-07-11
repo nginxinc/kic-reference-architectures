@@ -1,10 +1,10 @@
 import base64
 import urllib
 from urllib import parse
-from typing import Optional, List
+from typing import Optional
 
 import pulumi.log
-from pulumi import Input, Output
+from pulumi import Input
 import pulumi_docker as docker
 
 from kic_util import external_process
@@ -74,7 +74,7 @@ class ContainerRegistry:
 
     @staticmethod
     def decode_credentials(encoded_token: str) -> RegistryCredentials:
-        decoded = str(base64.b64decode(encoded_token), 'utf-8')
+        decoded = str(base64.b64decode(encoded_token), 'ascii')
         parts = decoded.split(':', 2)
         if len(parts) != 2:
             raise ValueError("Unexpected format for decoded ECR authorization token")
