@@ -19,7 +19,8 @@ class Provider:
         def is_provider(file: pathlib.Path) -> bool:
             return file.is_file() and \
                    not file.stem.endswith('base_provider') and \
-                   not file.stem.endswith('pulumi_project')
+                   not file.stem.endswith('pulumi_project') and \
+                   not file.stem.endswith('update_kubeconfig')
 
         path = pathlib.Path(SCRIPT_DIR)
         return [os.path.splitext(file.stem)[0] for file in path.iterdir() if is_provider(file)]
