@@ -24,14 +24,14 @@ DEFAULT_PATH = os.path.expanduser("~/.kube/config")
 LOG = logging.getLogger(__name__)
 
 
-def update_kubeconfig(cluser_name: str, env: Mapping[str, str], kubeconfig: Mapping[str, Any]):
+def update_kubeconfig(cluster_name: str, env: Mapping[str, str], kubeconfig: Mapping[str, Any]):
     cluster = kubeconfig['clusters'][0]
     user = kubeconfig['users'][0]
     alias = kubeconfig['contexts'][0]['name']
 
     config_selector = KubeconfigSelector(env_variable=env.get('KUBECONFIG', ''),
                                          path_in=None)
-    config = config_selector.choose_kubeconfig(cluser_name)
+    config = config_selector.choose_kubeconfig(cluster_name)
 
     appender = KubeconfigAppender()
     new_context_dict = appender.insert_cluster_user_pair(config=config,
@@ -42,7 +42,7 @@ def update_kubeconfig(cluser_name: str, env: Mapping[str, str], kubeconfig: Mapp
     writer = KubeconfigWriter()
     writer.write_kubeconfig(config)
 
-    if config.has_cluster(cluser_name):
+    if config.has_cluster(cluster_name):
         uni_print("Updated context {0} in {1}\n".format(
             new_context_dict["name"], config.path
         ))

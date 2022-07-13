@@ -172,7 +172,7 @@ class LinodeProvider(Provider):
         kubeconfig_bytes = base64.b64decode(kubeconfig_encoded)
         kubeconfig = yaml.safe_load(kubeconfig_bytes)
 
-        update_kubeconfig(env=params.env_config, cluser_name=cluster_name, kubeconfig=kubeconfig)
+        update_kubeconfig(env=params.env_config, cluster_name=cluster_name, kubeconfig=kubeconfig)
 
 
 INSTANCE = LinodeProvider()
