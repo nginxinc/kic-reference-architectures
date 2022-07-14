@@ -1,3 +1,7 @@
+"""
+File containing the Linode infrastructure provider for the MARA runner.
+"""
+
 import base64
 from typing import List, Union, Dict, Hashable, Any, Mapping, MutableMapping
 
@@ -17,6 +21,8 @@ class LinodeProviderException(Exception):
 
 
 class LinodeCli:
+    """Linode CLI execution helper class"""
+
     def base_cmd(self) -> str:
         return 'linode-cli'
 
@@ -144,6 +150,12 @@ class LinodeProvider(Provider):
     @staticmethod
     def token(stack_config: Union[Mapping[str, Any], MutableMapping[str, auto._config.ConfigValue]],
               env_config: Mapping[str, str]) -> str:
+        """Looks into multiple configuration sources for a valid Linode authentication token.
+        :param stack_config: reference to stack configuration
+        :param env_config: reference to environment configuration
+        :return: authentication token
+        """
+
         # Token is in an environment variable or the environment variable file
         if 'LINODE_TOKEN' in env_config:
             return env_config['LINODE_TOKEN']

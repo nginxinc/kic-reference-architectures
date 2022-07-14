@@ -1,3 +1,7 @@
+"""
+File containing the AWS infrastructure provider for the MARA runner.
+"""
+
 import json
 import os
 import sys
@@ -16,6 +20,7 @@ class AwsProviderException(Exception):
 
 
 class AwsCli:
+    """AWS CLI execution helper class"""
     region: str
     profile: str
 
@@ -25,6 +30,9 @@ class AwsCli:
         self.profile = profile
 
     def base_cmd(self) -> str:
+        """
+        :return: returns the base command and any required flags
+        """
         cmd = 'aws '
         if self.region and self.region != '':
             cmd += f'--region {self.region} '
@@ -34,7 +42,7 @@ class AwsCli:
 
     def update_kubeconfig_cmd(self, cluster_name: str) -> str:
         """
-        Returns the command used to update the kubeconfig with the passed cluster
+        Returns the command used to update the kubeconfig with the passed cluster name
         :param cluster_name: name of the cluster to add to the kubeconfig
         :return: command to be executed
         """
@@ -48,11 +56,17 @@ class AwsCli:
         return f'{self.base_cmd()} sts get-caller-identity'
 
     def list_azs_cmd(self) -> str:
+        """
+        Returns the command that provides a list of the AWS availability zones that can be provisioned to by the
+        current user.
+        :return: command to be executed
+        """
         return f"{self.base_cmd()} ec2 describe-availability-zones --filter " \
                f"'Name=state,Values=available' --zone-ids"
 
 
 class AwsProvider(Provider):
+    """AWS infrastructure provider"""
     def infra_type(self) -> str:
         return 'AWS'
 

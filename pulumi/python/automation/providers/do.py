@@ -1,3 +1,7 @@
+"""
+File containing the Digital Ocean infrastructure provider for the MARA runner.
+"""
+
 import json
 import sys
 from typing import List, Dict, Hashable, Any, Union, MutableMapping, Optional, Mapping
@@ -15,6 +19,7 @@ class DigitalOceanProviderException(Exception):
 
 
 class DoctlCli:
+    """Digital Ocean CLI execution helper class"""
     access_token: str
     region: Optional[str]
 
@@ -23,27 +28,52 @@ class DoctlCli:
         self.region = region
 
     def base_cmd(self) -> str:
+        """
+        :return: returns the base command and any required flags
+        """
         cmd = 'doctl'
         cmd += f' --access-token "{self.access_token}" '
         return cmd.strip()
 
     def validate_credentials_cmd(self) -> str:
+        """
+        Returns the command that validates if the doctl command can authenticate correctly.
+        :return: command to be executed
+        """
         return f'{self.base_cmd()} account get'
 
     def save_kubernetes_cluster_cmd(self, cluster_name: str) -> str:
+        """
+        Returns the command used to update the kubeconfig with the passed cluster name
+        :param cluster_name: name of the cluster to add to the kubeconfig
+        :return: command to be executed
+        """
         return f'{self.base_cmd()} kubernetes cluster config save {cluster_name}'
 
     def get_kubernetes_versions_json(self) -> str:
+        """
+        Returns the command that lists the Kubernetes versions available.
+        :return: command to be executed
+        """
         return f'{self.base_cmd()} kubernetes options versions --output json'
 
     def get_kubernetes_regions_json(self) -> str:
+        """
+        Returns the command that lists the regions available to run Kubernetes.
+        :return: command to be executed
+        """
         return f'{self.base_cmd()} kubernetes options regions --output json'
 
     def get_kubernetes_instance_sizes_json(self) -> str:
+        """
+        Returns the command that lists the instance sizes available for Kubernetes nodes.
+        :return: command to be executed
+        """
         return f'{self.base_cmd()} kubernetes options sizes --output json'
 
 
 class DigitalOceanProvider(Provider):
+    """Digital Ocean infrastructure provider"""
     def infra_type(self) -> str:
         return 'DO'
 
@@ -177,6 +207,11 @@ class DigitalOceanProvider(Provider):
     @staticmethod
     def token(stack_config: Union[Mapping[str, Any], MutableMapping[str, auto._config.ConfigValue]],
               env_config: Mapping[str, str]) -> str:
+        """Looks into multiple configuration sources for a valid Digital Ocean authentication token.
+        :param stack_config: reference to stack configuration
+        :param env_config: reference to environment configuration
+        :return: authentication token
+        """
         # Token is in an environment variable or the environment variable file
         if 'DIGITALOCEAN_TOKEN' in env_config:
             return env_config['DIGITALOCEAN_TOKEN']

@@ -1,3 +1,7 @@
+"""
+This file is provides the super class for all infrastructure providers.
+"""
+
 import abc
 import os
 import pathlib
@@ -6,6 +10,7 @@ from typing import List, Mapping, Iterable, TextIO, Union, Dict, Any, Hashable
 
 from .pulumi_project import PulumiProject, SecretConfigKey
 
+# Directory in which script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -14,9 +19,13 @@ class InvalidConfigurationException(Exception):
 
 
 class Provider:
+    """Super class for all infrastructure providers"""
     @staticmethod
     def list_providers() -> Iterable[str]:
+        """returns an iterable of the providers available derived from the files in the providers directory
+        :return all the usable providers"""
         def is_provider(file: pathlib.Path) -> bool:
+            # Filter out the non-provider files
             return file.is_file() and \
                    not file.stem.endswith('base_provider') and \
                    not file.stem.endswith('pulumi_project') and \
@@ -27,6 +36,8 @@ class Provider:
 
     @staticmethod
     def validate_env_config_required_keys(required_keys: List[str], config: Mapping[str, str]):
+        """Validates that the required environment variables as defined by file or runtime environment are present"""
+
         for key in required_keys:
             if key not in config.keys():
                 raise InvalidConfigurationException(f'Required configuration key [{key}] not found')
@@ -40,24 +51,29 @@ class Provider:
 
     @abc.abstractmethod
     def infra_execution_order(self) -> List[PulumiProject]:
+        """Pulumi infrastructure (not Kubernetes) projects to be executed in sequential order"""
         pass
 
     def new_stack_config(self, env_config: Mapping[str, str],
                          defaults: Union[Dict[Hashable, Any], list, None]) -> Union[Dict[Hashable, Any], list, None]:
+        """Creates a new Pulumi stack configuration"""
         config = {
             'kubernetes:infra_type': self.infra_type()
         }
         return config
 
     def validate_env_config(self, env_config: Mapping[str, str]):
+        """Validates that the passed environment variables are correct"""
         Provider.validate_env_config_required_keys(['PULUMI_STACK'], env_config)
 
     def validate_stack_config(self,
                               stack_config: Union[Dict[Hashable, Any], list, None],
                               env_config: Mapping[str, str]):
+        """Validates that the passed stack configuration is correct"""
         pass
 
     def k8s_execution_order(self) -> List[PulumiProject]:
+        """Pulumi Kubernetes projects to be executed in sequential order"""
         return [
             PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
             PulumiProject(path='kubernetes/secrets', description='Secrets'),
@@ -87,9 +103,12 @@ class Provider:
         ]
 
     def execution_order(self) -> List[PulumiProject]:
+        """Full list of Pulumi projects to be executed in sequential order (including both infrastructure and
+        Kubernetes"""
         return self.infra_execution_order() + self.k8s_execution_order()
 
     def display_execution_order(self, output: TextIO = sys.stdout):
+        """Writes the execution order of Pulumi projects in a visual tree to an output stream"""
         execution_order = self.execution_order()
         last_prefix = ''
 

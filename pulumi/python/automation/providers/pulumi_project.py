@@ -1,9 +1,14 @@
+"""
+This file contains classes related to modeling Pulumi projects as discrete directories that
+are invoked individually in sequence by the Pulumi Automation API.
+"""
+
 import os.path
 from typing import Optional, Callable, Mapping, List, MutableMapping
 import yaml
 from pulumi import automation as auto
 
-
+# Directory in which script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -72,6 +77,7 @@ class PulumiProject:
 
 
 class PulumiProjectEventParams:
+    """Object containing the state passed to an on_success event after the successful stand up of a Pulumi project."""
     stack_outputs: MutableMapping[str, auto._output.OutputValue]
     config: MutableMapping[str, auto._config.ConfigValue]
     env_config: Mapping[str, str]

@@ -12,6 +12,11 @@
 # the specific language governing permissions and limitations under
 # the License.
 
+"""
+This file contains functions that allow for merging in a new kubeconfig into the existing
+kubectl config files contained in a user's home directory or path specified by KUBECONFIG.
+"""
+
 import os
 import logging
 import errno
@@ -20,11 +25,18 @@ from collections import OrderedDict
 from typing import Mapping, Any
 import yaml
 
+# Default path to user's kubectl config files
 DEFAULT_PATH = os.path.expanduser("~/.kube/config")
 LOG = logging.getLogger(__name__)
 
 
 def update_kubeconfig(cluster_name: str, env: Mapping[str, str], kubeconfig: Mapping[str, Any]):
+    """Merge the passed kubeconfig for the given cluster into the existing kubectl config files.
+    :param cluster_name: name of cluster associated with kubeconfig
+    :param env: map environment variables to get KUBECONFIG from
+    :param kubeconfig: contents of kubeconfig
+    """
+
     cluster = kubeconfig['clusters'][0]
     user = kubeconfig['users'][0]
     alias = kubeconfig['contexts'][0]['name']
@@ -50,6 +62,9 @@ def update_kubeconfig(cluster_name: str, env: Mapping[str, str], kubeconfig: Map
         uni_print("Added new context {0} to {1}\n".format(
             new_context_dict["name"], config.path
         ))
+
+
+# Everything after this line is sourced from the AWS SDK
 
 
 class KubeconfigError(RuntimeError):

@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+
+"""
+This file is the entrypoint for the Modern Application Reference Architecture (MARA) Runner.
+
+This Python script ties together all of the different Pulumi projects needed to setup a
+Kubernetes environment on a given infrastructure provider (like AWS), configures it,
+installed required services on the Kubernetes environment, and deploys an application to
+Kubernetes.
+
+The runner functions as a simple CLI application that can be run just like any other program
+as long as the virtual environment for it (python-venv) is set up. This environment can be
+set up using the bin/setup_venv.sh script.
+"""
+
 import getopt
 import getpass
 import importlib
@@ -23,13 +37,22 @@ from typing import Any, Hashable, Dict, Union
 
 import stack_config_parser
 
+# Directory in which script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Root directory of the MARA project
 PROJECT_ROOT = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..']))
+# Allowed operations - if operation is not in this list, the runner will reject it
 OPERATIONS: List[str] = ['down', 'destroy', 'refresh', 'show-execution', 'up', 'validate', 'list-providers']
+# List of available infrastructure providers - if provider is not in this list, the runner will reject it
 PROVIDERS: typing.Iterable[str] = Provider.list_providers()
+# Types of headings available to show the difference between Pulumi projects
+# fabulous: a large rainbow covered banner
+# boring:   a single line of text uncolored
 BANNER_TYPES: List[str] = ['fabulous', 'boring']
 
+# We default to a fabulous banner of course
 banner_type = BANNER_TYPES[0]
+# Debug flag that will trigger additional output
 debug_on = False
 
 
@@ -57,14 +80,20 @@ OPERATIONS:
 
 
 def provider_instance(provider_name: str) -> Provider:
+    """Dynamically instantiates an infrastructure provider
+    :param provider_name: name of infrastructure provider
+    :return: instance of infrastructure provider
+    """
     module = importlib.import_module(name=f'providers.{provider_name}')
     return module.INSTANCE
 
 
 def main():
+    """Entrypoint to application"""
+
     try:
-        shortopts = 'hdp:b:'
-        longopts = ["help", 'debug', 'banner-type', 'provider=']
+        shortopts = 'hdp:b:' # single character options available
+        longopts = ["help", 'debug', 'banner-type', 'provider='] # long form options
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
         print(err)  # will print something like "option -a not recognized"
@@ -75,7 +104,7 @@ def main():
 
     global debug_on
 
-    # Parse flags
+    # First, we parse the flags given to the CLI runner
     for opt, value in opts:
         if opt in ('-h', '--help'):
             usage()
@@ -88,6 +117,8 @@ def main():
         elif opt in ('-b', '--banner-type'):
             if value in BANNER_TYPES:
                 headers.banner_type = value
+
+    # Next, we validate to make sure the input to the runner was correct
 
     # Make sure we got an operation - it is the last string passed as an argument
     if len(sys.argv) > 1:
@@ -118,9 +149,15 @@ def main():
 
     provider = provider_instance(provider_name.lower())
 
+    # We execute the operation requested - different operations have different pre-requirements, so they are matched
+    # differently. Like show-execution does not require reading the configuration files, so we just look for a match
+    # for it right away, and if matched, we run and exit.
+
     if operation == 'show-execution':
         provider.display_execution_order(output=sys.stdout)
         sys.exit(0)
+
+    # For the other operations, we need the configuration files parsed, so we do the parsing upfront.
 
     env_config = env_config_parser.read()
     stack_config = read_stack_config(provider=provider, env_config=env_config)
@@ -146,6 +183,9 @@ def main():
         print(f'Unknown operation: {operation}')
         sys.exit(2)
 
+    # Lastly, if the operation involves the execution of a Pulumi command, we make sure that secrets have been
+    # instantiated, before invoking Pulumi via the Automation API. This is required because certain Pulumi
+    # projects need to pull secrets in order to be stood up.
     if pulumi_cmd:
         init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
         try:
@@ -158,6 +198,11 @@ def main():
 
 def read_stack_config(provider: Provider,
                       env_config: env_config_parser.EnvConfig) -> stack_config_parser.PulumiStackConfig:
+    """Load and parse the Pulumi stack configuration file. In MARA, this is a globally shared file.
+    :param provider: reference to infrastructure provider
+    :param env_config: reference to environment configuration
+    :return: data structure containing stack configuration
+    """
     try:
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
     except FileNotFoundError as e:
@@ -173,6 +218,12 @@ def read_stack_config(provider: Provider,
 def prompt_for_stack_config(provider: Provider,
                             env_config: env_config_parser.EnvConfig,
                             filename: str) -> stack_config_parser.PulumiStackConfig:
+    """Prompts user via tty for required configuration values when the stack config is empty or missing.
+    :param provider: reference to infrastructure provider
+    :param env_config:  reference to environment configuration
+    :param filename: location to write stack config file to
+    :return: data structure containing stack configuration
+    """
     print(f'   creating new configuration based on user input')
 
     stack_defaults_path = os.path.sep.join([os.path.dirname(filename),
@@ -195,6 +246,13 @@ def validate(provider: Provider,
              env_config: env_config_parser.EnvConfig,
              stack_config: stack_config_parser.PulumiStackConfig,
              verbose: Optional[bool] = False):
+    """Validates that the runtime environment for MARA is correct. Will validate that external tools are present and
+    configurations are correct. If validation fails, an exception will be raised.
+    :param provider: reference to infrastructure provider
+    :param env_config: reference to environment configuration
+    :param stack_config: reference to stack configuration
+    :param verbose: flag to enable verbose output mode
+    """
     # First, we validate that we have the right tools installed
     def check_path(cmd: str, fail_message: str) -> bool:
         cmd_path = shutil.which(cmd)
@@ -249,6 +307,15 @@ def validate(provider: Provider,
 
 def init_secrets(env_config: env_config_parser.EnvConfig,
                  pulumi_projects: List[PulumiProject]):
+    """Goes through a list of Pulumi projects and prompts the user for secrets required by each project that have not
+    already been stored. Each secret is encrypted using Pulumi's secret management and stored in the stack configuration
+    for the Pulumi project kubernetes/secrets and *not* in the global stack configuration. When the secrets Pulumi
+    project is stood up, it adds the secrets that were encrypted in its stack configuration to the running Kubernetes
+    cluster as a Kubernetes Secret. This approach is taken because Pulumi does not support sharing secrets across
+    projects.
+    :param env_config: reference to environment configuration
+    :param pulumi_projects: list of pulumi project to instantiate secrets for
+    """
     secrets_work_dir = os.path.sep.join([SCRIPT_DIR, '..', 'kubernetes', 'secrets'])
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
@@ -277,6 +344,12 @@ def init_secrets(env_config: env_config_parser.EnvConfig,
 
 def build_pulumi_stack(pulumi_project: PulumiProject,
                        env_config: env_config_parser.EnvConfig) -> auto.Stack:
+    """Uses the Pulumi Automation API to do a `pulumi stack init` for the given project. If the stack already exists, it
+    will select it as the stack to use.
+    :param pulumi_project: reference to Pulumi project
+    :param env_config: reference to environment configuration
+    :return: reference to a new or existing stack
+    """
     print(f'project: {pulumi_project.name()} path: {pulumi_project.abspath()}')
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
@@ -289,6 +362,10 @@ def build_pulumi_stack(pulumi_project: PulumiProject,
 
 def refresh(provider: Provider,
             env_config: env_config_parser.EnvConfig):
+    """Execute `pulumi refresh` for the given project using the Pulumi Automation API.
+    :param provider: reference to infrastructure provider
+    :param env_config: reference to environment configuration
+    """
     for pulumi_project in provider.execution_order():
         headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
@@ -300,6 +377,10 @@ def refresh(provider: Provider,
 
 def up(provider: Provider,
        env_config: env_config_parser.EnvConfig):
+    """Execute `pulumi up` for the given project using the Pulumi Automation API.
+    :param provider: reference to infrastructure provider
+    :param env_config: reference to environment configuration
+    """
     for pulumi_project in provider.execution_order():
         headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
@@ -307,6 +388,9 @@ def up(provider: Provider,
         stack_up_result = stack.up(color=env_config.pulumi_color_settings(),
                                    on_output=print)
 
+        # If the project is instantiated without problems, then the on_success event
+        # as specified in the provider is run. This event is often used to do additional
+        # configuration, clean up, or to run external tools after a project is stood up.
         if pulumi_project.on_success:
             params = PulumiProjectEventParams(stack_outputs=stack_up_result.outputs,
                                               config=stack.get_all_config(),
@@ -316,6 +400,10 @@ def up(provider: Provider,
 
 def down(provider: Provider,
          env_config: env_config_parser.EnvConfig):
+    """Execute `pulumi down` for the given project using the Pulumi Automation API.
+    :param provider: reference to infrastructure provider
+    :param env_config: reference to environment configuration
+    """
     for pulumi_project in reversed(provider.execution_order()):
         headers.render_header(text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
