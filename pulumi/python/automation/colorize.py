@@ -45,7 +45,6 @@ else:
                                 speed=-1.0,
                                 spread=0.5,
                                 force=False)
-        colorizer = lolcat.LolCat(mode=options.mode, output=sys.stdout)
 
         def println_color(text: str, output: typing.TextIO = sys.stdout):
             """Prints a new line to the console using rainbow colors

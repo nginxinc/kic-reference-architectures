@@ -48,7 +48,11 @@ PROVIDERS: typing.Iterable[str] = Provider.list_providers()
 # Types of headings available to show the difference between Pulumi projects
 # fabulous: a large rainbow covered banner
 # boring:   a single line of text uncolored
-BANNER_TYPES: List[str] = ['fabulous', 'boring']
+# log:      writes the header to the same logger as Pulumi output
+BANNER_TYPES: List[str] = ['fabulous', 'boring', 'log']
+# Logger instance
+PULUMI_LOG = logging.getLogger('pulumi')
+RUNNER_LOG = logging.getLogger('runner')
 
 # We default to a fabulous banner of course
 banner_type = BANNER_TYPES[0]
@@ -76,7 +80,7 @@ OPERATIONS:
     up              Provisions all configured infrastructure
     validate        Validates that the environment and configuration is correct
 """
-    print(usage_text)
+    print(usage_text, file=sys.stdout)
 
 
 def provider_instance(provider_name: str) -> Provider:
@@ -96,7 +100,7 @@ def main():
         longopts = ["help", 'debug', 'banner-type', 'provider='] # long form options
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
-        print(err)  # will print something like "option -a not recognized"
+        RUNNER_LOG.error(err)
         usage()
         sys.exit(2)
 
@@ -124,12 +128,12 @@ def main():
     if len(sys.argv) > 1:
         operation = sys.argv[-1]
     else:
-        print(f'No operation specified')
+        RUNNER_LOG.error('No operation specified')
         usage()
         sys.exit(2)
 
     if operation not in OPERATIONS:
-        print(f'Unknown operation specified: {operation}')
+        RUNNER_LOG.error('Unknown operation specified: %s', operation)
         usage()
         sys.exit(2)
 
@@ -141,13 +145,16 @@ def main():
 
     # Now validate providers because everything underneath here depends on them
     if not provider_name or provider_name.strip() == '':
-        print('Provider must be specified')
+        RUNNER_LOG.error('No provider specified - provider is a required argument')
         sys.exit(2)
     if provider_name not in PROVIDERS:
-        print(f'Unknown provider specified: {provider_name}')
+        RUNNER_LOG.error('Unknown provider specified: %s', provider_name)
         sys.exit(2)
 
+    setup_loggers()
+
     provider = provider_instance(provider_name.lower())
+    RUNNER_LOG.debug('Using [%s] infrastructure provider', provider.infra_type())
 
     # We execute the operation requested - different operations have different pre-requirements, so they are matched
     # differently. Like show-execution does not require reading the configuration files, so we just look for a match
@@ -166,7 +173,7 @@ def main():
         validate(provider=provider, env_config=env_config, stack_config=stack_config,
                  verbose=validate_with_verbosity)
     except Exception as e:
-        logging.exception('Validation failed: %s', e)
+        RUNNER_LOG.error('Validation failed: %s', e)
         sys.exit(3)
 
     if operation == 'refresh':
@@ -180,7 +187,7 @@ def main():
         pulumi_cmd = None
         # validate was already run above
     else:
-        print(f'Unknown operation: {operation}')
+        RUNNER_LOG.error('Unknown operation: %s', operation)
         sys.exit(2)
 
     # Lastly, if the operation involves the execution of a Pulumi command, we make sure that secrets have been
@@ -196,6 +203,32 @@ def main():
             raise e
 
 
+def setup_loggers():
+    """Configures two loggers: 1) For the MARA Runner itself 2) For Pulumi output"""
+    global debug_on
+
+    if debug_on:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
+    # Pulumi output goes to STDOUT
+    PULUMI_LOG.setLevel(level=level)
+    pulumi_ch = logging.StreamHandler(stream=sys.stdout)
+    pulumi_ch.setLevel(level=level)
+    formatter = logging.Formatter('%(message)s')
+    pulumi_ch.setFormatter(formatter)
+    PULUMI_LOG.addHandler(pulumi_ch)
+
+    # Runner output goes to STDERR
+    RUNNER_LOG.setLevel(level=level)
+    runner_ch = logging.StreamHandler(stream=sys.stderr)
+    runner_ch.setLevel(level=level)
+    formatter = logging.Formatter('%(message)s')
+    runner_ch.setFormatter(formatter)
+    RUNNER_LOG.addHandler(runner_ch)
+
+
 def read_stack_config(provider: Provider,
                       env_config: env_config_parser.EnvConfig) -> stack_config_parser.PulumiStackConfig:
     """Load and parse the Pulumi stack configuration file. In MARA, this is a globally shared file.
@@ -205,11 +238,12 @@ def read_stack_config(provider: Provider,
     """
     try:
         stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
+        RUNNER_LOG.debug('stack configuration file read')
     except FileNotFoundError as e:
-        print(f' > stack configuration file does not exist: {e.filename}')
+        RUNNER_LOG.info('stack configuration file [%s] does not exist', e.filename)
         stack_config = prompt_for_stack_config(provider, env_config, e.filename)
     except stack_config_parser.EmptyConfigurationException as e:
-        print(f' > stack configuration file is empty: {e.filename}')
+        RUNNER_LOG.info('stack configuration file [%s] is empty', e.filename)
         stack_config = prompt_for_stack_config(provider, env_config, e.filename)
 
     return stack_config
@@ -224,7 +258,7 @@ def prompt_for_stack_config(provider: Provider,
     :param filename: location to write stack config file to
     :return: data structure containing stack configuration
     """
-    print(f'   creating new configuration based on user input')
+    RUNNER_LOG.info('creating new configuration based on user input')
 
     stack_defaults_path = os.path.sep.join([os.path.dirname(filename),
                                             'Pulumi.stackname.yaml.example'])
@@ -257,11 +291,10 @@ def validate(provider: Provider,
     def check_path(cmd: str, fail_message: str) -> bool:
         cmd_path = shutil.which(cmd)
         if cmd_path:
-            if verbose:
-                print(f' > {cmd} found at path: {cmd_path}')
+            RUNNER_LOG.debug('[%s] found at path: %s', cmd, cmd_path)
             return True
         else:
-            print(f'{cmd} is not installed - {fail_message}')
+            RUNNER_LOG.error('[%s] is not installed - %s', cmd, fail_message)
             return False
 
     success = True
@@ -280,29 +313,30 @@ def validate(provider: Provider,
     if 'kubernetes:infra_type' in stack_config['config']:
         previous_provider = stack_config['config']['kubernetes:infra_type']
         if previous_provider.lower() != provider.infra_type().lower():
-            print(f'Stack has already been used with the provider [{previous_provider}], so it cannot '
-                  f'be run with the specified provider [{provider.infra_type()}]. Destroy all resources '
-                  'and remove the kubernetes:infra_type key from the stack configuration.', file=sys.stderr)
+            RUNNER_LOG.error('Stack has already been used with the provider [%s], so it cannot '
+                             'be run with the specified provider [%s]. Destroy all resources '
+                             'and remove the kubernetes:infra_type key from the stack configuration.',
+                             previous_provider, provider.infra_type())
             sys.exit(3)
 
     # Next, we validate that the environment file has the required values
     try:
         provider.validate_env_config(env_config)
     except Exception as e:
-        print(f' > environment file at path failed validation: {env_config.config_path}')
+        RUNNER_LOG.error('environment file [%s] failed validation', env_config.config_path)
         raise e
     if verbose:
-        print(f' > environment file validated at path: {env_config.config_path}')
+        RUNNER_LOG.debug('environment file [%s] passed validation', env_config.config_path)
 
     try:
         provider.validate_stack_config(stack_config, env_config)
     except Exception as e:
-        print(f' > stack configuration file at path failed validation: {stack_config.config_path}')
+        RUNNER_LOG.error('stack configuration file [%s] at path failed validation', stack_config.config_path)
         raise e
     if verbose:
-        print(f' > stack configuration file validated at path: {stack_config.config_path}')
+        RUNNER_LOG.debug('stack configuration file [%s] passed validation', stack_config.config_path)
 
-    print(' > configuration is OK')
+    RUNNER_LOG.debug('all configuration is OK')
 
 
 def init_secrets(env_config: env_config_parser.EnvConfig,
@@ -350,7 +384,7 @@ def build_pulumi_stack(pulumi_project: PulumiProject,
     :param env_config: reference to environment configuration
     :return: reference to a new or existing stack
     """
-    print(f'project: {pulumi_project.name()} path: {pulumi_project.abspath()}')
+    RUNNER_LOG.info('Project [%s] selected: %s', pulumi_project.name(), pulumi_project.abspath())
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
                                             env_vars=env_config,
@@ -372,7 +406,7 @@ def refresh(provider: Provider,
                                    env_config=env_config)
         stack.refresh_config()
         stack.refresh(color=env_config.pulumi_color_settings(),
-                      on_output=print)
+                      on_output=write_pulumi_output)
 
 
 def up(provider: Provider,
@@ -386,7 +420,7 @@ def up(provider: Provider,
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack_up_result = stack.up(color=env_config.pulumi_color_settings(),
-                                   on_output=print)
+                                   on_output=write_pulumi_output)
 
         # If the project is instantiated without problems, then the on_success event
         # as specified in the provider is run. This event is often used to do additional
@@ -409,7 +443,12 @@ def down(provider: Provider,
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack_down_result = stack.destroy(color=env_config.pulumi_color_settings(),
-                                          on_output=print)
+                                          on_output=write_pulumi_output)
+
+
+def write_pulumi_output(text: str):
+    """Handles output from Pulumi invocations via the Automation API"""
+    PULUMI_LOG.info(text)
 
 
 if __name__ == "__main__":

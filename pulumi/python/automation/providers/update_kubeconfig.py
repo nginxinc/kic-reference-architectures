@@ -20,14 +20,13 @@ kubectl config files contained in a user's home directory or path specified by K
 import os
 import logging
 import errno
-import sys
 from collections import OrderedDict
 from typing import Mapping, Any
 import yaml
 
 # Default path to user's kubectl config files
 DEFAULT_PATH = os.path.expanduser("~/.kube/config")
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger('runner')
 
 
 def update_kubeconfig(cluster_name: str, env: Mapping[str, str], kubeconfig: Mapping[str, Any]):
@@ -55,13 +54,9 @@ def update_kubeconfig(cluster_name: str, env: Mapping[str, str], kubeconfig: Map
     writer.write_kubeconfig(config)
 
     if config.has_cluster(cluster_name):
-        uni_print("Updated context {0} in {1}\n".format(
-            new_context_dict["name"], config.path
-        ))
+        LOG.info('Updated context %s in %s', new_context_dict["name"], config.path)
     else:
-        uni_print("Added new context {0} to {1}\n".format(
-            new_context_dict["name"], config.path
-        ))
+        LOG.info('Added new context %s to %s', new_context_dict["name"], config.path)
 
 
 # Everything after this line is sourced from the AWS SDK
@@ -436,46 +431,3 @@ class KubeconfigAppender(object):
         config.content["current-context"] = context["name"]
 
         return context
-
-
-def uni_print(statement, out_file=None):
-    """
-    This function is used to properly write unicode to a file, usually
-    stdout or stdderr.  It ensures that the proper encoding is used if the
-    statement is not a string type.
-    """
-    if out_file is None:
-        out_file = sys.stdout
-    try:
-        # Otherwise we assume that out_file is a
-        # text writer type that accepts str/unicode instead
-        # of bytes.
-        out_file.write(statement)
-    except UnicodeEncodeError:
-        # Some file like objects like cStringIO will
-        # try to decode as ascii on python2.
-        #
-        # This can also fail if our encoding associated
-        # with the text writer cannot encode the unicode
-        # ``statement`` we've been given.  This commonly
-        # happens on windows where we have some S3 key
-        # previously encoded with utf-8 that can't be
-        # encoded using whatever codepage the user has
-        # configured in their console.
-        #
-        # At this point we've already failed to do what's
-        # been requested.  We now try to make a best effort
-        # attempt at printing the statement to the outfile.
-        # We're using 'ascii' as the default because if the
-        # stream doesn't give us any encoding information
-        # we want to pick an encoding that has the highest
-        # chance of printing successfully.
-        new_encoding = getattr(out_file, 'encoding', 'ascii')
-        # When the output of the aws command is being piped,
-        # ``sys.stdout.encoding`` is ``None``.
-        if new_encoding is None:
-            new_encoding = 'ascii'
-        new_statement = statement.encode(
-            new_encoding, 'replace').decode(new_encoding)
-        out_file.write(new_statement)
-    out_file.flush()
