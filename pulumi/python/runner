@@ -19,4 +19,4 @@ else
   >&2 echo "Have you run setup_venv.sh to initialize the environment?"
 fi
 
-exec "$script_dir/automation/main.py"
+exec "$script_dir/automation/main.py" $@
