@@ -260,6 +260,9 @@ override.tf.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm+all,terraform
 
+# Ignore locally installed pyenv environment
+.pyenv
+
 *.pyc
 !/extras/jwt.token
 /pulumi/python/tools/common/config/*.yaml

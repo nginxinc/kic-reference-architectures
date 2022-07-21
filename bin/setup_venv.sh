@@ -60,6 +60,7 @@ if ! command -v git >/dev/null; then
   exit 1
 fi
 
+# When Python does not exist
 if ! command -v python3 >/dev/null; then
   if ! command -v make >/dev/null; then
     echo >&2 "make must be installed in order to install python with pyenv"
@@ -86,7 +87,7 @@ if ! command -v python3 >/dev/null; then
     echo "required libraries: libbz2 libffi libreadline libsqlite3 libssl zlib1g"
   fi
 
-  export PYENV_ROOT="${script_dir}/../pulumi/python/.pyenv"
+  PYENV_ROOT="${script_dir}/../pulumi/python/.pyenv"
 
   mkdir -p "${PYENV_ROOT}"
   git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
@@ -97,13 +98,21 @@ if ! command -v python3 >/dev/null; then
     cat >&2 "${git_clone_log}"
   fi
 
-  export PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/bin:$PATH"
 fi
 
-# If pyenv is available we use a hardcoded python version
+# If pyenv is available we use a the python version as set in the
+# .python-version file. This gives us a known and well tested version
+# of python.
 if command -v pyenv >/dev/null; then
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
+
+  if [ -z "${PYENV_ROOT}" ]; then
+    PYENV_ROOT=~/.pyenv
+  fi
+
+  echo "pyenv detected in: ${PYENV_ROOT}"
   pyenv install --skip-existing <"${script_dir}/../.python-version"
 
   # If the pyenv-virtualenv tools are installed, prompt the user if they want to
@@ -126,12 +135,12 @@ fi
 if [ ${has_pyenv_venv_plugin} -eq 1 ]; then
   eval "$(pyenv virtualenv-init -)"
 
-  if ! pyenv virtualenvs --bare | grep --quiet '^ref-arch-pulumi-aws'; then
-    pyenv virtualenv ref-arch-pulumi-aws
+  if ! pyenv virtualenvs --bare | grep --quiet '^mara'; then
+    pyenv virtualenv mara
   fi
 
   if [ -z "${VIRTUAL_ENV}" ]; then
-    pyenv activate ref-arch-pulumi-aws
+    pyenv activate mara
   fi
 
   if [ -h "${script_dir}/../pulumi/python/venv" ]; then
@@ -150,6 +159,10 @@ if [ ${has_pyenv_venv_plugin} -eq 1 ]; then
     fi
   fi
 
+  # We create a symbolic link to the pyenv managed venv because using the
+  # pyenv virtual environment tooling introduces too many conditional logic paths
+  # in subsequent scripts/programs that need to load the virtual environment.
+  # Assuming that the venv directory is at a fixed known path makes things easier.
   echo "Linking virtual environment [${VIRTUAL_ENV}] to local directory [venv]"
   ln -s "${VIRTUAL_ENV}" "${script_dir}/../pulumi/python/venv"
 fi
@@ -241,7 +254,7 @@ fi
 
 #
 # This section originally pulled the most recent version of Kubectl down; however it turned out that
-# was causing isues with our AWS deploy (see the issues in the repo). Addtionally, this was only
+# was causing issues with our AWS deploy (see the issues in the repo). Additionally, this was only
 # downloading the kubectl if it did not exist; this could result in versions not being updated if the
 # MARA project was run in the same environment w/o a refresh.
 #

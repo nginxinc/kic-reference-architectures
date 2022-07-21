@@ -59,12 +59,14 @@ banner_type = BANNER_TYPES[0]
 # Debug flag that will trigger additional output
 debug_on = False
 
+# Use he script name as invoked rather than hard coding it
+script_name = os.path.basename(sys.argv[0])
 
 def usage():
     usage_text = f"""Modern Application Reference Architecture (MARA) Runner
 
 USAGE:
-    main.py [FLAGS] [OPERATION]
+    {script_name} [FLAGS] [OPERATION]
 
 FLAGS:
     -d, --debug        Enable debug output on all of the commands executed
