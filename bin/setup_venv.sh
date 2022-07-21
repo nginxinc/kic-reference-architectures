@@ -272,7 +272,7 @@ fi
 # Download Pulumi CLI tooling
 # Regular expression and sed command from https://superuser.com/a/363878
 echo "Downloading Pulumi CLI into virtual environment"
-PULUMI_VERSION="$(pip3 list | grep 'pulumi ' | sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p')"
+PULUMI_VERSION="$(pip3 list | grep 'pulumi ' | sed -nEe 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p')"
     if  [ -z $PULUMI_VERSION ] ; then
       echo "Failed to find Pulumi version - EXITING"
       exit 5
