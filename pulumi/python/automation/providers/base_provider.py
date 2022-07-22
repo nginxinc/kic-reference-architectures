@@ -6,7 +6,7 @@ import abc
 import os
 import pathlib
 import sys
-from typing import List, Mapping, Iterable, TextIO, Union, Dict, Any, Hashable
+from typing import List, Mapping, Iterable, TextIO, Union, Dict, Any, Hashable, Optional
 
 from .pulumi_project import PulumiProject, SecretConfigKey
 
@@ -15,7 +15,11 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class InvalidConfigurationException(Exception):
-    pass
+    key: Optional[str]
+
+    def __init__(self, msg: str, key: Optional[str] = None) -> None:
+        super().__init__(msg)
+        self.key = key
 
 
 class Provider:
@@ -40,7 +44,7 @@ class Provider:
 
         for key in required_keys:
             if key not in config.keys():
-                raise InvalidConfigurationException(f'Required configuration key [{key}] not found')
+                raise InvalidConfigurationException(msg=f'Required configuration key [{key}] not found', key=key)
 
     @abc.abstractmethod
     def infra_type(self) -> str:

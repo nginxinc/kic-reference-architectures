@@ -30,7 +30,7 @@ import headers
 from typing import List, Optional
 from getpass import getpass
 
-from providers.base_provider import Provider
+from providers.base_provider import Provider, InvalidConfigurationException
 from providers.pulumi_project import PulumiProject, PulumiProjectEventParams
 from pulumi import automation as auto
 from typing import Any, Hashable, Dict, Union
@@ -127,8 +127,12 @@ def main():
     # Next, we validate to make sure the input to the runner was correct
 
     # Make sure we got an operation - it is the last string passed as an argument
-    if len(sys.argv) > 1:
-        operation = sys.argv[-1]
+    if len(args) == 1:
+        operation = args[0]
+    elif len(args) >= 1:
+        RUNNER_LOG.error('Only one operation per invocation allowed')
+        usage()
+        sys.exit(2)
     else:
         RUNNER_LOG.error('No operation specified')
         usage()
@@ -168,8 +172,18 @@ def main():
 
     # For the other operations, we need the configuration files parsed, so we do the parsing upfront.
 
-    env_config = env_config_parser.read()
-    stack_config = read_stack_config(provider=provider, env_config=env_config)
+    try:
+        env_config = env_config_parser.read()
+    except FileNotFoundError as e:
+        msg = 'Environment configuration file not found. This file must exist at the path: %s'
+        RUNNER_LOG.error(msg, e.filename)
+        sys.exit(2)
+
+    if env_config.stack_name():
+        stack_config = read_stack_config(provider=provider, env_config=env_config)
+    else:
+        stack_config = None
+
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
         validate(provider=provider, env_config=env_config, stack_config=stack_config,
@@ -280,7 +294,7 @@ def prompt_for_stack_config(provider: Provider,
 
 def validate(provider: Provider,
              env_config: env_config_parser.EnvConfig,
-             stack_config: stack_config_parser.PulumiStackConfig,
+             stack_config: Optional[stack_config_parser.PulumiStackConfig],
              verbose: Optional[bool] = False):
     """Validates that the runtime environment for MARA is correct. Will validate that external tools are present and
     configurations are correct. If validation fails, an exception will be raised.
@@ -312,6 +326,26 @@ def validate(provider: Provider,
     if not success:
         sys.exit(3)
 
+    # Next, we validate that the environment file has the required values
+    try:
+        provider.validate_env_config(env_config)
+    except InvalidConfigurationException as e:
+        if e.key == 'PULUMI_STACK':
+            msg = 'Environment file [%s] does not contain the required key PULUMI_STACK. This key specifies the ' \
+                  'name of the Pulumi Stack (https://www.pulumi.com/docs/intro/concepts/stack/) that is used ' \
+                  'globally across Pulumi projects in MARA.'
+        else:
+            msg = 'Environment file [%s] failed validation'
+
+        RUNNER_LOG.error(msg, env_config.config_path)
+        raise e
+    if verbose:
+        RUNNER_LOG.debug('environment file [%s] passed validation', env_config.config_path)
+
+    if not stack_config:
+        RUNNER_LOG.debug('stack configuration is not available')
+        return False
+
     if 'kubernetes:infra_type' in stack_config['config']:
         previous_provider = stack_config['config']['kubernetes:infra_type']
         if previous_provider.lower() != provider.infra_type().lower():
@@ -321,24 +355,15 @@ def validate(provider: Provider,
                              previous_provider, provider.infra_type())
             sys.exit(3)
 
-    # Next, we validate that the environment file has the required values
-    try:
-        provider.validate_env_config(env_config)
-    except Exception as e:
-        RUNNER_LOG.error('environment file [%s] failed validation', env_config.config_path)
-        raise e
-    if verbose:
-        RUNNER_LOG.debug('environment file [%s] passed validation', env_config.config_path)
-
     try:
         provider.validate_stack_config(stack_config, env_config)
     except Exception as e:
-        RUNNER_LOG.error('stack configuration file [%s] at path failed validation', stack_config.config_path)
+        RUNNER_LOG.error('Stack configuration file [%s] at path failed validation', stack_config.config_path)
         raise e
     if verbose:
-        RUNNER_LOG.debug('stack configuration file [%s] passed validation', stack_config.config_path)
+        RUNNER_LOG.debug('Stack configuration file [%s] passed validation', stack_config.config_path)
 
-    RUNNER_LOG.debug('all configuration is OK')
+    RUNNER_LOG.debug('All configuration is OK')
 
 
 def init_secrets(env_config: env_config_parser.EnvConfig,

@@ -3,6 +3,7 @@ File containing the AWS infrastructure provider for the MARA runner.
 """
 
 import json
+import logging
 import os
 import sys
 
@@ -13,7 +14,10 @@ from .base_provider import PulumiProject, Provider, InvalidConfigurationExceptio
 from .pulumi_project import PulumiProjectEventParams
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
+RUNNER_LOG = logging.getLogger('runner')
+AUTH_ERR_MSG = '''Unable to authenticate to AWS with provided credentials. Are the settings in your ~/.aws/credentials 
+correct? Error: %s
+'''
 
 class AwsProviderException(Exception):
     pass
@@ -106,6 +110,11 @@ class AwsProvider(Provider):
 
         aws_cli = AwsCli(region=aws_region, profile=aws_profile)
 
+        _, err = external_process.run(cmd=aws_cli.validate_credentials_cmd(), suppress_error=True)
+        if err:
+            RUNNER_LOG.error(AUTH_ERR_MSG, err.lstrip())
+            sys.exit(3)
+
         # AWS availability zones
         az_data, _ = external_process.run(aws_cli.list_azs_cmd())
         zones = []
@@ -124,7 +133,7 @@ class AwsProvider(Provider):
         while len(selected_azs) == 0 or not validate_selected_azs(selected_azs):
             default_azs = ', '.join(zones)
             azs = input(
-                f'AWS availability zones to use with VPC [{default_azs} (separate with commas)]: ') or default_azs
+                f'AWS availability zones to use with VPC [{default_azs}] (separate with commas): ') or default_azs
             selected_azs = [x.strip() for x in azs.split(',')]
 
         config['vpc:azs'] = list(selected_azs)
@@ -182,7 +191,7 @@ class AwsProvider(Provider):
         aws_cli = AwsCli(region=config['aws:region'], profile=config['aws:profile'])
         _, err = external_process.run(cmd=aws_cli.validate_credentials_cmd(), suppress_error=True)
         if err:
-            print(f'AWS authentication error: {err}', file=sys.stderr)
+            RUNNER_LOG.error(AUTH_ERR_MSG, err.lstrip())
             sys.exit(3)
 
     @staticmethod
