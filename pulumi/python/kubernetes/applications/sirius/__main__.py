@@ -1,9 +1,10 @@
 import base64
 import os
-
+from typing import Mapping
 import pulumi
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
+from pulumi_kubernetes.core.v1 import Secret
 from Crypto.PublicKey import RSA
 from pulumi_kubernetes.yaml import ConfigFile
 from pulumi_kubernetes.yaml import ConfigGroup
@@ -18,16 +19,23 @@ def remove_status_field(obj):
         del obj['status']
 
 
-def pulumi_k8_project_name():
+def project_name_from_infrastructure_dir():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     eks_project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
+
+
+def project_name_from_kubernetes_dir(dirname: str):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_path = os.path.join(script_dir, '..', '..', dirname)
+    return pulumi_config.get_pulumi_project_name(project_path)
 
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
 
 def pulumi_repo_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +49,16 @@ def sirius_manifests_location():
     return sirius_manifests_path
 
 
-# We will only want to be deploying one type of cerficate issuer
+def extract_password_from_k8s_secrets(secrets: Mapping[str, str], secret_name: str) -> str:
+    if secret_name not in secrets:
+        raise f'Secret [{secret_name}] not found in Kubernetes secret store'
+    base64_string = secrets[secret_name]
+    byte_data = base64.b64decode(base64_string)
+    password = str(byte_data, 'utf-8')
+    return password
+
+
+# We will only want to be deploying one type of certificate issuer
 # as part of this application; this can (and should) be changed as
 # needed. For example, if the user is taking advantage of ACME let's encrypt
 # in order to generate certs.
@@ -69,7 +86,7 @@ def add_namespace(obj):
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
-k8_project_name = pulumi_k8_project_name()
+k8_project_name = project_name_from_infrastructure_dir()
 pulumi_user = pulumi_config.get_pulumi_user()
 
 k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
@@ -77,6 +94,11 @@ k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
 kubeconfig = k8_stack_ref.get_output('kubeconfig').apply(lambda c: str(c))
 k8_stack_ref.get_output('cluster_name').apply(
     lambda s: pulumi.log.info(f'Cluster name: {s}'))
+
+secrets_project_name = project_name_from_kubernetes_dir('secrets')
+secrets_stack_ref_id = f"{pulumi_user}/{secrets_project_name}/{stack_name}"
+secrets_stack_ref = pulumi.StackReference(secrets_stack_ref_id)
+pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
@@ -151,7 +173,18 @@ ns = k8s.core.v1.Namespace(resource_name='bos',
 #
 # Note this config is specific to the sirius code!
 config = pulumi.Config('sirius')
-accounts_pwd = config.require_secret('accounts_pwd')
+
+sirius_secrets = Secret.get(resource_name='pulumi-secret-sirius',
+                            id=pulumi_secrets['sirius'],
+                            opts=pulumi.ResourceOptions(provider=k8s_provider)).data
+accounts_pwd = pulumi.Output.unsecret(sirius_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'accounts_pwd'))
+ledger_pwd = pulumi.Output.unsecret(sirius_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'ledger_pwd'))
+demo_login_user = pulumi.Output.unsecret(sirius_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'demo_login_user'))
+demo_login_pwd = pulumi.Output.unsecret(sirius_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'demo_login_pwd'))
 
 accounts_admin = config.get('accounts_admin')
 if not accounts_admin:
@@ -236,14 +269,9 @@ demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
                                                     ),
                                                     data={
                                                         "USE_DEMO_DATA": "True",
-                                                        "DEMO_LOGIN_USERNAME": "testuser",
-                                                        "DEMO_LOGIN_PASSWORD": "password"
+                                                        "DEMO_LOGIN_USERNAME": demo_login_user,
+                                                        "DEMO_LOGIN_PASSWORD": demo_login_pwd
                                                     })
-
-# Configuration Values are stored in the configuration:
-#  ./config/Pulumi.STACKNAME.yaml
-config = pulumi.Config('sirius')
-ledger_pwd = config.require_secret('ledger_pwd')
 
 ledger_admin = config.get('ledger_admin')
 if not ledger_admin:

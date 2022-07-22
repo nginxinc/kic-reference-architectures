@@ -1,0 +1,7 @@
+name: ingress-controller-namespace
+runtime:
+  name: python
+  options:
+    virtualenv: ../../../venv
+config: ../../../../../config/pulumi
+description: Creates the NGINX Kubernetes Ingress Controller Namespace

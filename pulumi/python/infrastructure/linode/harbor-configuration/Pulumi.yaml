@@ -1,7 +1,7 @@
-name: sirius-deploy
+name: harbor-configuration
 runtime:
   name: python
   options:
     virtualenv: ../../../venv
 config: ../../../../../config/pulumi
-description: Creates the Bank of Sirius App
+description: Configures Harbor Container Registry

@@ -172,12 +172,7 @@ kubernetes extras functionality. For more details on those, please see the READM
 
 ### Digital Ocean
 
-If you are using Digital Ocean as your infrastructure provider
-[configuring Pulumi for Digital Ocean](https://www.pulumi.com/registry/packages/digitalocean/) is necessary. The first
-step is to install the [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/) utility to interact with
-your Digital Ocean account.
-
-Next, you will need to create a
+You will need to create a
 [Digital Ocean Personal API Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/)
 for authentication to Digital Ocean. When you run the script [`./bin/start.sh`](../bin/start.sh) and select a Digital
 Ocean deployment, your token will be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration

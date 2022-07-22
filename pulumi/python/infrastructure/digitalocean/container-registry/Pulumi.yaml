@@ -1,7 +1,7 @@
-name: sirius-deploy
+name: container-registry
 runtime:
   name: python
   options:
     virtualenv: ../../../venv
 config: ../../../../../config/pulumi
-description: Creates the Bank of Sirius App
+description: Creates new Digital Ocean Container Registry
