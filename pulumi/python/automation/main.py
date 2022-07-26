@@ -214,8 +214,8 @@ def main():
         try:
             pulumi_cmd(provider=provider, env_config=env_config)
         except Exception as e:
-            logging.error('Error running Pulumi operation with provider [%s] for stack [%s]',
-                          provider_name, env_config.stack_name())
+            logging.error('Error running Pulumi operation [%s] with provider [%s] for stack [%s]',
+                          operation, provider_name, env_config.stack_name())
             raise e
 
 
@@ -432,8 +432,16 @@ def refresh(provider: Provider,
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack.refresh_config()
-        stack.refresh(color=env_config.pulumi_color_settings(),
-                      on_output=write_pulumi_output)
+        try:
+            stack.refresh(color=env_config.pulumi_color_settings(),
+                          on_output=write_pulumi_output)
+        except auto.CommandError as e:
+            msg = str(e).strip()
+            if msg.endswith('no previous deployment'):
+                logging.warning("Cannot refresh project that has no previous deployment for stack [%s]",
+                                env_config.stack_name())
+            else:
+                raise e
 
 
 def up(provider: Provider,
