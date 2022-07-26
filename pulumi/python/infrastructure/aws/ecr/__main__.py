@@ -8,6 +8,7 @@ project_name = pulumi.get_project()
 ecr_repo = ecr.Repository(name=f'ingress-controller-{stack_name}',
                           resource_name=f'nginx-ingress-repository-{stack_name}',
                           image_tag_mutability="MUTABLE",
+                          force_delete=False,
                           tags={"Project": project_name, "Stack": stack_name})
 
 pulumi.export('repository_url', ecr_repo.repository_url)
