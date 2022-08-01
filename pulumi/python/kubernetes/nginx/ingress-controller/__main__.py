@@ -17,7 +17,7 @@ if not chart_name:
     chart_name = 'nginx-ingress'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '0.13.2'
+    chart_version = '0.14.0'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'nginx-stable'
