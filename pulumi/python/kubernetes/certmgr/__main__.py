@@ -8,12 +8,6 @@ from pulumi_kubernetes.yaml import ConfigFile
 from kic_util import pulumi_config
 
 
-def crd_deployment_manifest():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    crd_deployment_path = os.path.join(script_dir, 'manifests', 'cert-manager.crds.yaml')
-    return crd_deployment_path
-
-
 def project_name_from_project_dir(dirname: str):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_path = os.path.join(script_dir, '..', '..', '..', 'python', 'infrastructure', dirname)
@@ -39,17 +33,6 @@ k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
 ns = k8s.core.v1.Namespace(resource_name='cert-manager',
                            metadata={'name': 'cert-manager'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
-
-# Config Manifests
-crd_deployment = crd_deployment_manifest()
-
-crd_dep = ConfigFile(
-    'crd-dep',
-    file=crd_deployment,
-    transformations=[add_namespace],  # Need to review w/ operator
-    opts=pulumi.ResourceOptions(depends_on=[ns])
-)
-
 
 config = pulumi.Config('certmgr')
 chart_name = config.get('chart_name')
@@ -81,6 +64,9 @@ certmgr_release_args = ReleaseArgs(
     ),
     version=chart_version,
     namespace=ns.metadata.name,
+    values={
+        "installCRDs": "True"
+    },
     # Configure the timeout value.
     timeout=helm_timeout,
     # By default Release resource will wait till all created resources
@@ -96,7 +82,7 @@ certmgr_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-certmgr_release = Release("certmgr", args=certmgr_release_args, opts=pulumi.ResourceOptions(depends_on=crd_dep))
+certmgr_release = Release("certmgr", args=certmgr_release_args, opts=pulumi.ResourceOptions(depends_on=ns))
 
 status = certmgr_release.status
 pulumi.export("certmgr_status", status)
