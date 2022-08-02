@@ -13,7 +13,7 @@ if not chart_name:
     chart_name = 'elasticsearch'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '17.6.2'
+    chart_version = '19.1.4'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'bitnami'
@@ -131,7 +131,7 @@ elastic_release = Release("elastic", args=elastic_release_args)
 
 elastic_rname = elastic_release.status.name
 
-elastic_fqdn = Output.concat(elastic_rname, "-coordinating-only.logstore.svc.cluster.local")
+elastic_fqdn = Output.concat(elastic_rname, "-elasticsearch.logstore.svc.cluster.local")
 kibana_fqdn = Output.concat(elastic_rname, "-kibana.logstore.svc.cluster.local")
 
 pulumi.export('elastic_hostname', pulumi.Output.unsecret(elastic_fqdn))
