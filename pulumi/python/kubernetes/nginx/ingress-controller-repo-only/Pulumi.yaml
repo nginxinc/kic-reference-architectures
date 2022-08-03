@@ -1,7 +1,0 @@
-name: ingress-controller
-runtime:
-  name: python
-  options:
-    virtualenv: ../../../venv
-config: ../../../../../config/pulumi
-description: Sets up NGINX Kubernetes Ingress Controller using Helm
