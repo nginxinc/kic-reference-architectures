@@ -37,12 +37,6 @@ def pulumi_ingress_project_name():
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 
-def pulumi_repo_ingress_project_name():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller-repo-only')
-    return pulumi_config.get_pulumi_project_name(ingress_project_path)
-
-
 def sirius_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     sirius_manifests_path = os.path.join(script_dir, 'src', 'kubernetes-manifests', '*.yaml')
@@ -102,58 +96,15 @@ pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
-# TODO: Streamline the logic for FQDN/IP into something a bit more sane and scalable #82
 #
-# Currently, if we are doing an AWS deployment we use the AWS IC deployment, which uses the ELB hostname
-# as part of the certificate (self-signed).
+# We use the hostanme to set the value for our FQDN, which drives the cert
+# process as well.
 #
-# If we are using a kubeconfig file (ie, not type AWS) we expect we are going to get an IP address and not
-# a hostname in return. So we use the hostname variable to create the certificate we need, and then we use
-# the IP address in output to the user to tell them to setup DNS or a hostfile.
-#
-
-# We use the kubernetes namespace for this
-config = pulumi.Config('kubernetes')
-infra_type = config.require('infra_type')
-
-if infra_type == 'AWS':
-    # Logic to extract the FQDN of the load balancer for Ingress
-    ingress_project_name = pulumi_ingress_project_name()
-    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
-    sirius_host = lb_ingress_hostname
-elif infra_type == 'kubeconfig':
-    # Logic to extract the FQDN of the load balancer for Ingress
-    ingress_project_name = pulumi_repo_ingress_project_name()
-    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
-    # Set back to kubernetes
-    config = pulumi.Config('kubernetes')
-    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
-    sirius_host = lb_ingress_hostname
-elif infra_type == 'DO':
-    # Logic to extract the FQDN of the load balancer for Ingress
-    ingress_project_name = pulumi_repo_ingress_project_name()
-    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
-    # Set back to kubernetes
-    config = pulumi.Config('kubernetes')
-    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
-    sirius_host = lb_ingress_hostname
-elif infra_type == 'LKE':
-    # Logic to extract the FQDN of the load balancer for Ingress
-    ingress_project_name = pulumi_repo_ingress_project_name()
-    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
-    # Set back to kubernetes
-    config = pulumi.Config('kubernetes')
-    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
-    sirius_host = lb_ingress_hostname
-
+ingress_project_name = pulumi_ingress_project_name()
+ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+sirius_host = lb_ingress_hostname
 
 # Create the namespace for Bank of Sirius
 ns = k8s.core.v1.Namespace(resource_name='bos',
@@ -421,12 +372,12 @@ if infra_type == 'AWS':
 elif infra_type == 'kubeconfig':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
-    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    # pulumi.export('application_url', f'https://{lb_ingress_hostname}')
     application_url = sirius_host.apply(lambda host: f'https://{host}')
 elif infra_type == 'DO':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
-    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    # pulumi.export('application_url', f'https://{lb_ingress_hostname}')
     application_url = sirius_host.apply(lambda host: f'https://{host}')
 
 #
@@ -457,11 +408,11 @@ accountsdb_release_args = ReleaseArgs(
     namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
-    values = {
+    values={
         "serviceMonitor": {
             "enabled": True,
             "namespace": "prometheus"
-            },
+        },
         "config": {
             "datasource": {
                 "host": "accounts-db",
@@ -504,11 +455,11 @@ ledgerdb_release_args = ReleaseArgs(
     namespace=ns,
 
     # Values from Chart's parameters specified hierarchically,
-    values = {
+    values={
         "serviceMonitor": {
             "enabled": True,
             "namespace": "prometheus"
-            },
+        },
         "config": {
             "datasource": {
                 "host": "ledger-db",

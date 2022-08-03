@@ -258,7 +258,7 @@ fi
 # downloading the kubectl if it did not exist; this could result in versions not being updated if the
 # MARA project was run in the same environment w/o a refresh.
 #
-# The two fixes here are to hardcode (For now) to a known good version (1.23.6) and force the script to
+# The two fixes here are to hardcode (For now) to a known good version (1.24.3) and force the script to
 # always download this version.
 #
 # TODO: Figure out a way to not hardcode the kubectl version
@@ -275,7 +275,7 @@ if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
 else
   echo "kubectl is already installed, but will overwrite to ensure correct version"
   echo "Downloading kubectl into virtual environment"
-  KUBECTL_VERSION="v1.23.6"
+  KUBECTL_VERSION="v1.24.3"
   ${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
   KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
   echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
