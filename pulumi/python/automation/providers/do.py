@@ -113,7 +113,7 @@ class DigitalOceanProvider(Provider):
         config = super().new_stack_config(env_config, defaults)
 
         if 'DIGITALOCEAN_TOKEN' not in env_config:
-            config['digitalocean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
+            config['docean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
                                                  "alternatively this can be specified as the environment variable "
                                                  "DIGITALOCEAN_TOKEN): ")
 
@@ -131,42 +131,42 @@ class DigitalOceanProvider(Provider):
         print('Supported Kubernetes versions:')
         for slug in k8s_version_slugs:
             print(f'  {slug}')
-        default_version = defaults['digitalocean:k8s_version'] or k8s_version_slugs[0]
-        config['digitalocean:k8s_version'] = input(f'Kubernetes version [{default_version}]: ').strip() or default_version
-        print(f"Kubernetes version: {config['digitalocean:k8s_version']}")
+        default_version = defaults['docean:k8s_version'] or k8s_version_slugs[0]
+        config['docean:k8s_version'] = input(f'Kubernetes version [{default_version}]: ').strip() or default_version
+        print(f"Kubernetes version: {config['docean:k8s_version']}")
 
         # Kubernetes regions
         k8s_regions_json_str, _ = external_process.run(do_cli.get_kubernetes_regions_json())
         k8s_regions_json = json.loads(k8s_regions_json_str)
-        default_region = defaults['digitalocean:region'] or k8s_regions_json[-1]['slug']
+        default_region = defaults['docean:region'] or k8s_regions_json[-1]['slug']
 
         print('Supported Regions:')
         for item in k8s_regions_json:
             print(f"  {item['name']}: {item['slug']}")
-        config['digitalocean:region'] = input(f'Region [{default_region}]: ').strip() or default_region
-        print(f"Region: {config['digitalocean:region']}")
+        config['docean:region'] = input(f'Region [{default_region}]: ').strip() or default_region
+        print(f"Region: {config['docean:region']}")
 
         # Kubernetes instance size
         k8s_sizes_json_str, _ = external_process.run(do_cli.get_kubernetes_instance_sizes_json())
         k8s_sizes_json = json.loads(k8s_sizes_json_str)
         k8s_sizes_slugs = [size['slug'] for size in k8s_sizes_json]
-        default_size = defaults['digitalocean:instance_size'] or 's-2vcpu-4gb'
+        default_size = defaults['docean:instance_size'] or 's-2vcpu-4gb'
 
         print('Supported Instance Sizes:')
         for slug in k8s_sizes_slugs:
             print(f'  {slug}')
 
-        config['digitalocean:instance_size'] = input(f'Instance size [{default_size}]: ').strip() or default_size
-        print(f"Instance size: {config['digitalocean:instance_size']}")
+        config['docean:instance_size'] = input(f'Instance size [{default_size}]: ').strip() or default_size
+        print(f"Instance size: {config['docean:instance_size']}")
 
         # Kubernetes instance count
-        default_node_count = defaults['digitalocean:node_count'] or 3
-        while 'digitalocean:node_count' not in config:
+        default_node_count = defaults['docean:node_count'] or 3
+        while 'docean:node_count' not in config:
             node_count = input('Node count for Kubernetes cluster '
                                f'[{default_node_count}]: ').strip() or default_node_count
             if type(node_count) == int or node_count.isdigit():
-                config['digitalocean:node_count'] = int(node_count)
-        print(f"Node count: {config['digitalocean:node_count']}")
+                config['docean:node_count'] = int(node_count)
+        print(f"Node count: {config['docean:node_count']}")
 
         return config
 
@@ -217,16 +217,16 @@ class DigitalOceanProvider(Provider):
             return env_config['DIGITALOCEAN_TOKEN']
 
         # We were given a reference to a StackConfigParser object
-        if 'config' in stack_config and 'digitalocean:token' in stack_config['config']:
-            return stack_config['config']['digitalocean:token']
+        if 'config' in stack_config and 'docean:token' in stack_config['config']:
+            return stack_config['config']['docean:token']
 
         # We were given a reference to a Pulumi Stack configuration
-        if 'digitalocean:token' in stack_config:
-            return stack_config['digitalocean:token'].value
+        if 'docean:token' in stack_config:
+            return stack_config['docean:token'].value
 
         # Otherwise
         msg = 'When using the Digital Ocean provider, an API token must be specified - ' \
-              'this token can be specified with the Pulumi config parameter digitalocean:token ' \
+              'this token can be specified with the Pulumi config parameter docean:token ' \
               'or the environment variable DIGITALOCEAN_TOKEN'
         raise InvalidConfigurationException(msg)
 

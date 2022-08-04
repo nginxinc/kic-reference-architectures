@@ -5,7 +5,7 @@ import pulumi_digitalocean as docean
 
 from kic_util import external_process
 
-config = pulumi.Config('digitalocean')
+config = pulumi.Config('docean')
 # valid values: starter, basic, professional
 subscription_tier = config.get('container_registry_subscription_tier')
 if not subscription_tier:

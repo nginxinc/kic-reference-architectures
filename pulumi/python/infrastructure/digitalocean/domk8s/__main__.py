@@ -5,14 +5,14 @@ from pulumi_digitalocean import KubernetesCluster, KubernetesClusterNodePoolArgs
 
 from kic_util import pulumi_config
 # Configuration details for the K8 cluster
-config = pulumi.Config('digitalocean')
+config = pulumi.Config('docean')
 instance_size = config.get('instance_size')
 if not instance_size:
-    instance_size = 's-2vcpu-4gb'
+    instance_size = 's-4vcpu-8gb'
 region = config.get('region')
 if not region:
     region = 'sfo3'
-node_count = config.get('node_count')
+node_count = config.get_int('node_count')
 if not node_count:
     node_count = 3
 k8s_version = config.get('k8s_version')
@@ -41,7 +41,7 @@ cluster = KubernetesCluster(resource_name=resource_name,
                             node_pool=KubernetesClusterNodePoolArgs(
                                 name=pool_name,
                                 size=instance_size,
-                                node_count=node_count,
+                                node_count=node_count
                             ))
 
 kubeconfig = cluster.kube_configs[0].raw_config
