@@ -28,9 +28,14 @@ ip = ns_stack_ref.require_output('lb_ingress').apply(extract_ip_address)
 config = pulumi.Config('kic-helm')
 fqdn = config.require('fqdn')
 
-ingress_domain = docean.Domain.get(resource_name='ingress-domain', id=fqdn, name=fqdn)
+#
+# Split our hostname off the domain name to build the DNS records
+#
+hostname, domainname = fqdn.split('.',1)
+
+ingress_domain = docean.Domain.get(resource_name='ingress-domain', id=domainname, name=domainname)
 ingress_a_record = docean.DnsRecord(resource_name='ingress-a-record',
-                                    name='@',
+                                    name=hostname,
                                     domain=ingress_domain.id,
                                     type="A",
                                     ttl=1800,

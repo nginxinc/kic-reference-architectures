@@ -363,22 +363,11 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                            )],
                                        ))
 
-# We use the kubernetes namespace for this
-config = pulumi.Config('kubernetes')
-infra_type = config.require('infra_type')
-if infra_type == 'AWS':
-    application_url = sirius_host.apply(lambda host: f'https://{host}')
-    pulumi.export('application_url', application_url)
-elif infra_type == 'kubeconfig':
-    pulumi.export('hostname', lb_ingress_hostname)
-    pulumi.export('ipaddress', lb_ingress_ip)
-    # pulumi.export('application_url', f'https://{lb_ingress_hostname}')
-    application_url = sirius_host.apply(lambda host: f'https://{host}')
-elif infra_type == 'DO':
-    pulumi.export('hostname', lb_ingress_hostname)
-    pulumi.export('ipaddress', lb_ingress_ip)
-    # pulumi.export('application_url', f'https://{lb_ingress_hostname}')
-    application_url = sirius_host.apply(lambda host: f'https://{host}')
+#
+# Get the hostname for our connect URL
+#
+application_url = sirius_host.apply(lambda host: f'https://{host}')
+pulumi.export('application_url', application_url)
 
 #
 # Get the chart values for both monitoring charts, switch back to the Sirius

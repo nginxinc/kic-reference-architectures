@@ -324,13 +324,13 @@ config:
   # Digital Ocean Managed Kubernetes and Container Registry
   ############################################################################
   # This is the Kubernetes version to install using Digital Ocean K8s.
-  digitalocean:k8s_version: 1.22.8-do.1
+  docean:k8s_version: 1.22.12-do.0
   # This is the default instance type used by Digital Ocean K8s.
-  digitalocean:instance_size: s-2vcpu-4gb
+  docean:instance_size: s-4vcpu-8gb
   # The desired node count of the Digital Ocean K8s cluster.
-  digitalocean:node_count: 3
+  docean:node_count: 3
   # The region to deploy the cluster
-  digitalocean:region: sfo3
+  docean:region: sfo3
   # Subscription tier for container registry
   digitalocean:container_registry_subscription_tier: starter
 
