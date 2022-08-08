@@ -15,18 +15,16 @@ pipeline {
   }
 
   /*
-  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
-  * open source IC.
-  *
-  * The POSTRUN_CMD is used to execute an arbitrary command following the cleanup process; this is just a work-around
-  * for the time being and will be addressed in the future.
-  */
+   * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
+   * open source IC.
+   */
 
  environment {
         NGINX_JWT           = credentials('NGINX_JWT')
-        POSTRUN_CMD         = credentials('POSTRUN_CMD')
         PULUMI_ACCESS_TOKEN = credentials('PULUMI_ACCESS_TOKEN')
         NO_COLOR            = "TRUE"
+        MARA_PASSWORD       = credentials('MARA_PASSWORD')
+
     }
 
   stages {
@@ -79,24 +77,11 @@ pipeline {
       steps {
 
         /*
-         * Run a find and check for any stacks that currently exist with our generated stack name; this should not
-         * happen in normal operation, but could potentially happen if things break so better safe than sorry.
-         *
-         * This function also tries to remove both K3S and Microk8s if they are found on the host; this is because we
-         * will be installing K3S and we want to both make sure we are removing any previous installations as well as
-         * ensuring this Jenkins Agent does not already have a microk8s installation on it.
+         * Any pre-run cleanup can be put here...
          */
 
           sh '''
-            # Reset our K3S Environment
-            /usr/local/bin/k3s-killall.sh || true
-            /usr/local/bin/k3s-uninstall.sh || true
-            # Reset our Microk8s Environment; true if it’s not there
-            microk8s reset --destroy-storage || true
-            # True if it’s not there…
-            sudo snap remove microk8s || true
-            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
+            true
             '''
       }
     }
@@ -157,20 +142,24 @@ pipeline {
          */
 
           sh '''
-            echo "PULUMI_STACK=marajenk${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
-            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenk${BUILD_NUMBER} -C pulumi/python/config
-            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenk${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenks${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenk${BUILD_NUMBER}
+            echo "PULUMI_STACK=marajenkk3s${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
+           $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkk3s${BUILD_NUMBER} -C pulumi/python/config
+           $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkk3s${BUILD_NUMBER} -C pulumi/python/kubernetes/secrets
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkk3s${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "default" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenkk3s${BUILD_NUMBER}
+           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkk3s${BUILD_NUMBER}
             '''
       }
     }
@@ -202,10 +191,10 @@ pipeline {
 
       steps {
           sh '''
-            PATH=$WORKSPACE/pulumi/python/venv/bin:$PATH $WORKSPACE/bin/destroy.sh
+            $WORKSPACE/bin/destroy.sh
             /usr/local/bin/k3s-killall.sh || true
             /usr/local/bin/k3s-uninstall.sh || true
-            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenk${BUILD_NUMBER} --force --yes \\;
+            find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenkk3s${BUILD_NUMBER} --force --yes \\;
             '''
       }
     }
@@ -227,7 +216,7 @@ pipeline {
             # Reset our K3S Environment
             /usr/local/bin/k3s-killall.sh || true
             /usr/local/bin/k3s-uninstall.sh || true
-            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenk${BUILD_NUMBER}  --force --yes  \\;
+            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkk3s${BUILD_NUMBER}  --force --yes  \\;
             '''
     }
   }

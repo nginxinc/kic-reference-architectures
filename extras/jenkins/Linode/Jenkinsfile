@@ -14,16 +14,14 @@ pipeline {
  /*
   * The Linode token is passed into the process via a credential in Jenkins. If this is not found the
   * process will fail out.
-  *
-  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
-  * open source IC.
   */
 
  environment {
         LINODE_TOKEN           = credentials('LINODE_TOKEN')
-        NGINX_JWT              = credentials('NGINX_JWT')
         NO_COLOR               = "TRUE"
         PULUMI_ACCESS_TOKEN    = credentials('PULUMI_ACCESS_TOKEN')
+        MARA_PASSWORD          = credentials('MARA_PASSWORD')
+
     }
   stages {
 
@@ -114,23 +112,37 @@ pipeline {
          * of the manual deployment if required.
          *
          * This will likely evolve further as the project does, and we may reach a point where these defaults are assumed
-         * for a given development type.
+         * for a given development type.  kubernetes:cluster_name
          */
 
         sh '''
           echo "PULUMI_STACK=marajenklke${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
           echo "LINODE_TOKEN=${LINODE_TOKEN}" >> $WORKSPACE/config/pulumi/environment
           $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenklke${BUILD_NUMBER} -C pulumi/python/config
-          $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenklke${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+          $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenklke${BUILD_NUMBER} -C pulumi/python/kubernetes/secrets
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenks${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
-          $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "DO" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "lke" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "marajenklke${BUILD_NUMBER}" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
-          $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:harbor_db_password "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:harbor_password "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:harbor_sudo_user_password "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:instance_type "g6-standard-8" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:k8s_ha "true" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:k8s_version "1.23" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:node_count "3" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:region "us-central" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:soa_email "qdzlug@gmail.com" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set linode:token "${LINODE_TOKEN}" --plaintext -C pulumi/python/config -s marajenklke${BUILD_NUMBER}
            '''
 
@@ -140,14 +152,8 @@ pipeline {
     stage('Deploying Pulumi') {
       steps {
 
-        /*
-         * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
-         * the MARA deployment in Linode.
-         */
-
         sh '''
-          echo $NGINX_JWT > $WORKSPACE/extras/jwt.token
-          $WORKSPACE/bin/start_lke.sh
+          $WORKSPACE/pulumi/python/runner -p linode up
            '''
       }
     }
@@ -164,7 +170,7 @@ pipeline {
          */
 
         sh '''
-          PATH=$WORKSPACE/pulumi/python/venv/bin:$PATH $WORKSPACE/bin/destroy.sh
+          $WORKSPACE/pulumi/python/runner -p linode destroy
           find $WORKSPACE -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir pulumi stack rm marajenklke${BUILD_NUMBER} --force --yes \\;
            '''
       }
@@ -181,7 +187,8 @@ pipeline {
 
           sh '''
             # Destroy our partial build...
-            $WORKSPACE/bin/destroy.sh || true
+            $WORKSPACE/pulumi/python/runner -p linode destroy|| true
+            # Clean up the Pulumi stack
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenklke${BUILD_NUMBER}  --force --yes  \\;
              '''
     }
