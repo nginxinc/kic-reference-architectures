@@ -30,6 +30,15 @@ def project_name_from_kubernetes_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
+#
+# This is just used for the kubernetes config deploy....
+#
+# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
+#
+def pulumi_repo_ingress_project_name():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller-repo-only')
+    return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -97,14 +106,37 @@ pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
 #
-# We use the hostanme to set the value for our FQDN, which drives the cert
-# process as well.
+# This logic is used to manage the kubeconfig deployments, since that uses a slightly
+# different logic path than the mainline. This will be removed once the kubeconfig deploys
+# are moved to the Pulumi Automation API.
 #
-ingress_project_name = pulumi_ingress_project_name()
-ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
-ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
-lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
-sirius_host = lb_ingress_hostname
+# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
+#
+
+config = pulumi.Config('kubernetes')
+infra_type = config.require('infra_type')
+
+if infra_type == 'kubeconfig':
+    # Logic to extract the FQDN of the load balancer for Ingress
+    ingress_project_name = pulumi_repo_ingress_project_name()
+    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+    # Set back to kubernetes
+    config = pulumi.Config('kubernetes')
+    lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
+    sirius_host = lb_ingress_hostname
+else:
+    #
+    # We use the hostname to set the value for our FQDN, which drives the cert
+    # process as well.
+    #
+    ingress_project_name = pulumi_ingress_project_name()
+    ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
+    ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
+    lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+    sirius_host = lb_ingress_hostname
+
 
 # Create the namespace for Bank of Sirius
 ns = k8s.core.v1.Namespace(resource_name='bos',
@@ -364,10 +396,23 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                        ))
 
 #
-# Get the hostname for our connect URL
+# Get the hostname for our connect URL; this logic will be collapsed once the kubeconfig
+# deployments are moved over to the automation api. Until then, we have to use a different
+# process.
 #
-application_url = sirius_host.apply(lambda host: f'https://{host}')
-pulumi.export('application_url', application_url)
+# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
+#
+
+config = pulumi.Config('kubernetes')
+infra_type = config.require('infra_type')
+if infra_type == 'kubeconfig':
+    pulumi.export('hostname', lb_ingress_hostname)
+    pulumi.export('ipaddress', lb_ingress_ip)
+    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
+    application_url = sirius_host.apply(lambda host: f'https://{host}')
+else:
+    application_url = sirius_host.apply(lambda host: f'https://{host}')
+    pulumi.export('application_url', application_url)
 
 #
 # Get the chart values for both monitoring charts, switch back to the Sirius
