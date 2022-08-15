@@ -20,24 +20,24 @@ includes the following:
 
 All of these configurations use Pulumi code within Python as the Infrastructure as Code (IaaC) provider.
 
-| K8 Provider     | Tested / Deploy Status                                                                                 | Infrastructure Support      | IC Options                      | FQDN/IP         | Notes                                            |
-|-----------------|--------------------------------------------------------------------------------------------------------|-----------------------------|---------------------------------|-----------------|--------------------------------------------------|
-| AWS EKS         | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_aws_prod&subject=Deploy)      | Full Infrastructure Standup | Build, Pull (uses ECR)          | Provided        |                                                  |
-| Azure AKS       | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Digtal Ocean    | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_do_prod&subject=Deploy)       | Full Infrastructure Standup | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Google GKE      | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Harvester/RKE2  | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
-| K3S             | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_k3s_prod&subject=Deploy)      | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Linode          | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_lke_prod&subject=Deploy)      | Full Infrastructure Standup | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| MicroK8s        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=Deploy)     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
-| Minikube        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Deploy) | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) |                                                  |
-| Rancher Desktop | No                                                                                                     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1) | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| K8 Provider     | Tested / Deploy Status                                                                                 | Infrastructure Support      | IC Options                        | FQDN/IP         | Notes                                            |
+|-----------------|--------------------------------------------------------------------------------------------------------|-----------------------------|-----------------------------------|-----------------|--------------------------------------------------|
+| AWS EKS         | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_aws_prod&subject=Deploy)      | Full Infrastructure Standup | Build, Pull (uses ECR)            | Provided        |                                                  |
+| Azure AKS       | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) |                                                  |
+| Digtal Ocean    | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_do_prod&subject=Deploy)       | Full Infrastructure Standup | Build, Pull (Uses DO Registry)    | Provided        | Requires DNS delegation to DO                    |
+| Google GKE      | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) |                                                  |
+| Harvester/RKE2  | Yes                                                                                                    | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
+| K3S             | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_k3s_prod&subject=Deploy)      | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) |                                                  |
+| Linode          | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_lke_prod&subject=Deploy)      | Full Infrastructure Standup | Build, Pull (uses Harbor install) | Provided        |                                                  |
+| MicroK8s        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=Deploy)     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) | Storage, DNS, and Metallb need to be Enabled (4) |
+| Minikube        | ![Deploy Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Deploy) | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) |                                                  |
+| Rancher Desktop | No                                                                                                     | Kubeconfig Only (3)         | NGINX / NGINX Plus (w/ JWT) (1)   | Manual FQDN (2) | Needs Storage, K8 LoadBalancer                   |
 
 ### Notes:
 
 1. The NGINX IC build/deploy process is currently under active development and support for IC will be standardized
    across all providers. Follow [#81](https://github.com/nginxinc/kic-reference-architectures/issues/81) and
-   [#86](https://github.com/nginxinc/kic-reference-architectures/issues/86) for details. Currently, for all non-AWS
+   [#86](https://github.com/nginxinc/kic-reference-architectures/issues/86) for details. Currently, for all `kubeconfig`
    environments you have the option to specify either NGINX or NGINX Plus as your IC. The latter does require an active
    subscription and a JWT to be included at build time. Please see the documentation for more details.
 2. The process via which the IP and FQDN are created and used is currently under active development, and will be

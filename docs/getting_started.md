@@ -93,7 +93,7 @@ deploy the NGINX IC or the NGINX Plus IC (with a JWT from your F5 account)
 #### Kubernetes
 
 Although not required, installing the [CLI tool `kubectl`](https://kubernetes.io/docs/tasks/tools/)
-will allow you to interact with the Kubernetes cluster that you have stood up using this project. This 
+will allow you to interact with the Kubernetes cluster that you have stood up using this project. This
 tool is also installed as part of the venv that is created and can be used from that directory.
 
 #### Setup
@@ -116,6 +116,15 @@ other environment variables into the current shell.
 
 ## Post Install Configuration
 
+### Stack Name
+
+For AWS, Linode, or Digital Ocean deployments you will need to add the variable `PULUMI_STACK_NAME` to the environment
+file for the deployment at [`../config/pulumi/environment`](../config/pulumi/environment). This is the name that will
+be used for the provisioned Pulumi stack.
+
+If you are running a `kubeconfig` deployment, the process will prompt you for the value of `PULUMI_STACK_NAME` and
+update the environment file for you.
+
 ### Kubeconfig
 
 If you are using an existing kubernetes installation for this project, you will need to provide three pieces of
@@ -128,56 +137,67 @@ information to the installer:
 The easiest way to test this is to run the command:
 `kubectl --kubeconfig="yourconfig" --cluster="yourcluster" --context="yourcontext"`
 
-Once you have verified you can connect to the cluster you will need to test to make sure your cluster supports the
-minimum required capabilities for MARA. You can test this by running the [`./bin/testcap.sh`](../bin/testcap.sh)
-script.
-
-This script does several things:
-
-1. Creates a namespace
-2. Creates a persistent volume claim
-3. Deploys a pod to test the persistent volume
-4. Writes to the persistent volume
-5. Reads from the persistent volume
-6. Destroys the pod
-7. Destroys the persistent volume
-8. Deploys a service and attempts to provision a `LoadBalancer` to obtain an egress IP address
-9. Destroys the service
-10. Destroys the namespace
-
-If any of these tests fails the script exits with notes on the failure. These failures need to be remediated before MARA
-can be installed.
-
-There are several utilities under the `./pulumi/python/tools` directory that are intended for use to add the necessary
-capabilities to a Kubernetes cluster. Note that these are not extensively tested with MARA, but are included for
-convenience. Please see the [README.md](../pulumi/python/tools/README.md) in that directory for additional information.
-Note that these tools can be installed via the [kubernetes-extras.sh](../bin/kubernetes-extras.sh)
-script.
-
 ### AWS
+
+*Note:* The AWS deployment has been updated from v1.1 and no longer uses the [`../bin/start.sh`](../bin/start.sh)
+script for deployment. If you attempt to use the script to deploy to AWS you will receive an error message. Please
+use the new [`../pulumi/python/runner`](../pulumi/python/runner) program for these deployments.
 
 If you are using AWS as your infrastructure provider
 [configuring Pulumi for AWS](https://www.pulumi.com/docs/intro/cloud-providers/aws/setup/)
 is necessary. If you already have run the [`./bin/setup_venv.sh`](../bin/setup_venv.sh)
-script, you will have the `aws` CLI tool installed in the path `./pulumi/python/venv/bin/aws`
+script, you will have the `aws` CLI tool installed in the path `../pulumi/python/venv/bin/aws`
 and you do not need to install it to run the steps in the Pulumi Guide.
 
 If you want to avoid using environment variables, AWS profile and region definitions can be contained in
-the `config/Pulumi.<stack>.yaml`
-files in each project. Refer to the Pulumi documentation for details on how to do this. When you run the
-script [`./bin/start.sh`](../bin/start.sh) and select an AWS installation, you will be prompted to add the AWS region
-and profile values that will then be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration
-file for the project, although there are two other configuration files kept for the application standup and the
-kubernetes extras functionality. For more details on those, please see the README.md in those directories.
+the `config/Pulumi.<stack>.yaml` files in each project. Refer to the Pulumi documentation for details on how to do this.
+When you run the [`../pulumi/python/runnner`](../pulumi/python/runner) program and select your provider you will be
+prompted for all variables necessary to use that provider along with MARA specific variables. This information will
+be added to the `../config/Pulumi/Pulumi.<stack>.yaml` configuration file. This is the main configuration file for the
+project, although there is one other configuration file used to maintain secrets in the
+[`../pulumi/python/kubernetes/secrets`](./pulumi/python/kubernetes/secrets) kubernetes extras functionality.
+For more details on those, please see the README.md in those directories.
 
 ### Digital Ocean
 
+*Note:* The Digital Ocean deployment has been updated from v1.1 and no longer uses the
+[`../bin/start.sh`](../bin/start.sh) script for deployment. If you attempt to use the script to deploy to AWS you will
+receive an error message. Please use the new [`../pulumi/python/runner`](../pulumi/python/runner) program for these
+deployments.
+
 You will need to create a
 [Digital Ocean Personal API Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/)
-for authentication to Digital Ocean. When you run the script [`./bin/start.sh`](../bin/start.sh) and select a Digital
-Ocean deployment, your token will be added to the `./config/Pulumi/Pulumi.<stack>.yaml`. This is the main configuration
-file for the project, although there are two other configuration files kept for the application standup and the
-kubernetes extras functionality. For more details on those, please see the README.md in those directories.
+for authentication to Digital Ocean. When you run the [`./pulumi/python/runnner`](./pulumi/python/runner) program and
+select your provider you will be prompted for all variables necessary to use that provider along with MARA specific
+variables. This information will be added to the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file. This is the
+main configuration file for the project, although there is one other configuration file used to maintain secrets in the
+[`./pulumi/python/kubernetes/secrets`](./pulumi/python/kubernetes/secrets) kubernetes extras functionality.
+For more details on those, please see the README.md in those directories.
+
+### Linode
+
+*Note:* The Linode deployment has been updated from v1.1 and no longer uses the [`../bin/start.sh`](../bin/start.sh)
+script for deployment. If you attempt to use the script to deploy to AWS you will receive an error message. Please
+use the new [`../pulumi/python/runner`](../pulumi/python/runner) program for these deployments.
+
+You will need to create a
+[Linode API Token](https://www.linode.com/docs/products/tools/linode-api/guides/get-access-token/) for authentication
+to Linode. When you run the [`./pulumi/python/runnner`](./pulumi/python/runner) program and
+select your provider you will be prompted for all variables necessary to use that provider along with MARA specific
+variables. This information will be added to the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file. This is the
+main configuration file for the project, although there is one other configuration file used to maintain secrets in the
+[`./pulumi/python/kubernetes/secrets`](./pulumi/python/kubernetes/secrets) kubernetes extras functionality.
+For more details on those, please see the README.md in those directories.
+
+### Kubeconfig Deployments: MicroK8s / Minikube / K3s / Other
+
+Deployments that use a `kubeconfig` file to access an existing K8 installation will continue to use the
+[`../bin/start.sh`](../bin/start.sh) script. Additionally, these deployments are not able to build the Ingress
+Controller and instead need to download from the NGINX repositories. The installation of NGINX+ is supported via the
+use of a JWT, if desired.
+
+These deployments will be moved over to use the [`../pulumi/python/runner`](../pulumi/python/runner) program in a
+future release, which will bring them to parity for NGINX IC build/deployment with the other infrastructures.
 
 ### Pulumi
 
@@ -190,18 +210,17 @@ Pulumi documentation for additional details regarding the command and alternativ
 
 ## Running the Project
 
-The easiest way to run the project is to run [`start.sh`](../bin/start.sh)
-after you have completed the installation steps. When doing so, be sure to choose the same
-[Pulumi stack name](https://www.pulumi.com/docs/intro/concepts/stack/)
-for all of your projects. Additionally, this script will prompt you for infrastructure specific configuration values.
-This information will be used to populate the `./config/pulumi/Pulumi.<stack>.yaml` file.
+Provided you have completed the installation steps, the easiest way to run the project is to run
+[`../pulumi/python/runner`](../pulumi/python/runner) for AWS, Linode, or Digital Ocean and
+[`../bin/start.sh`](../bin/start.sh) for `kubeconfig` deployments. This process will prompt you for all required
+variables for your deployment type. This information will be used to populate the configuration files.
 
 Alternatively, you can enter into each Pulumi project directory and execute each project independently by doing
 `pulumi up`. Take a look at `start.sh` and dependent scripts to get a feel for the flow.
 
-If you want to destroy the entire environment you can run [`destroy.sh`](../bin/destroy.sh). This script calls the
-correct destroy script based on the information stored in the `./config/Pulumi/Pulumi.<stack>.yaml` configuration file.
-Detailed information and warnings are emitted by the script as it runs.
+If you want to destroy the entire environment you can run [`../pulumi/python/runner`](../pulumi/python/runner) for AWS,
+Linode, or Digital Ocean or [`destroy.sh`](../bin/destroy.sh) for `kubeconfig` deployments.
+Detailed information and warnings are emitted by the process as it runs.
 
 ### Running the Project in a Docker Container
 
@@ -257,6 +276,13 @@ these tools.
 ### Cleaning Up
 
 If you want to completely remove all the resources you have provisioned, run the
-script: [`./bin/destroy.sh`](../bin/destroy.sh).
+[`../pulumi/python/runner`](../pulumi/python/runner) for AWS, Linode, or Digital Ocean or
+[`destroy.sh`](../bin/destroy.sh) for `kubeconfig` deployments. Detailed information and warnings are emitted by the
+process as it runs.
 
 Be careful because this will **DELETE ALL** the resources you have provisioned.
+
+## Other Resources
+Starting with release `v1.1`, the MARA project has begun the process of transitioning the deployment logic away from 
+BASH scripts and instead using the [Pulumi Automation API](https://www.pulumi.com/docs/guides/automation-api/) with
+Python. For more information on this, please see this [Design Document](../pulumi/python/automation/DESIGN.md). 
