@@ -107,7 +107,7 @@ pipeline {
             curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64  && chmod +x minikube
             mkdir -p /usr/local/bin/
             install minikube /usr/local/bin/
-            minikube start --vm-driver=docker --force
+            minikube start --vm-driver=docker --force --cpus 4 --memory 30000
             '''
       }
     }
