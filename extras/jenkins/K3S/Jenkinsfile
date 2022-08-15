@@ -97,7 +97,7 @@ pipeline {
       steps {
           sh '''
             # Is this super safe? No, but we’re going to roll with it for now.
-            curl -sfL https://get.k3s.io |  INSTALL_K3S_EXEC="--disable=traefik" sh -
+            curl -sfL https://get.k3s.io |  INSTALL_K3S_EXEC="--disable=traefik" INSTALL_K3S_VERSION="v1.23.9+k3s1" sh -
             '''
       }
     }
