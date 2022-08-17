@@ -196,6 +196,8 @@ pip3 install pipenv
 # Install certain utility packages like `nodeenv` and `wheel` that aid
 # in the installation of other build tools and dependencies
 # required by the other python packages.
+pip3 install wheel
+
 # `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
 PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --dev
 
