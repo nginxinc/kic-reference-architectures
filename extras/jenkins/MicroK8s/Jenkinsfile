@@ -160,11 +160,11 @@ pipeline {
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "Zf4dabEA" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "Zf4dabEA" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "Zf4dabEA" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
              '''
       }
     }
