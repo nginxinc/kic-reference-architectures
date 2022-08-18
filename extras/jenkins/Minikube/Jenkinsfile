@@ -105,7 +105,7 @@ pipeline {
             curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64  && chmod +x minikube
             mkdir -p /usr/local/bin/
             install minikube /usr/local/bin/
-            minikube start --vm-driver=docker --force --cpus 4 --memory 30000
+            minikube start --vm-driver=docker --force --cpus 4 --memory 30000 --kubernetes-version=v1.23.9
             '''
       }
     }
@@ -164,7 +164,7 @@ _EOF_
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmkube${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmkube${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
