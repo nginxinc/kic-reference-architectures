@@ -72,6 +72,7 @@ FLAGS:
     -d, --debug        Enable debug output on all of the commands executed
     -b, --banner-type= Banner type to indicate which project is being executed (e.g. {', '.join(BANNER_TYPES)})
     -h, --help         Prints help information
+    -s, --stack        Specifies the Pulumi stack to use
     -p, --provider=    Specifies the provider used (e.g. {', '.join(PROVIDERS)})
 
 OPERATIONS:
@@ -98,8 +99,8 @@ def main():
     """Entrypoint to application"""
 
     try:
-        shortopts = 'hdp:b:' # single character options available
-        longopts = ["help", 'debug', 'banner-type', 'provider='] # long form options
+        shortopts = 'hds:p:b:' # single character options available
+        longopts = ["help", 'debug', 'banner-type', 'stack=','provider='] # long form options
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
         RUNNER_LOG.error(err)
@@ -107,6 +108,7 @@ def main():
         sys.exit(2)
 
     provider_name: Optional[str] = None
+    stack_name: Optional[str] = None
 
     global debug_on
 
@@ -118,6 +120,9 @@ def main():
         elif opt in ('-p', '--provider'):
             if value.lower() != 'none':
                 provider_name = value.lower()
+        elif opt in ('-s', '--stack'):
+            if value.lower() != 'none':
+                stack_name = value.lower()
         elif opt in ('-d', '--debug'):
             debug_on = True
         elif opt in ('-b', '--banner-type'):
@@ -162,6 +167,11 @@ def main():
     provider = provider_instance(provider_name.lower())
     RUNNER_LOG.debug('Using [%s] infrastructure provider', provider.infra_type())
 
+    # Now validate the stack name
+    if not stack_name or stack_name.strip() == '':
+        RUNNER_LOG.error('No Pulumi stack specified - Pulumi stack is a required argument')
+        sys.exit(2)
+
     # We execute the operation requested - different operations have different pre-requirements, so they are matched
     # differently. Like show-execution does not require reading the configuration files, so we just look for a match
     # for it right away, and if matched, we run and exit.
@@ -170,19 +180,43 @@ def main():
         provider.display_execution_order(output=sys.stdout)
         sys.exit(0)
 
-    # For the other operations, we need the configuration files parsed, so we do the parsing upfront.
-
+    # We parse the environment file up front in order to have the necessary values required by this program.
+    # The logic around the PULUMI_STACK accounts for three scenarios:
+    #
+    # 1. If there is no environment file, the argument given on the CLI is used and added to the environment file.
+    # 2. If there is a difference between the CLI and the environment file, the environment file value is used.
+    # 3. If there is an environment file with no PULUMI_STACK, the environment file is appended with the argument.
     try:
         env_config = env_config_parser.read()
     except FileNotFoundError as e:
-        msg = 'Environment configuration file not found. This file must exist at the path: %s'
-        RUNNER_LOG.error(msg, e.filename)
-        sys.exit(2)
-
-    if env_config.stack_name():
-        stack_config = read_stack_config(provider=provider, env_config=env_config)
+        msg = 'Environment configuration file not found. Creating new file at the path: %s'
+        # If we do not have an environment file, we create one and add the pulumi_stack
+        with open(e.filename, 'w') as f:
+            print("PULUMI_STACK=" + stack_name, file=f)
+            RUNNER_LOG.error(msg, e.filename)
+            try:
+                env_config = env_config_parser.read()
+                stack_config = read_stack_config(provider=provider, env_config=env_config)
+            except:
+                RUNNER_LOG.error("Unable to build configuration file")
+                sys.exit(2)
     else:
-        stack_config = None
+        if env_config.stack_name():
+            if env_config.stack_name() != stack_name:
+                msg = 'Stack %s given on CLI but Stack %s is in env file; using env file value '
+                RUNNER_LOG.error(msg, env_config.stack_name(), stack_name)
+            stack_config = read_stack_config(provider=provider, env_config=env_config)
+        else:
+            msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
+            with open(e.filename, 'a') as f:
+                print("PULUMI_STACK=" + stack_name, file=f)
+                RUNNER_LOG.error(msg, e.filename)
+                try:
+                    env_config = env_config_parser.read()
+                    stack_config = read_stack_config(provider=provider, env_config=env_config)
+                except:
+                    RUNNER_LOG.error("Unable to append to configuration file")
+                    sys.exit(2)
 
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
