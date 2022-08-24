@@ -62,6 +62,7 @@ debug_on = False
 # Use he script name as invoked rather than hard coding it
 script_name = os.path.basename(sys.argv[0])
 
+
 def usage():
     usage_text = f"""Modern Application Reference Architecture (MARA) Runner
 
@@ -95,12 +96,36 @@ def provider_instance(provider_name: str) -> Provider:
     return module.INSTANCE
 
 
+def write_env(env_config):
+    """Create a new environment file and write our stack to it"""
+    with open(env_config.filename, 'w') as f:
+        try:
+            print("PULUMI_STACK=" + stack_name, file=f)
+            msg = 'Environment configuration file not found. Creating new file at the path: %s'
+            RUNNER_LOG.error(msg, env_config.filename)
+        except:
+            RUNNER_LOG.error("Unable to build configuration file")
+            sys.exit(2)
+
+
+def append_env(env_config):
+    """Append our stack to the existing environment file"""
+    with open(env_config.filename, 'a') as f:
+        try:
+            msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
+            print("PULUMI_STACK=" + stack_name, file=f)
+            RUNNER_LOG.error(msg, env_config.filename)
+        except:
+            RUNNER_LOG.error("Unable to append to configuration file")
+            sys.exit(2)
+
+
 def main():
     """Entrypoint to application"""
 
     try:
-        shortopts = 'hds:p:b:' # single character options available
-        longopts = ["help", 'debug', 'banner-type', 'stack=','provider='] # long form options
+        shortopts = 'hds:p:b:'  # single character options available
+        longopts = ["help", 'debug', 'banner-type', 'stack=', 'provider=']  # long form options
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
         RUNNER_LOG.error(err)
@@ -189,34 +214,19 @@ def main():
     try:
         env_config = env_config_parser.read()
     except FileNotFoundError as e:
-        msg = 'Environment configuration file not found. Creating new file at the path: %s'
-        # If we do not have an environment file, we create one and add the pulumi_stack
-        with open(e.filename, 'w') as f:
-            print("PULUMI_STACK=" + stack_name, file=f)
-            RUNNER_LOG.error(msg, e.filename)
-            try:
-                env_config = env_config_parser.read()
-                stack_config = read_stack_config(provider=provider, env_config=env_config)
-            except:
-                RUNNER_LOG.error("Unable to build configuration file")
-                sys.exit(2)
+        write_env(e)
+        env_config = env_config_parser.read()
+        stack_config = read_stack_config(provider=provider, env_config=env_config)
     else:
-        if env_config.stack_name():
-            if env_config.stack_name() != stack_name:
-                msg = 'Stack %s given on CLI but Stack %s is in env file; using env file value '
-                RUNNER_LOG.error(msg, env_config.stack_name(), stack_name)
-            stack_config = read_stack_config(provider=provider, env_config=env_config)
+        stack_config = read_stack_config(provider=provider, env_config=env_config)
+        if env_config.stack_name() != stack_name:
+            msg = 'Stack "%s" given on CLI but Stack "%s" is in env file; exiting'
+            RUNNER_LOG.error(msg, stack_name, env_config.stack_name())
+            sys.exit(2)
         else:
-            msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
-            with open(e.filename, 'a') as f:
-                print("PULUMI_STACK=" + stack_name, file=f)
-                RUNNER_LOG.error(msg, e.filename)
-                try:
-                    env_config = env_config_parser.read()
-                    stack_config = read_stack_config(provider=provider, env_config=env_config)
-                except:
-                    RUNNER_LOG.error("Unable to append to configuration file")
-                    sys.exit(2)
+            append_env(env_config)
+            stack_config = read_stack_config(provider=provider, env_config=env_config)
+
 
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
@@ -337,6 +347,7 @@ def validate(provider: Provider,
     :param stack_config: reference to stack configuration
     :param verbose: flag to enable verbose output mode
     """
+
     # First, we validate that we have the right tools installed
     def check_path(cmd: str, fail_message: str) -> bool:
         cmd_path = shutil.which(cmd)
