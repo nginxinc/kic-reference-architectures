@@ -13,7 +13,7 @@ most likely be moved as the project matures.
   See [this webpage](https://docs.nginx.com/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret)
   for details and examples.
 - [`jenkins`](./jenkins) This directory contains sample jenkinsfiles. Note that these are not guaranteed to be production
-  ready. These files are named according to the specific type of build they manage; for example, AWS, K3S, MicroK8s, and
+  ready. These files are named according to the specific type of build they manage; for example, AWS, K3S, MicroK8s, Linode, Minikube and
   DO (Digital Ocean). 
 
 ## Notes
