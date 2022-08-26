@@ -11,8 +11,7 @@ use is at your own risk.
 ## Purpose
 
 This directory holds common tools that *may* be required by kubernetes
-installations that do not meet the minimum requirements of MARA as checked by
-the [testcap.sh](../../../bin/testcap.sh) script.
+installations that do not meet the minimum requirements of MARA.
 
 These tools address two main areas:
 
