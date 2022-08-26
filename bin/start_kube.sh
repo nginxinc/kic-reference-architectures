@@ -315,39 +315,39 @@ echo " "
 
 header "Kubeconfig"
 cd "${script_dir}/../pulumi/python/infrastructure/kubeconfig"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Secrets"
 cd "${script_dir}/../pulumi/python/kubernetes/secrets"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Deploying IC"
 cd "${script_dir}/../pulumi/python/kubernetes/nginx/ingress-controller-repo-only"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Logstore"
 cd "${script_dir}/../pulumi/python/kubernetes/logstore"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Logagent"
 cd "${script_dir}/../pulumi/python/kubernetes/logagent"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Cert Manager"
 cd "${script_dir}/../pulumi/python/kubernetes/certmgr"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Prometheus"
 cd "${script_dir}/../pulumi/python/kubernetes/prometheus"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Observability"
 cd "${script_dir}/../pulumi/python/kubernetes/observability"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Bank of Sirius"
 cd "${script_dir}/../pulumi/python/kubernetes/applications/sirius"
-pulumi "$pulumi_args" up
+pulumi "${pulumi_args}" up
 
 header "Finished!!"
 THE_FQDN=$(pulumi config get kic-helm:fqdn -C "${script_dir}"/../pulumi/python/config || echo "Cannot Retrieve")
