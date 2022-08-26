@@ -14,7 +14,6 @@ set up using the bin/setup_venv.sh script.
 """
 
 import getopt
-import getpass
 import importlib
 import importlib.util
 import logging
@@ -42,7 +41,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Root directory of the MARA project
 PROJECT_ROOT = os.path.abspath(os.path.sep.join([SCRIPT_DIR, '..']))
 # Allowed operations - if operation is not in this list, the runner will reject it
-OPERATIONS: List[str] = ['down', 'destroy', 'refresh', 'show-execution', 'up', 'validate', 'list-providers']
+OPERATIONS: List[str] = ['down', 'destroy', 'refresh',
+                         'show-execution', 'up', 'validate', 'list-providers']
 # List of available infrastructure providers - if provider is not in this list, the runner will reject it
 PROVIDERS: typing.Iterable[str] = Provider.list_providers()
 # Types of headings available to show the difference between Pulumi projects
@@ -103,7 +103,7 @@ def write_env(env_config, stack_name):
             print("PULUMI_STACK=" + stack_name, file=f)
             msg = 'Environment configuration file not found. Creating new file at the path: %s'
             RUNNER_LOG.error(msg, env_config.filename)
-        except:
+        except (FileNotFoundError, PermissionError):
             RUNNER_LOG.error("Unable to build configuration file")
             sys.exit(2)
 
@@ -115,7 +115,7 @@ def append_env(env_config, stack_name):
             msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
             print("PULUMI_STACK=" + stack_name, file=f)
             RUNNER_LOG.error(msg)
-        except:
+        except (FileNotFoundError, PermissionError):
             RUNNER_LOG.error("Unable to append to configuration file")
             sys.exit(2)
 
@@ -125,7 +125,8 @@ def main():
 
     try:
         shortopts = 'hds:p:b:'  # single character options available
-        longopts = ["help", 'debug', 'banner-type', 'stack=', 'provider=']  # long form options
+        longopts = ["help", 'debug', 'banner-type',
+                    'stack=', 'provider=']  # long form options
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as err:
         RUNNER_LOG.error(err)
@@ -181,7 +182,8 @@ def main():
 
     # Now validate providers because everything underneath here depends on them
     if not provider_name or provider_name.strip() == '':
-        RUNNER_LOG.error('No provider specified - provider is a required argument')
+        RUNNER_LOG.error(
+            'No provider specified - provider is a required argument')
         sys.exit(2)
     if provider_name not in PROVIDERS:
         RUNNER_LOG.error('Unknown provider specified: %s', provider_name)
@@ -190,11 +192,13 @@ def main():
     setup_loggers()
 
     provider = provider_instance(provider_name.lower())
-    RUNNER_LOG.debug('Using [%s] infrastructure provider', provider.infra_type())
+    RUNNER_LOG.debug(
+        'Using [%s] infrastructure provider', provider.infra_type())
 
     # Now validate the stack name
     if not stack_name or stack_name.strip() == '':
-        RUNNER_LOG.error('No Pulumi stack specified - Pulumi stack is a required argument')
+        RUNNER_LOG.error(
+            'No Pulumi stack specified - Pulumi stack is a required argument')
         sys.exit(2)
 
     # We execute the operation requested - different operations have different pre-requirements, so they are matched
@@ -222,12 +226,12 @@ def main():
         # Found file, if there is no stack we append it
         try:
             env_config = env_config_parser.read()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             sys.exit(2)
-        append_env(env_config,stack_name)
+        append_env(env_config, stack_name)
         env_config = env_config_parser.read()
     elif env_config.stack_name() != stack_name:
-        # 
+        # Found file, but stack name mismatch; bail out
         msg = 'Stack "%s" given on CLI but Stack "%s" is in env file; exiting'
         RUNNER_LOG.error(msg, stack_name, env_config.stack_name())
         sys.exit(2)
@@ -249,7 +253,8 @@ def main():
     elif operation == 'down' or operation == 'destroy':
         pulumi_cmd = down
     elif operation == 'validate':
-        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        init_secrets(env_config=env_config,
+                     pulumi_projects=provider.execution_order())
         pulumi_cmd = None
         # validate was already run above
     else:
@@ -260,7 +265,8 @@ def main():
     # instantiated, before invoking Pulumi via the Automation API. This is required because certain Pulumi
     # projects need to pull secrets in order to be stood up.
     if pulumi_cmd:
-        init_secrets(env_config=env_config, pulumi_projects=provider.execution_order())
+        init_secrets(env_config=env_config,
+                     pulumi_projects=provider.execution_order())
         try:
             pulumi_cmd(provider=provider, env_config=env_config)
         except Exception as e:
@@ -303,14 +309,18 @@ def read_stack_config(provider: Provider,
     :return: data structure containing stack configuration
     """
     try:
-        stack_config = stack_config_parser.read(stack_name=env_config.stack_name())
+        stack_config = stack_config_parser.read(
+            stack_name=env_config.stack_name())
         RUNNER_LOG.debug('stack configuration file read')
     except FileNotFoundError as e:
-        RUNNER_LOG.info('stack configuration file [%s] does not exist', e.filename)
-        stack_config = prompt_for_stack_config(provider, env_config, e.filename)
+        RUNNER_LOG.info(
+            'stack configuration file [%s] does not exist', e.filename)
+        stack_config = prompt_for_stack_config(
+            provider, env_config, e.filename)
     except stack_config_parser.EmptyConfigurationException as e:
         RUNNER_LOG.info('stack configuration file [%s] is empty', e.filename)
-        stack_config = prompt_for_stack_config(provider, env_config, e.filename)
+        stack_config = prompt_for_stack_config(
+            provider, env_config, e.filename)
 
     return stack_config
 
@@ -391,7 +401,8 @@ def validate(provider: Provider,
         RUNNER_LOG.error(msg, env_config.config_path)
         raise e
     if verbose:
-        RUNNER_LOG.debug('environment file [%s] passed validation', env_config.config_path)
+        RUNNER_LOG.debug(
+            'environment file [%s] passed validation', env_config.config_path)
 
     if not stack_config:
         RUNNER_LOG.debug('stack configuration is not available')
@@ -409,10 +420,12 @@ def validate(provider: Provider,
     try:
         provider.validate_stack_config(stack_config, env_config)
     except Exception as e:
-        RUNNER_LOG.error('Stack configuration file [%s] at path failed validation', stack_config.config_path)
+        RUNNER_LOG.error(
+            'Stack configuration file [%s] at path failed validation', stack_config.config_path)
         raise e
     if verbose:
-        RUNNER_LOG.debug('Stack configuration file [%s] passed validation', stack_config.config_path)
+        RUNNER_LOG.debug(
+            'Stack configuration file [%s] passed validation', stack_config.config_path)
 
     RUNNER_LOG.debug('All configuration is OK')
 
@@ -428,13 +441,14 @@ def init_secrets(env_config: env_config_parser.EnvConfig,
     :param env_config: reference to environment configuration
     :param pulumi_projects: list of pulumi project to instantiate secrets for
     """
-    secrets_work_dir = os.path.sep.join([SCRIPT_DIR, '..', 'kubernetes', 'secrets'])
+    secrets_work_dir = os.path.sep.join(
+        [SCRIPT_DIR, '..', 'kubernetes', 'secrets'])
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
                                             env_vars=env_config,
-                                        ),
-                                        project_name='secrets',
-                                        work_dir=secrets_work_dir)
+    ),
+        project_name='secrets',
+        work_dir=secrets_work_dir)
 
     for project in pulumi_projects:
         if not project.config_keys_with_secrets:
@@ -451,7 +465,8 @@ def init_secrets(env_config: env_config_parser.EnvConfig,
                     value = secret_config_key.default
 
                 config_value = auto.ConfigValue(secret=True, value=value)
-                stack.set_config(secret_config_key.key_name, value=config_value)
+                stack.set_config(secret_config_key.key_name,
+                                 value=config_value)
 
 
 def build_pulumi_stack(pulumi_project: PulumiProject,
@@ -462,13 +477,14 @@ def build_pulumi_stack(pulumi_project: PulumiProject,
     :param env_config: reference to environment configuration
     :return: reference to a new or existing stack
     """
-    RUNNER_LOG.info('Project [%s] selected: %s', pulumi_project.name(), pulumi_project.abspath())
+    RUNNER_LOG.info('Project [%s] selected: %s',
+                    pulumi_project.name(), pulumi_project.abspath())
     stack = auto.create_or_select_stack(stack_name=env_config.stack_name(),
                                         opts=auto.LocalWorkspaceOptions(
                                             env_vars=env_config,
-                                        ),
-                                        project_name=pulumi_project.name(),
-                                        work_dir=pulumi_project.abspath())
+    ),
+        project_name=pulumi_project.name(),
+        work_dir=pulumi_project.abspath())
     return stack
 
 
@@ -479,7 +495,8 @@ def refresh(provider: Provider,
     :param env_config: reference to environment configuration
     """
     for pulumi_project in provider.execution_order():
-        headers.render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(
+            text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack.refresh_config()
@@ -502,7 +519,8 @@ def up(provider: Provider,
     :param env_config: reference to environment configuration
     """
     for pulumi_project in provider.execution_order():
-        headers.render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(
+            text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack_up_result = stack.up(color=env_config.pulumi_color_settings(),
@@ -525,7 +543,8 @@ def down(provider: Provider,
     :param env_config: reference to environment configuration
     """
     for pulumi_project in reversed(provider.execution_order()):
-        headers.render_header(text=pulumi_project.description, env_config=env_config)
+        headers.render_header(
+            text=pulumi_project.description, env_config=env_config)
         stack = build_pulumi_stack(pulumi_project=pulumi_project,
                                    env_config=env_config)
         stack_down_result = stack.destroy(color=env_config.pulumi_color_settings(),
