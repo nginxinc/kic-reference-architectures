@@ -176,7 +176,7 @@ pipeline {
          */
 
           sh '''
-             $WORKSPACE/pulumi/python/runner -p aws up
+             $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} up
              '''
       }
     }
@@ -197,7 +197,7 @@ pipeline {
 
           sh '''
             $WORKSPACE/pulumi/python/venv/bin/aws ecr delete-repository --repository-name ingress-controller-marajenkaws${BUILD_NUMBER} --force
-            $WORKSPACE/pulumi/python/runner -p aws destroy
+            $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} destroy
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
              '''
       }
@@ -215,7 +215,7 @@ pipeline {
 
           sh '''
              # Destroy our partial build...
-             $WORKSPACE/pulumi/python/runner -p aws destroy || true
+             $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} destroy || true
              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
               '''
     }
