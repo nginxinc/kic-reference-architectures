@@ -21,7 +21,8 @@ def remove_status_field(obj):
 
 def project_name_from_infrastructure_dir():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    eks_project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', 'kubeconfig')
+    eks_project_path = os.path.join(
+        script_dir, '..', '..', '..', 'infrastructure', 'kubeconfig')
     return pulumi_config.get_pulumi_project_name(eks_project_path)
 
 
@@ -33,22 +34,26 @@ def project_name_from_kubernetes_dir(dirname: str):
 #
 # This is just used for the kubernetes config deploy....
 #
-# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
-#
+
+
 def pulumi_repo_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller-repo-only')
+    ingress_project_path = os.path.join(
+        script_dir, '..', '..', 'nginx', 'ingress-controller-repo-only')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
+
 
 def pulumi_ingress_project_name():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    ingress_project_path = os.path.join(script_dir, '..', '..', 'nginx', 'ingress-controller')
+    ingress_project_path = os.path.join(
+        script_dir, '..', '..', 'nginx', 'ingress-controller')
     return pulumi_config.get_pulumi_project_name(ingress_project_path)
 
 
 def sirius_manifests_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    sirius_manifests_path = os.path.join(script_dir, 'src', 'kubernetes-manifests', '*.yaml')
+    sirius_manifests_path = os.path.join(
+        script_dir, 'src', 'kubernetes-manifests', '*.yaml')
     return sirius_manifests_path
 
 
@@ -60,21 +65,23 @@ def extract_password_from_k8s_secrets(secrets: Mapping[str, str], secret_name: s
     password = str(byte_data, 'utf-8')
     return password
 
-
+#
 # We will only want to be deploying one type of certificate issuer
 # as part of this application; this can (and should) be changed as
 # needed. For example, if the user is taking advantage of ACME let's encrypt
 # in order to generate certs.
+#
 def k8_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     k8_manifest_path = os.path.join(script_dir, 'cert', 'self-sign.yaml')
     return k8_manifest_path
 
-
+#
 # The database password is a secret, and in order to use it in a string concat
 # we need to decrypt the password with Output.unsecret() before we use it.
-# This function provides the logic to accomplish this, while still using the pulumi
-# secrets for the resulting string:
+# This function provides the logic to accomplish this, while still using the
+# pulumi secrets for the resulting string:
+#
 def create_pg_uri(password_object):
     user = str(accounts_admin)
     password = str(password_object)
@@ -103,26 +110,27 @@ secrets_stack_ref_id = f"{pulumi_user}/{secrets_project_name}/{stack_name}"
 secrets_stack_ref = pulumi.StackReference(secrets_stack_ref_id)
 pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 
-k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
+k8s_provider = k8s.Provider(resource_name='ingress-controller')
 
 #
-# This logic is used to manage the kubeconfig deployments, since that uses a slightly
-# different logic path than the mainline. This will be removed once the kubeconfig deploys
-# are moved to the Pulumi Automation API.
+# This logic is used to manage the kubeconfig deployments, since that uses a
+# slightly # different logic path than the mainline. This will be removed once
+# the kubeconfig deploys are moved to the Pulumi Automation API.
 #
-# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
-#
-
 config = pulumi.Config('kubernetes')
 infra_type = config.require('infra_type')
 
 if infra_type == 'kubeconfig':
+    #
     # Logic to extract the FQDN of the load balancer for Ingress
+    #
     ingress_project_name = pulumi_repo_ingress_project_name()
     ingress_stack_ref_id = f"{pulumi_user}/{ingress_project_name}/{stack_name}"
     ingress_stack_ref = pulumi.StackReference(ingress_stack_ref_id)
     lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
+    #
     # Set back to kubernetes
+    #
     config = pulumi.Config('kubernetes')
     lb_ingress_ip = ingress_stack_ref.get_output('lb_ingress_ip')
     sirius_host = lb_ingress_hostname
@@ -137,24 +145,25 @@ else:
     lb_ingress_hostname = ingress_stack_ref.get_output('lb_ingress_hostname')
     sirius_host = lb_ingress_hostname
 
-
+#
 # Create the namespace for Bank of Sirius
+#
 ns = k8s.core.v1.Namespace(resource_name='bos',
                            metadata={'name': 'bos'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-# Add Config Maps for Bank of Sirius; these are built in Pulumi in order to manage secrets and provide the option
-# for users to override defaults in the configuration file. Configuration values that are required use the `require`
-# method. Those that are optional use the `get` method, and have additional logic to set defaults if no value is set
-# by the user.
 #
-# Note that the Pulumi code will exit with an error message if a required variable is not defined in the configuration
-# file.
+# Add Config Maps for Bank of Sirius; these are built in Pulumi in order to
+# manage secrets and provide the option for users to override defaults in the
+# configuration file. Configuration values that are required use the `require`
+# method. Those that are optional use the `get` method, and have additional
+# logic to set defaults if no value is set  by the user.
 #
-# Configuration Values are stored in the configuration:
-#  ./config/Pulumi.STACKNAME.yaml
+# Note that the Pulumi code will exit with an error message if a required
+# variable is not defined in the configuration file.
 #
-# Note this config is specific to the sirius code!
+# Configuration Values are stored in the "secrets" project
+#
 config = pulumi.Config('sirius')
 
 sirius_secrets = Secret.get(resource_name='pulumi-secret-sirius',
@@ -180,7 +189,8 @@ if not accounts_db:
 accounts_db_uri = pulumi.Output.unsecret(accounts_pwd).apply(create_pg_uri)
 
 accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigMap",
-                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      opts=pulumi.ResourceOptions(
+                                                          depends_on=[ns]),
                                                       api_version="v1",
                                                       kind="ConfigMap",
                                                       metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -198,7 +208,8 @@ accounts_db_config_config_map = k8s.core.v1.ConfigMap("accounts_db_configConfigM
                                                       })
 
 environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigMap",
-                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      opts=pulumi.ResourceOptions(
+                                                          depends_on=[ns]),
                                                       api_version="v1",
                                                       kind="ConfigMap",
                                                       metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -209,8 +220,10 @@ environment_config_config_map = k8s.core.v1.ConfigMap("environment_configConfigM
                                                           "LOCAL_ROUTING_NUM": "883745000",
                                                           "PUB_KEY_PATH": "/root/.ssh/publickey"
                                                       })
+
 tracing_config_config_map = k8s.core.v1.ConfigMap("tracing_configConfigMap",
-                                                  opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                  opts=pulumi.ResourceOptions(
+                                                      depends_on=[ns]),
                                                   api_version="v1",
                                                   kind="ConfigMap",
                                                   metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -224,7 +237,8 @@ tracing_config_config_map = k8s.core.v1.ConfigMap("tracing_configConfigMap",
                                                   })
 
 service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigMap",
-                                                      opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                      opts=pulumi.ResourceOptions(
+                                                          depends_on=[ns]),
                                                       api_version="v1",
                                                       kind="ConfigMap",
                                                       metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -238,12 +252,13 @@ service_api_config_config_map = k8s.core.v1.ConfigMap("service_api_configConfigM
                                                           "CONTACTS_API_ADDR": "contacts:8080",
                                                           "USERSERVICE_API_ADDR": "userservice:8080",
                                                       })
-
+#
 # Demo data is hardcoded in the current incarnation of the bank of
 # sirius project, so we go along with that for now.
-
+#
 demo_data_config_config_map = k8s.core.v1.ConfigMap("demo_data_configConfigMap",
-                                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                    opts=pulumi.ResourceOptions(
+                                                        depends_on=[ns]),
                                                     api_version="v1",
                                                     kind="ConfigMap",
                                                     metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -267,7 +282,8 @@ if not ledger_db:
 spring_url = 'jdbc:postgresql://ledger-db:5432/' + str(ledger_db)
 
 ledger_db_config_config_map = k8s.core.v1.ConfigMap("ledger_db_configConfigMap",
-                                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                                    opts=pulumi.ResourceOptions(
+                                                        depends_on=[ns]),
                                                     api_version="v1",
                                                     kind="ConfigMap",
                                                     metadata=k8s.meta.v1.ObjectMetaArgs(
@@ -297,7 +313,8 @@ encode_public = base64.b64encode(public_key)
 
 jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
                                     api_version="v1",
-                                    opts=pulumi.ResourceOptions(depends_on=[ns]),
+                                    opts=pulumi.ResourceOptions(
+                                        depends_on=[ns]),
                                     kind="Secret",
                                     metadata=k8s.meta.v1.ObjectMetaArgs(
                                         name="jwt-key",
@@ -309,11 +326,13 @@ jwt_key_secret = k8s.core.v1.Secret("jwt_keySecret",
                                         "jwtRS256.key.pub": str(encode_public, "utf-8")
                                     })
 
-# Create resources for the Bank of Sirius using the  Kubernetes YAML manifests which have been pulled from
-# the google repository.
 #
-# Note that these have been lightly edited to remove dependencies on GCP where necessary. Additionally, the
-# `frontend` service has been updated to use a ClusterIP rather than the external load balancer, as that interaction
+# Create resources for the Bank of Sirius using the  Kubernetes YAML manifests
+# which have been pulled from the google repository.
+#
+# Note that these have been lightly edited to remove dependencies on GCP where
+# necessary. Additionally, the `frontend` service has been updated to use a
+# ClusterIP rather than the external load balancer, as that interaction
 # is now handled by the NGNIX Ingress Controller
 #
 sirius_manifests = sirius_manifests_location()
@@ -325,10 +344,11 @@ bos = ConfigGroup(
     opts=pulumi.ResourceOptions(depends_on=[tracing_config_config_map])
 )
 
+#
 # We need to create an issuer for the cert-manager (which is installed in a
 # separate project directory). This can (and should) be adjusted as required,
 # as the default issuer is self-signed.
-
+#
 k8_manifest = k8_manifest_location()
 
 selfissuer = ConfigFile(
@@ -336,13 +356,17 @@ selfissuer = ConfigFile(
     transformations=[add_namespace],
     file=k8_manifest)
 
-# Add the Ingress controller for the Bank of Sirius  application. This uses the NGINX IC that is installed
-# as part of this Pulumi stack.
+#
+# Add the Ingress controller for the Bank of Sirius  application. This uses the
+# NGINX IC that is installed as part of this Pulumi stack.
 #
 
-# This block is responsible for creating the Ingress object for the application. This object
-# is deployed into the same namespace as the application and requires that an IngressClass
-# and Ingress controller be installed (which is done in an earlier step, deploying the KIC).
+#
+# This block is responsible for creating the Ingress object for the
+# application. This object is deployed into the same namespace as the
+# application and requires that an IngressClass # and Ingress controller be
+# installed (which is done in an earlier step, deploying the KIC).
+#
 bosingress = k8s.networking.v1.Ingress("bosingress",
                                        api_version="networking.k8s.io/v1",
                                        kind="Ingress",
@@ -367,7 +391,7 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                            # to store the generated certificate.
                                            tls=[k8s.networking.v1.IngressTLSArgs(
                                                hosts=[sirius_host],
-                                               secret_name="sirius-secret",
+                                               secret_name="sirius-secret",   # pragma: allowlist secret
                                            )],
                                            # The block below defines the rules for traffic coming into the KIC.
                                            # In the example below, we take any traffic on the host for path /
@@ -396,11 +420,9 @@ bosingress = k8s.networking.v1.Ingress("bosingress",
                                        ))
 
 #
-# Get the hostname for our connect URL; this logic will be collapsed once the kubeconfig
-# deployments are moved over to the automation api. Until then, we have to use a different
-# process.
-#
-# TODO: Update as part of the conversion of kubeconfig to AutomationAPI #178
+# Get the hostname for our connect URL; this logic will be collapsed once the
+# kubeconfig # deployments are moved over to the automation api. Until then,
+# we have to use a different process.
 #
 
 config = pulumi.Config('kubernetes')
@@ -408,7 +430,6 @@ infra_type = config.require('infra_type')
 if infra_type == 'kubeconfig':
     pulumi.export('hostname', lb_ingress_hostname)
     pulumi.export('ipaddress', lb_ingress_ip)
-    #pulumi.export('application_url', f'https://{lb_ingress_hostname}')
     application_url = sirius_host.apply(lambda host: f'https://{host}')
 else:
     application_url = sirius_host.apply(lambda host: f'https://{host}')
