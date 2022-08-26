@@ -74,7 +74,7 @@ for project_dir in "${APPLICATIONS[@]}"; do
 	echo "$project_dir"
 	if [ -f "${script_dir}/../pulumi/python/kubernetes/applications/${project_dir}/Pulumi.yaml" ]; then
 		pulumi_args="--cwd ${script_dir}/../pulumi/python/kubernetes/applications/${project_dir} --emoji --stack ${PULUMI_STACK}"
-		pulumi "${pulumi_args}" destroy
+		pulumi $pulumi_args destroy
 	else
 		echo >&2 "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/kubernetes/applications/${project_dir}"
 	fi
@@ -85,7 +85,7 @@ for project_dir in "${KUBERNETES[@]}"; do
 	echo "$project_dir"
 	if [ -f "${script_dir}/../pulumi/python/kubernetes/${project_dir}/Pulumi.yaml" ]; then
 		pulumi_args="--cwd ${script_dir}/../pulumi/python/kubernetes/${project_dir} --emoji --stack ${PULUMI_STACK}"
-		pulumi "${pulumi_args}" destroy
+		pulumi $pulumi_args destroy
 	else
 		echo >&2 "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/kubernetes/${project_dir}"
 	fi
@@ -108,7 +108,7 @@ for project_dir in "${NGINX[@]}"; do
 	echo "$project_dir"
 	if [ -f "${script_dir}/../pulumi/python/${project_dir}/Pulumi.yaml" ]; then
 		pulumi_args="--cwd ${script_dir}/../pulumi/python/${project_dir} --emoji --stack ${PULUMI_STACK}"
-		pulumi "${pulumi_args}" destroy
+		pulumi $pulumi_args destroy
 	else
 		echo >&2 "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/${project_dir}"
 	fi
@@ -119,7 +119,7 @@ for project_dir in "${INFRA[@]}"; do
 	echo "$project_dir"
 	if [ -f "${script_dir}/../pulumi/python/infrastructure/${project_dir}/Pulumi.yaml" ]; then
 		pulumi_args="--cwd ${script_dir}/../pulumi/python/infrastructure/${project_dir} --emoji --stack ${PULUMI_STACK}"
-		pulumi "${pulumi_args}" destroy
+		pulumi $pulumi_args destroy
 	else
 		echo >&2 "Not destroying - Pulumi.yaml not found in directory: ${script_dir}/../pulumi/python/infrastructure/${project_dir}"
 	fi
