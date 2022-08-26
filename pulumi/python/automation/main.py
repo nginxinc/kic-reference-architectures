@@ -63,6 +63,15 @@ debug_on = False
 script_name = os.path.basename(sys.argv[0])
 
 
+def provider_instance(provider_name: str) -> Provider:
+    """Dynamically instantiates an infrastructure provider
+    :param provider_name: name of infrastructure provider
+    :return: instance of infrastructure provider
+    """
+    module = importlib.import_module(name=f'providers.{provider_name}')
+    return module.INSTANCE
+
+
 def usage():
     usage_text = f"""Modern Application Reference Architecture (MARA) Runner
 
@@ -87,16 +96,7 @@ OPERATIONS:
     print(usage_text, file=sys.stdout)
 
 
-def provider_instance(provider_name: str) -> Provider:
-    """Dynamically instantiates an infrastructure provider
-    :param provider_name: name of infrastructure provider
-    :return: instance of infrastructure provider
-    """
-    module = importlib.import_module(name=f'providers.{provider_name}')
-    return module.INSTANCE
-
-
-def write_env(env_config):
+def write_env(env_config, stack_name):
     """Create a new environment file and write our stack to it"""
     with open(env_config.filename, 'w') as f:
         try:
@@ -108,13 +108,13 @@ def write_env(env_config):
             sys.exit(2)
 
 
-def append_env(env_config):
+def append_env(env_config, stack_name):
     """Append our stack to the existing environment file"""
-    with open(env_config.filename, 'a') as f:
+    with open(env_config.config_path, 'a') as f:
         try:
             msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
             print("PULUMI_STACK=" + stack_name, file=f)
-            RUNNER_LOG.error(msg, env_config.filename)
+            RUNNER_LOG.error(msg)
         except:
             RUNNER_LOG.error("Unable to append to configuration file")
             sys.exit(2)
@@ -214,19 +214,25 @@ def main():
     try:
         env_config = env_config_parser.read()
     except FileNotFoundError as e:
-        write_env(e)
+        # No file, we create one and then read it back in
+        write_env(e, stack_name)
         env_config = env_config_parser.read()
-        stack_config = read_stack_config(provider=provider, env_config=env_config)
-    else:
-        stack_config = read_stack_config(provider=provider, env_config=env_config)
-        if env_config.stack_name() != stack_name:
-            msg = 'Stack "%s" given on CLI but Stack "%s" is in env file; exiting'
-            RUNNER_LOG.error(msg, stack_name, env_config.stack_name())
-            sys.exit(2)
-        else:
-            append_env(env_config)
-            stack_config = read_stack_config(provider=provider, env_config=env_config)
 
+    if env_config.stack_name() is None:
+        # Found file, if there is no stack we append it
+        try:
+            env_config = env_config_parser.read()
+        except FileNotFoundError as e:
+            sys.exit(2)
+        append_env(env_config,stack_name)
+        env_config = env_config_parser.read()
+    elif env_config.stack_name() != stack_name:
+        # 
+        msg = 'Stack "%s" given on CLI but Stack "%s" is in env file; exiting'
+        RUNNER_LOG.error(msg, stack_name, env_config.stack_name())
+        sys.exit(2)
+
+    stack_config = read_stack_config(provider=provider, env_config=env_config)
 
     validate_with_verbosity = operation == 'validate' or debug_on
     try:
