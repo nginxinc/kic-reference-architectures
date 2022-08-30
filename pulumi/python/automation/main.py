@@ -100,9 +100,10 @@ def write_env(env_config, stack_name):
     """Create a new environment file and write our stack to it"""
     with open(env_config.filename, 'w') as f:
         try:
+            # Note that we are printing to a file here, not STDOUT
             print("PULUMI_STACK=" + stack_name, file=f)
             msg = 'Environment configuration file not found. Creating new file at the path: %s'
-            RUNNER_LOG.error(msg, env_config.filename)
+            RUNNER_LOG.info(msg, env_config.filename)
         except (FileNotFoundError, PermissionError):
             RUNNER_LOG.error("Unable to build configuration file")
             sys.exit(2)
@@ -113,8 +114,9 @@ def append_env(env_config, stack_name):
     with open(env_config.config_path, 'a') as f:
         try:
             msg = 'Environment configuration file does not contain PULUMI_STACK, adding'
+            # Note that we are printing to a file here, not STDOUT
             print("PULUMI_STACK=" + stack_name, file=f)
-            RUNNER_LOG.error(msg)
+            RUNNER_LOG.info(msg)
         except (FileNotFoundError, PermissionError):
             RUNNER_LOG.error("Unable to append to configuration file")
             sys.exit(2)
