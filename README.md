@@ -10,6 +10,8 @@
 ![MicroK8s Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=MicroK8s)
 ![Minikube Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Minikube)
 
+![MARA Project](./docs/NGINX-MARA-icon.png)  
+
 This repository has the basics for a common way to deploy and manage modern
 apps. Over time, we'll build more example architectures using different
 deployment models and options – including other clouds – and you’ll be able
