@@ -187,7 +187,7 @@ pipeline {
 
           sh '''
             # Destroy our partial build...
-            $WORKSPACE/pulumi/python/runner -p linode -s marajenklke${BUILD_NUMBER} destroy|| true
+            $WORKSPACE/pulumi/python/runner -p linode -s marajenklke${BUILD_NUMBER} destroy || true
             # Clean up the Pulumi stack
             find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenklke${BUILD_NUMBER}  --force --yes  \\;
              '''
