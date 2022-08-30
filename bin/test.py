@@ -12,8 +12,10 @@ IGNORE_DIRS = ['.pyenv', 'venv', 'config', 'kic-pulumi-utils']
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 TEST_FILE_PATTERN = 'test_*.py'
 
-TestsInDir = collections.namedtuple(typename='TestsInDir', field_names=['directory', 'loader'])
-RunDirectories = collections.namedtuple(typename='RunDirectories', field_names=['start_dir', 'top_level_dir'])
+TestsInDir = collections.namedtuple(
+    typename='TestsInDir', field_names=['directory', 'loader'])
+RunDirectories = collections.namedtuple(
+    typename='RunDirectories', field_names=['start_dir', 'top_level_dir'])
 
 test_dirs: List[TestsInDir] = []
 
