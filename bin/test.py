@@ -8,42 +8,38 @@ import pathlib
 import collections
 from typing import List
 
-IGNORE_DIRS = ['venv', 'kic-pulumi-utils']
+IGNORE_DIRS = ['.pyenv', 'venv', 'config', 'kic-pulumi-utils']
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+TEST_FILE_PATTERN = 'test_*.py'
 
-TestsInDir = collections.namedtuple(typename='TestsInDir', field_names=['directory', 'loader'])
-RunDirectories = collections.namedtuple(typename='RunDirectories', field_names=['start_dir', 'top_level_dir'])
+TestsInDir = collections.namedtuple(
+    typename='TestsInDir', field_names=['directory', 'loader'])
+RunDirectories = collections.namedtuple(
+    typename='RunDirectories', field_names=['start_dir', 'top_level_dir'])
 
 test_dirs: List[TestsInDir] = []
 
 
-def find_testable_dirs(dir_name: pathlib.Path) -> pathlib.Path:
-    sublisting = os.listdir(dir_name)
-    dir_count = 0
-    last_path = None
+def find_testable_dirs(dir_name: pathlib.Path) -> List[pathlib.Path]:
+    def is_main_file(filename: str) -> bool:
+        return filename == '__main__.py' or filename == 'main.py'
 
-    for item in sublisting:
-        path = pathlib.Path(dir_name, item)
+    test_dirs = []
+    contains_main_file = False
 
-        # We assume we are in the starting directory for test invocation if there is a
-        # __main__.py file present.
-        if path.is_file() and (path.name == '__main__.py'):
-            return dir_name
-
-        # Otherwise, we are probably in a module directory and the starting directory is
-        # one level deeper.
-        if path.is_dir():
-            dir_count += 1
-            if not last_path:
-                last_path = path
-        if dir_count > 1:
+    for item in os.listdir(dir_name):
+        name = str(item)
+        path = pathlib.Path(dir_name, name)
+        if path.is_dir() and name != '__pycache__':
+            test_dirs.extend(find_testable_dirs(path.absolute()))
+        # If there is a main file we consider it a top level project where tests would
+        # live under it
+        elif path.is_file() and is_main_file(name) and not contains_main_file:
+            contains_main_file = True
+            test_dirs.append(pathlib.Path(dir_name))
             break
 
-    # If the directory contains only a single subdirectory, we traverse down once
-    if dir_count == 1:
-        return last_path
-
-    return dir_name
+    return test_dirs
 
 
 def find_kic_util_path():
@@ -65,27 +61,24 @@ def find_kic_util_path():
     return TestsInDir(venv_start_dir, kic_util_loader)
 
 
+# We explicitly test the kic util package separately because it needs to live
+# under venv when tested. By default, we do no traverse into the venv directory.
 test_dirs.append(find_kic_util_path())
+pulumi_python_dir = os.path.join(SCRIPT_DIR, '..', 'pulumi', 'python')
 
-for item in os.listdir(SCRIPT_DIR):
-    if item in IGNORE_DIRS:
+for item in os.listdir(pulumi_python_dir):
+    directory = pathlib.Path(pulumi_python_dir, item)
+    if not directory.is_dir() or item in IGNORE_DIRS:
         continue
 
-    directory = pathlib.Path(SCRIPT_DIR, item)
-    if not directory.is_dir():
-        continue
-
-    run_dir = find_testable_dirs(directory)
-    if run_dir is None:
-        continue
-
-    start_dir = str(run_dir)
-
-    loader = unittest.defaultTestLoader.discover(
-        start_dir=start_dir,
-        top_level_dir=start_dir,
-        pattern='test_*.py')
-    test_dirs.append(TestsInDir(start_dir, loader))
+    directory = pathlib.Path(pulumi_python_dir, item)
+    for test_dir in find_testable_dirs(directory):
+        start_dir = str(os.path.realpath(test_dir))
+        loader = unittest.defaultTestLoader.discover(
+            start_dir=start_dir,
+            top_level_dir=start_dir,
+            pattern=TEST_FILE_PATTERN)
+        test_dirs.append(TestsInDir(start_dir, loader))
 
 successful = True
 

@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Callable
 
 import pulumi
 from pulumi import Resource
@@ -21,8 +21,8 @@ class IngressControllerBaseProvider(ResourceProvider):
 
         if debug_logger_func:
             self.debug_logger = debug_logger_func
-        else:
-            self.debug_logger = self.__debug_logger_func
+        elif self._debug_logger_func:
+            self.debug_logger = self._debug_logger_func
 
         super().__init__()
 
@@ -32,7 +32,7 @@ class IngressControllerBaseProvider(ResourceProvider):
             pulumi.log.info(f'deleting image {image_id}')
             self._docker_delete_image(image_id)
 
-    def __debug_logger_func(self, msg):
+    def _debug_logger_func(self, msg):
         pulumi.log.debug(msg, self.resource)
 
     def _run_docker(self, cmd: str, suppress_error: bool = False) -> (str, str):

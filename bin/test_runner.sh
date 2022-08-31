@@ -12,10 +12,10 @@ set -o pipefail # don't hide errors within pipes
 # for docker but not GH actions
 #
 
-if [ -z "$1" ] ; then
-  source ~/pulumi/python/venv/bin/activate
-  ~/pulumi/python/venv/bin/python3 ~/bin/test.py
+if [ -z "$1" ]; then
+	source ~/pulumi/python/venv/bin/activate
+	~/pulumi/python/venv/bin/python3 ~/bin/test.py
 else
-  source $1/pulumi/python/venv/bin/activate
-  $1/pulumi/python/venv/bin/python3 $1/bin/test.py
+	source "$1/pulumi/python/venv/bin/activate"
+	$1/pulumi/python/venv/bin/python3 $1/bin/test.py
 fi

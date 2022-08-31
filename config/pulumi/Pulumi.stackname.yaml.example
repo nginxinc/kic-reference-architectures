@@ -17,6 +17,39 @@
 
 config:
   ############################################################################
+  # Bank of Sirius (Sample Application) Settings
+  ############################################################################
+
+  # These parameters define the name of the database and the database credentials
+  # used by the Bank of Sirius ledger application.
+  #
+  # Note that the encrypted password is a required value; Pulumi will abort the Bank of Sirius
+  # deployment if no password is provided.
+  # sirius:ledger_pwd: Password # Required
+  sirius:ledger_admin: admin
+  sirius:ledger_db: postgresdb
+
+  # This optional parameter supplies a hostname for the Bank of Sirius Ingress
+  # controller. If not set, the FQDN of the LB is used.
+  #sirius:hostname: demo.example.com
+
+  # These parameters define the name of the database and the database credentials
+  # used by the Bank of Sirius accounts application.
+  #
+  # Note that the encrypted password is a required value; Pulumi will abort the Bank of Sirius
+  # deployment if no password is provided.
+  #sirius:accounts_pwd: Password # Required
+  sirius:accounts_admin: admin
+  sirius:accounts_db: postgresdb
+
+  # Prometheus Configuration
+  sirius:chart_version: 2.3.5
+  # Chart version for the Pulumi chart for prometheus
+  sirius:helm_repo_name: prometheus-community
+  # Name of the repo to pull the prometheus chart from
+  sirius:helm_repo_url: https://prometheus-community.github.io/helm-charts
+
+  ############################################################################
   # AWS Access Settings
   ############################################################################
 
@@ -94,7 +127,7 @@ config:
   # Chart name for the helm chart for kic
   kic-helm:chart_name: nginx-ingress
   # Chart version for the helm chart for kic
-  kic-helm:chart_version: 0.13.1
+  kic-helm:chart_version: 0.14.0
   # Name of the repo to pull the kic chart from
   kic-helm:helm_repo_name: nginx-stable
   # URL of the chart repo to pull kic from
@@ -118,12 +151,12 @@ config:
   # https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/
   #
   # The following are all valid image names:
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.0
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.2.0-ot
-  # kic:image_name: docker.io/nginx/nginx-ingress:2.2.0
-  # kic:image_name: nginx/nginx-ingress:2.2.0
-  # kic:image_name: nginx/nginx-ingress:2.2.0-alpine
-  kic:image_name: nginx/nginx-ingress:2.2.0
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.0
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.0-ot
+  # kic:image_name: docker.io/nginx/nginx-ingress:2.3.0
+  # kic:image_name: nginx/nginx-ingress:2.3.0
+  # kic:image_name: nginx/nginx-ingress:2.3.0-alpine
+  kic:image_name: nginx/nginx-ingress:2.3.0
 
 
   ############################################################################
@@ -197,7 +230,7 @@ config:
   # Logagent Configuration
   logagent:chart_name: filebeat
   # Chart name for the helm chart for the logagent
-  logagent:chart_version: 7.16.3
+  logagent:chart_version: 7.17.3
   # Chart version for the helm chart for the logagent
   logagent:helm_repo_name: elastic
   # Name of the repo to pull the logagent from
@@ -213,7 +246,7 @@ config:
   # Logstore Configuration
   logstore:chart_name: elasticsearch
   # Chart name for the helm chart for the logstore
-  logstore:chart_version: 17.6.2
+  logstore:chart_version: 19.1.4
   # Chart version for the helm chart for the logstore
   logstore:helm_repo_name: bitnami
   # Name of the repo to pull the logstore from
@@ -244,7 +277,7 @@ config:
   # Cert Manager Configuration
   certmgr:chart_name: cert-manager
   # Chart hame for the helm chart for certmanager
-  certmgr:chart_version: v1.6.1
+  certmgr:chart_version: v1.9.1
   # Chart version for the helm chart for certmanager
   certmgr:certmgr_helm_repo_name: jetstack
   # Name of the repo to pull the certmanager chart from
@@ -260,7 +293,7 @@ config:
   # Prometheus Configuration
   prometheus:chart_name: kube-prometheus-stack
   # Chart name for the helm chart for prometheus
-  prometheus:chart_version: 30.0.1
+  prometheus:chart_version: 39.2.1
   # Chart version for the helm chart for prometheus
   prometheus:helm_repo_name: prometheus-community
   # Name of the repo to pull the prometheus chart from
@@ -268,7 +301,7 @@ config:
   # URL of the chart repo
   prometheus:statsd_chart_name: prometheus-statsd-exporter
   # Name of the statsd chart (uses the same repo as the prom chart)
-  prometheus.statsd_chart_version: 0.4.2
+  prometheus.statsd_chart_version: 0.5.0
   # Version of the statsd chart (uses the same repo as the prom chart)
   prometheus:helm_timeout: 300
   # Timeout value for helm operations in seconds
@@ -288,28 +321,29 @@ config:
   #       within that project.
 
   ############################################################################
-  # Digital Ocean Managed Kubernetes
+  # Digital Ocean Managed Kubernetes and Container Registry
   ############################################################################
   # This is the Kubernetes version to install using Digital Ocean K8s.
-  domk8s:k8s_version: latest
-  # Version of Kubernetes to use
-  domk8s:instance_type: s-2vcpu-4gb
+  docean:k8s_version: 1.22.12-do.0
   # This is the default instance type used by Digital Ocean K8s.
-  domk8s:node_count: 3
+  docean:instance_size: s-4vcpu-8gb
   # The desired node count of the Digital Ocean K8s cluster.
-  domk8s:region: sfo3
+  docean:node_count: 3
   # The region to deploy the cluster
-
+  docean:region: sfo3
+  # Subscription tier for container registry
+  digitalocean:container_registry_subscription_tier: starter
 
   ############################################################################
   # Linode Kubernetes Engine
   ############################################################################
   # This is the Kubernetes version to install using Linode K8s.
-  lke:k8s_version: 1.22
-  # Version of Kubernetes to use
-  lke:instance_type: g6-standard-8
-  # This is the default instance type used Linode K8s.
-  lke:node_count: 3
+  linode:k8s_version: 1.23
+  # This is the default instance type used Linode Kubernetes
+  linode:instance_type: g6-standard-8
   # The desired node count of the Linode K8s cluster.
-  lke:region: us-central
+  linode:node_count: 3
   # The region to deploy the cluster
+  linode:region: us-central
+  # Flag to enable or disable HA mode for the Kubernetes cluster
+  linode:k8s_ha: true

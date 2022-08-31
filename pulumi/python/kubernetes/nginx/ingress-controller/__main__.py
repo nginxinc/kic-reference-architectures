@@ -1,15 +1,15 @@
 import os
-import typing
-from typing import Dict
+from typing import Dict, Mapping, Any, Optional
 
 import pulumi
-from pulumi import Output
+from pulumi import Output, StackReference
 import pulumi_kubernetes as k8s
 from pulumi_kubernetes.core.v1 import Service
-import pulumi_kubernetes.helm.v3 as helm
 from pulumi_kubernetes.helm.v3 import Release, ReleaseArgs, RepositoryOptsArgs
 
 from kic_util import pulumi_config
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 config = pulumi.Config('kic-helm')
 chart_name = config.get('chart_name')
@@ -17,13 +17,16 @@ if not chart_name:
     chart_name = 'nginx-ingress'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '0.13.0'
+    chart_version = '0.14.0'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'nginx-stable'
 helm_repo_url = config.get('helm_repo_url')
 if not helm_repo_url:
     helm_repo_url = 'https://helm.nginx.com/stable'
+
+pulumi.log.info(f'NGINX Ingress Controller will be deployed with the Helm Chart [{chart_name}@{chart_version}]')
+
 #
 # Allow the user to set timeout per helm chart; otherwise
 # we default to 5 minutes.
@@ -33,19 +36,22 @@ if not helm_timeout:
     helm_timeout = 300
 
 
-def aws_project_name_from_project_dir(dirname: str):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def infrastructure_project_name_from_project_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'infrastructure', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
-def project_name_from_project_dir(dirname: str):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def project_name_from_utility_dir(dirname: str):
     project_path = os.path.join(script_dir, '..', '..', '..', 'utility', dirname)
     return pulumi_config.get_pulumi_project_name(project_path)
 
 
-def find_image_tag(repository: dict) -> typing.Optional[str]:
+def project_name_from_same_parent(directory: str):
+    project_path = os.path.join(script_dir, '..', directory)
+    return pulumi_config.get_pulumi_project_name(project_path)
+
+
+def find_image_tag(repository: dict) -> Optional[str]:
     """
     Inspect the repository dictionary as returned from a stack reference for a valid image_tag_alias or image_tag.
     If found, return the image_tag_alias or image_tag if found, otherwise return None
@@ -62,8 +68,8 @@ def find_image_tag(repository: dict) -> typing.Optional[str]:
     return None
 
 
-def build_chart_values(repository: dict) -> helm.ChartOpts:
-    values: Dict[str, Dict[str, typing.Any]] = {
+def build_chart_values(repo_push: dict) -> Mapping[str, Any]:
+    values: Dict[str, Dict[str, Any]] = {
         'controller': {
             'healthStatus': True,
             'appprotect': {
@@ -77,6 +83,12 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
                                   '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
                                   '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
                 }
+            },
+            'serviceAccount': {
+                # This references the name of the secret used to pull the ingress container image
+                # from a remote repository. When using EKS on AWS, authentication to ECR happens
+                # via a different mechanism, so this value is ignored.
+                'imagePullSecretName': 'ingress-controller-registry',
             },
             'service': {
                 'annotations': {
@@ -117,18 +129,18 @@ def build_chart_values(repository: dict) -> helm.ChartOpts:
         "opentracing": True
     }
 
-    image_tag = find_image_tag(repository)
+    image_tag = find_image_tag(repo_push)
     if not image_tag:
         pulumi.log.debug('No image_tag or image_tag_alias found')
 
-    if 'repository_url' in repository and image_tag:
-        repository_url = repository['repository_url']
+    if 'repository_url' in repo_push and image_tag:
+        repository_url = repo_push['repository_url']
 
         if 'image' not in values['controller']:
             values['controller']['image'] = {}
 
         if repository_url and image_tag:
-            pulumi.log.info(f"Using ingress controller image: {repository_url}:{image_tag}")
+            pulumi.log.info(f"Using Ingress Controller image: {repository_url}:{image_tag}")
             values['controller']['image'].update({
                 'repository': repository_url,
                 'tag': image_tag
@@ -147,28 +159,34 @@ stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 pulumi_user = pulumi_config.get_pulumi_user()
 
-k8_project_name = aws_project_name_from_project_dir('kubeconfig')
+k8_project_name = infrastructure_project_name_from_project_dir('kubeconfig')
 k8_stack_ref_id = f"{pulumi_user}/{k8_project_name}/{stack_name}"
-k8_stack_ref = pulumi.StackReference(k8_stack_ref_id)
+k8_stack_ref = StackReference(k8_stack_ref_id)
 kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 cluster_name = k8_stack_ref.require_output('cluster_name').apply(lambda c: str(c))
 
-image_push_project_name = project_name_from_project_dir('kic-image-push')
+namespace_stack_ref_id = f"{pulumi_user}/{project_name_from_same_parent('ingress-controller-namespace')}/{stack_name}"
+ns_stack_ref = StackReference(namespace_stack_ref_id)
+ns_name_output = ns_stack_ref.require_output('ingress_namespace_name')
+
+image_push_project_name = project_name_from_utility_dir('kic-image-push')
 image_push_ref_id = f"{pulumi_user}/{image_push_project_name}/{stack_name}"
-image_push_ref = pulumi.StackReference(image_push_ref_id)
-ecr_repository = image_push_ref.get_output('ecr_repository')
+image_push_ref = StackReference(image_push_ref_id)
+container_repo_push = image_push_ref.get_output('container_repo_push')
 
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
 
-ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
-                           metadata={'name': 'nginx-ingress',
-                                     'labels': {
-                                         'prometheus': 'scrape'}
-                                     },
-                           opts=pulumi.ResourceOptions(provider=k8s_provider))
 
-chart_values = ecr_repository.apply(build_chart_values)
+def namespace_by_name(name):
+    return k8s.core.v1.Namespace.get(resource_name=name,
+                                     id=name,
+                                     opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+
+ns = ns_name_output.apply(namespace_by_name)
+
+chart_values = container_repo_push.apply(build_chart_values)
 
 kic_release_args = ReleaseArgs(
     chart=chart_name,
@@ -196,16 +214,34 @@ kic_release_args = ReleaseArgs(
     # Force update if required
     force_update=True)
 
-kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(depends_on=[ns]))
+kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(depends_on=[ns],
+                                                                              provider=k8s_provider))
 
 pstatus = kic_chart.status
 
-srv = Service.get("nginx-ingress",
-                  Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress"))
+srv = Service.get(resource_name="nginx-ingress",
+                  id=Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress"),
+                  opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 ingress_service = srv.status
 
-pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].hostname))
+
+def ingress_hostname(_ingress_service):
+    # Attempt to get the hostname as returned from the helm chart
+    if 'load_balancer' in _ingress_service:
+        load_balancer = _ingress_service['load_balancer']
+        if 'ingress' in load_balancer and len(load_balancer['ingress']) > 0:
+            first_ingress = load_balancer['ingress'][0]
+            if 'hostname' in first_ingress:
+                return first_ingress['hostname']
+
+    # If we can't get the hostname, then use the FQDN coded in the config file
+    fqdn = config.require('fqdn')
+    return fqdn
+
+
+pulumi.export('lb_ingress_hostname', pulumi.Output.unsecret(ingress_service).apply(ingress_hostname))
+pulumi.export('lb_ingress', pulumi.Output.unsecret(ingress_service))
 # Print out our status
 pulumi.export("kic_status", pstatus)
 pulumi.export('nginx_plus', pulumi.Output.unsecret(chart_values['controller']['nginxplus']))

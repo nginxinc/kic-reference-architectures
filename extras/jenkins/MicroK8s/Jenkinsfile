@@ -15,18 +15,15 @@ pipeline {
   }
 
   /*
-  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
-  * open source IC.
-  *
-  * The POSTRUN_CMD is used to execute an arbitrary command following the cleanup process; this is just a work-around
-  * for the time being and will be addressed in the future.
-  */
+   * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
+   * open source IC.
+   */
 
  environment {
         NGINX_JWT               = credentials('NGINX_JWT')
-        POSTRUN_CMD             = credentials('POSTRUN_CMD')
         NO_COLOR                = "TRUE"
         PULUMI_ACCESS_TOKEN     = credentials('PULUMI_ACCESS_TOKEN')
+        MARA_PASSWORD           = credentials('MARA_PASSWORD')
     }
 
   stages {
@@ -152,18 +149,22 @@ pipeline {
           sh '''
             echo "PULUMI_STACK=marajenkmk8s${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmk8s${BUILD_NUMBER} -C pulumi/python/config
-            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmk8s${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmk8s${BUILD_NUMBER} -C pulumi/python/kubernetes/secrets
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmk8ss${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmk8s${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmk8s${BUILD_NUMBER}
              '''
       }
     }

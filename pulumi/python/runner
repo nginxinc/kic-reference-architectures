@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -o errexit  # abort on nonzero exit status
+set -o pipefail # don't hide errors within pipes
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+PYENV_ROOT="${script_dir}/.pyenv"
+
+if [ -d "${PYENV_ROOT}" ]; then
+  PATH="${PATH}:${PYENV_ROOT}/bin"
+  eval "$(pyenv init --path)"
+  eval "$(pyenv init -)"
+fi
+
+if [ -d "${script_dir}/venv" ]; then
+  source "${script_dir}/venv/bin/activate"
+else
+  >&2 echo "Python virtual environment not found at path: ${script_dir}/venv"
+  >&2 echo "Have you run setup_venv.sh to initialize the environment?"
+fi
+
+exec "$script_dir/automation/main.py" $@

@@ -1,9 +1,9 @@
 pipeline {
   agent {
      /*
-      * Nodes that are configured for Microk8s are tagged as "mk8s". Unlike the deployment to cloud providers, this logic
-      * will install Microk8s on the Jenkins Agent. This means that the agent should have sufficient resources available
-      * to run Microk8s. A minimum of 16GB RAM, 2 vCPU, and 20GB of disk is recommended. Testing is done with 20GB of RAM,
+      * Nodes that are configured for minkube are tagged as "minikube". Unlike the deployment to cloud providers, this logic
+      * will install minikube on the Jenkins Agent. This means that the agent should have sufficient resources available
+      * to run minikube. A minimum of 16GB RAM, 2 vCPU, and 20GB of disk is recommended. Testing is done with 20GB of RAM,
       * 4 vCPU, and 64GB of disk.
       *
       * This has been * tested on Ubuntu 20.04. Be sure to check that your Agent has the necessary components installed
@@ -15,18 +15,16 @@ pipeline {
   }
 
   /*
-  * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
-  * open source IC.
-  *
-  * The POSTRUN_CMD is used to execute an arbitrary command following the cleanup process; this is just a work-around
-  * for the time being and will be addressed in the future.
-  */
+   * The JWT for using NGINX Plus is passed in via a variable; if the JWT is not found the process will deploy the
+   * open source IC.
+   */
 
  environment {
         NGINX_JWT               = credentials('NGINX_JWT')
-        POSTRUN_CMD             = credentials('POSTRUN_CMD')
         NO_COLOR                = "TRUE"
         PULUMI_ACCESS_TOKEN     = credentials('PULUMI_ACCESS_TOKEN')
+        MARA_PASSWORD           = credentials('MARA_PASSWORD')
+
     }
 
   stages {
@@ -95,7 +93,7 @@ pipeline {
     stage('Minikube Setup') {
 
         /*
-         * This step installs Microk8s. This assumes you have the snap store installed and configured properly. Note that
+         * This step installs minikube. This assumes you have the snap store installed and configured properly. Note that
          * the snap store will always pull the latest version of the software so you may end up with a deployment that
          * does not work as expected; if this happens please check back with the github repository and verify the known
          * working configurations.
@@ -107,7 +105,7 @@ pipeline {
             curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64  && chmod +x minikube
             mkdir -p /usr/local/bin/
             install minikube /usr/local/bin/
-            minikube start --vm-driver=none
+            minikube start --vm-driver=docker --force --cpus 4 --memory 30000 --kubernetes-version=v1.23.9
             '''
       }
     }
@@ -159,18 +157,23 @@ _EOF_
           sh '''
             echo "PULUMI_STACK=marajenkmkube${BUILD_NUMBER}" > $WORKSPACE/config/pulumi/environment
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmkube${BUILD_NUMBER} -C pulumi/python/config
-            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmkube${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkmkube${BUILD_NUMBER} -C pulumi/python/kubernetes/secrets
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmkubes${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenkmkube${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "microk8s-cluster" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "kubeconfig" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenkmkube${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkmkube${BUILD_NUMBER}
+
             '''
       }
     }
@@ -179,7 +182,7 @@ _EOF_
 
         /*
          * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
-         * the MARA deployment in Microk8s
+         * the MARA deployment in minikube
          */
 
       steps {
@@ -194,7 +197,7 @@ _EOF_
 
         /*
          * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
-         * destroy the deployed Microk8s installation.
+         * destroy the deployed minikube installation.
          *
          * After that completes, we remove the pulumi stack from the project with the find command; this is because
          * we need to delete the stack in each project it's been instantiated in.
@@ -203,17 +206,8 @@ _EOF_
       steps {
           sh '''
             $WORKSPACE/bin/destroy.sh
-            # Reset our Microk8s Environment; true if it’s not there
-            microk8s reset --destroy-storage || true
-            # True if it’s not there…
-            snap remove microk8s || true
+            minikube delete || true
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkmkube${BUILD_NUMBER} --force --yes \\;
-            # This is a hack to allow additional commands to be issued following cleanup. This is needed because the VMs
-            # that currently run as agents for K3S and Microk8s deployments need to be rebooted following some number of
-            # runs due to zombie processes and other issues. Long term we want to deploy these VM's via IaaC so the only
-            # exist for the lifetime of the project. We do it this way in order to provide some flexibility for the
-            # jenkins configuration.
-            ${POSTRUN_CMD- true}
             '''
 
       }

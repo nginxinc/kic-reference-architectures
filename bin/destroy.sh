@@ -10,10 +10,11 @@ export PULUMI_SKIP_UPDATE_CHECK=true
 export PULUMI_SKIP_CONFIRMATIONS=true
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-# Check to see if the venv has been installed, since this is only going to be used to start pulumi/python based
-# projects.
 #
-if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" > /dev/null ; then
+# Check to see if the venv has been installed, since this is only going to be
+# used to start pulumi/python based projects.
+#
+if ! command -v "${script_dir}/../pulumi/python/venv/bin/python" >/dev/null; then
   echo "NOTICE! Unable to find the venv directory. This is required for the pulumi/python deployment process."
   echo "Please run ./setup_venv.sh from this directory to install the required virtual environment."
   echo " "
@@ -54,10 +55,8 @@ if ! pulumi whoami --non-interactive >/dev/null 2>&1; then
 fi
 
 echo " "
-echo "Notice! This shell script will read the config/environment file to determine which pulumi stack to destroy."
-echo "Based on the type of stack it will either run the ./bin/destroy_kube.sh or the ./bin/destroy_aws.sh script."
-echo "If this is not what you want to do, please abort the script by typing ctrl-c and running the appropriate "
-echo "script manually."
+echo "Notice! This shell script will only destroy kubeconfig based deployments; if you have deployed to AWS, "
+echo "DigitalOcean, or Linode you will need to use the ./pulumi/python/runner script instead."
 echo " "
 
 # Sleep so we are seen...
@@ -69,27 +68,28 @@ echo "Configuring all Pulumi projects to use the stack: ${PULUMI_STACK}"
 #
 # Determine what destroy script we need to run
 #
-if pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config>/dev/null 2>&1; then
+if pulumi config get kubernetes:infra_type -C "${script_dir}"/../pulumi/python/config >/dev/null 2>&1; then
   INFRA="$(pulumi config get kubernetes:infra_type -C ${script_dir}/../pulumi/python/config)"
-  if [ $INFRA == 'AWS' ]; then
-    echo "Destroying an AWS based stack; if this is not right please type ctrl-c to abort this script."
-    sleep 5
-    ${script_dir}/destroy_aws.sh
+  if [ "$INFRA" == 'AWS' ]; then
+    echo "This script no longer works with AWS deployments; please use ./pulumi/python/runner instead"
+    exec ${script_dir}/../pulumi/python/runner
     exit 0
-  elif [ $INFRA == 'kubeconfig' ]; then
+  elif [ "$INFRA" == 'kubeconfig' ]; then
     echo "Destroying a kubeconfig based stack; if this is not right please type ctrl-c to abort this script."
     sleep 5
-    ${script_dir}/destroy_kube.sh
+    "${script_dir}"/destroy_kube.sh
     exit 0
-  elif [ $INFRA == 'DO' ]; then
-    echo "Destroying a Digital Ocean based stack; if this is not right please type ctrl-c to abort this script."
+  elif [ "$INFRA" == 'DO' ]; then
+    echo "This script no longer works with DigitalOcean deployments; please use ./pulumi/python/runner instead"
+    exec "${script_dir}"/../pulumi/python/runner
     sleep 5
-    ${script_dir}/destroy_do.sh
+    "${script_dir}"/destroy_do.sh
     exit 0
-  elif [ $INFRA == 'LKE' ]; then
-    echo "Destroying a Linode LKE based stack; if this is not right please type ctrl-c to abort this script."
+  elif [ "$INFRA" == 'LKE' ]; then
+    echo "This script no longer works with Linode deployments; please use ./pulumi/python/runner instead"
+    exec "${script_dir}"/../pulumi/python/runner
     sleep 5
-    ${script_dir}/destroy_lke.sh
+    "${script_dir}"/destroy_lke.sh
     exit 0
   else
     print "No infrastructure set in config file; aborting!"

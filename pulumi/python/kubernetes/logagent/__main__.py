@@ -13,7 +13,7 @@ if not chart_name:
     chart_name = 'filebeat'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '7.16.3'
+    chart_version = '7.17.3'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'elastic'

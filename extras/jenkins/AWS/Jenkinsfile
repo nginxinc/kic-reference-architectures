@@ -29,9 +29,10 @@ pipeline {
         AWS_ACCESS_KEY_ID      = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY  = credentials('AWS_SECRET_ACCESS_KEY')
         AWS_SESSION_TOKEN      = credentials('AWS_SESSION_TOKEN')
-        NGINX_JWT              = credentials('NGINX_JWT')
         NO_COLOR               = "TRUE"
         PULUMI_ACCESS_TOKEN    = credentials('PULUMI_ACCESS_TOKEN')
+        MARA_PASSWORD          = credentials('MARA_PASSWORD')
+
 
 
     }
@@ -86,15 +87,11 @@ pipeline {
       steps {
 
         /*
-         * Run a find and check for any stacks that currently exist with our generated stack name; this should not
-         * happen in normal operation, but could potentially happen if things break so better safe than sorry.
-         *
          * Other cleanup related functions can be placed here as well.
          */
 
           sh '''
-            # Clean up the Pulumi stack if it exists for our run - which it shouldn\'t, but you never know.
-            find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
+             true
              '''
       }
     }
@@ -145,17 +142,28 @@ pipeline {
             echo "AWS_PROFILE=${AWS_PROFILE}" >> $WORKSPACE/config/pulumi/environment
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/config
             $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/kubernetes/applications/sirius
+            $WORKSPACE/pulumi/python/venv/bin/pulumi stack select --create marajenkaws${BUILD_NUMBER} -C pulumi/python/kubernetes/secrets
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set certmgr:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "marajenks${BUILD_NUMBER}.zathras.io" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "AWS" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:kubeconfig "$HOME/.kube/config" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:infra_type "aws" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set kubernetes:cluster_name "marajenkaws${BUILD_NUMBER}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logagent:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set logstore:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
-            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "password" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:helm_timeout "600" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_user "testuser" --secret -C pulumi/python/kubernetes/secrets -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:ledger_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:profile "${AWS_PROFILE}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
             $WORKSPACE/pulumi/python/venv/bin/pulumi config set aws:region "${AWS_DEFAULT_REGION}" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set eks:k8s_version "1.22" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set eks:instance_type "t2.large" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set eks:min_size "3" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set eks:max_size "12" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
+            $WORKSPACE/pulumi/python/venv/bin/pulumi config set eks:desired_capacity "3" -C pulumi/python/config -s marajenkaws${BUILD_NUMBER}
              '''
       }
     }
@@ -164,13 +172,11 @@ pipeline {
       steps {
 
         /*
-         * This step echoes the JWT into the correct file for the startup to find it and then calls the script to build
-         * the credentials file if we have environment variables set. Finally, it moves the JWT into the correct location.
+         *
          */
 
           sh '''
-            echo "${NGINX_JWT}" > $WORKSPACE/extras/jwt.token
-            $WORKSPACE/bin/start_aws.sh
+             $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} up
              '''
       }
     }
@@ -182,12 +188,16 @@ pipeline {
          * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
          * destroy the deployed infrastructure in AWS
          *
+         * AWS will not remove a registry that contains images, so we do a force removal here; this should ultimately
+         * be fixed in the code.
+         *
          * After that completes, we remove the pulumi stack from the project with the find command; this is because
          * we need to delete the stack in each project it's been instantiated in.
          */
 
           sh '''
-            $WORKSPACE/bin/destroy.sh
+            $WORKSPACE/pulumi/python/venv/bin/aws ecr delete-repository --repository-name ingress-controller-marajenkaws${BUILD_NUMBER} --force
+            $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} destroy
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
              '''
       }
@@ -205,7 +215,7 @@ pipeline {
 
           sh '''
              # Destroy our partial build...
-             $WORKSPACE/bin/destroy.sh || true
+             $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} destroy || true
              find  $WORKSPACE -mindepth 2 -maxdepth 7 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER}  --force --yes  \\;
               '''
     }

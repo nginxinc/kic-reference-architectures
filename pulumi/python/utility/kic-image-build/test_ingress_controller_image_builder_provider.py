@@ -1,6 +1,6 @@
 import os
 import unittest
-import ingress_controller_image_builder_provider as image_builder
+from ingress_controller_image_builder_provider import IngressControllerImageBuilderProvider
 
 from kic_util.docker_image_name import DockerImageName
 
@@ -8,7 +8,7 @@ from kic_util.docker_image_name import DockerImageName
 class TestIngressControllerImageBuilderProvider(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.provider = image_builder.IngressControllerImageBuilderProvider()
+        self.provider = IngressControllerImageBuilderProvider()
 
     def assertStrEqual(self, first, second, msg=None):
         self.assertEqual(first=str(first), second=str(second), msg=msg)
