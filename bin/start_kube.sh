@@ -239,40 +239,58 @@ fi
 # project.
 #
 echo "Checking for required secrets"
-if pulumi config get prometheus:adminpass -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+
+# Sirius Accounts Database
+if pulumi config get sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
+  true
 else
-	echo "Please enter a password for grafana"
-	pulumi config set prometheus:adminpass --secret -C pulumi/python/kubernetes/secrets
+  ACCOUNTS_PW=$(createpw)
+  pulumi config set --secret sirius:accounts_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets $ACCOUNTS_PW
 fi
 
-if pulumi config get sirius:accounts_pwd -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+# Sirius Ledger Database
+if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
+  true
 else
-	echo "Please enter a password for the sirius accountsdb"
-	pulumi config set sirius:accounts_pwd --secret -C pulumi/python/kubernetes/secrets
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets $LEDGER_PW
 fi
 
+if pulumi config get sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
+  true
+else
+  LEDGER_PW=$(createpw)
+  pulumi config set --secret sirius:ledger_pwd -C ${script_dir}/../pulumi/python/kubernetes/secrets $LEDGER_PW
+fi
+
+# Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
+# This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
+#
+if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
+  echo "Existing password found for grafana admin user"
+else
+  echo "Create a password for the grafana admin user; this password will be used to access the Grafana dashboard"
+  echo "This should be an alphanumeric string without any shell special characters; it is presented in plain text"
+  echo "due to current limitations with Pulumi secrets. You will need this password to access the Grafana dashboard."
+  pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
+fi
+
+#
+# The demo account defaults to testuser/password for credentials; this needs to be fixed in the BoS to allow
+# other passwords to be used. Once that is done we can adjust this section.
+#
 if pulumi config get sirius:demo_login_pwd -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+	echo "Existing demo user login found"
 else
-	echo "Please enter a password for the sirius ledgerdb"
-	pulumi config set sirius:demo_login_pwd --secret -C pulumi/python/kubernetes/secrets
+	pulumi config set sirius:demo_login_pwd --secret -C pulumi/python/kubernetes/secrets "password"
 fi
 
 if pulumi config get sirius:demo_login_user -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+	echo "Existing demo user password found"
 else
-	echo "Please enter a username for the BoS"
-	pulumi config set sirius:demo_login_user --secret -C pulumi/python/kubernetes/secrets
+	pulumi config set sirius:demo_login_user --secret -C pulumi/python/kubernetes/secrets "testuser"
 fi
 
-if pulumi config get sirius:ledger_pwd -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
-else
-	echo "Please enter a password for the BoS user account"
-	pulumi config set sirius:ledger_pwd --secret -C pulumi/python/kubernetes/secrets
-fi
 
 #
 # The default helm timeout for all the projects is set at the default of 300 seconds (5 minutes)
