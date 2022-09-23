@@ -280,13 +280,13 @@ fi
 # other passwords to be used. Once that is done we can adjust this section.
 #
 if pulumi config get sirius:demo_login_pwd -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+	echo "Existing demo user login found"
 else
 	pulumi config set sirius:demo_login_pwd --secret -C pulumi/python/kubernetes/secrets "password"
 fi
 
 if pulumi config get sirius:demo_login_user -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
-	echo "Configuration value found"
+	echo "Existing demo user password found"
 else
 	pulumi config set sirius:demo_login_user --secret -C pulumi/python/kubernetes/secrets "testuser"
 fi
