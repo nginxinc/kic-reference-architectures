@@ -66,7 +66,7 @@ if not chart_name:
     chart_name = 'kube-prometheus-stack'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '39.2.1'
+    chart_version = '41.5.0'
 helm_repo_name = config.get('prometheus_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'
@@ -207,7 +207,7 @@ if not statsd_chart_name:
     statsd_chart_name = 'prometheus-statsd-exporter'
 statsd_chart_version = config.get('statsd_chart_version')
 if not statsd_chart_version:
-    statsd_chart_version = '0.5.0'
+    statsd_chart_version = '0.6.2'
 helm_repo_name = config.get('prometheus_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'prometheus-community'

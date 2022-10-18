@@ -13,7 +13,7 @@ if not chart_name:
     chart_name = 'elasticsearch'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '19.1.4'
+    chart_version = '19.4.4'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'bitnami'

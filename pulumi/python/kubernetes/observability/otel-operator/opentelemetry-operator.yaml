@@ -10,7 +10,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   labels:
     app.kubernetes.io/name: opentelemetry-operator
@@ -61,6 +61,131 @@ spec:
             description: InstrumentationSpec defines the desired state of OpenTelemetry
               SDK and instrumentation.
             properties:
+              dotnet:
+                description: DotNet defines configuration for DotNet auto-instrumentation.
+                properties:
+                  env:
+                    description: 'Env defines DotNet specific env vars. There are
+                      four layers for env vars'' definitions and the precedence order
+                      is: `original container env vars` > `language specific env vars`
+                      > `common env vars` > `instrument spec configs'' vars`. If the
+                      former var had been defined, then the other vars would be ignored.'
+                    items:
+                      description: EnvVar represents an environment variable present
+                        in a Container.
+                      properties:
+                        name:
+                          description: Name of the environment variable. Must be a
+                            C_IDENTIFIER.
+                          type: string
+                        value:
+                          description: 'Variable references $(VAR_NAME) are expanded
+                            using the previously defined environment variables in
+                            the container and any service environment variables. If
+                            a variable cannot be resolved, the reference in the input
+                            string will be unchanged. Double $$ are reduced to a single
+                            $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                            Escaped references will never be expanded, regardless
+                            of whether the variable exists or not. Defaults to "".'
+                          type: string
+                        valueFrom:
+                          description: Source for the environment variable's value.
+                            Cannot be used if value is not empty.
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Add other useful fields. apiVersion, kind,
+                                    uid?'
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fieldRef:
+                              description: 'Selects a field of the pod: supports metadata.name,
+                                metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                spec.serviceAccountName, status.hostIP, status.podIP,
+                                status.podIPs.'
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            resourceFieldRef:
+                              description: 'Selects a resource of the container: only
+                                resources limits and requests (limits.cpu, limits.memory,
+                                limits.ephemeral-storage, requests.cpu, requests.memory
+                                and requests.ephemeral-storage) are currently supported.'
+                              properties:
+                                containerName:
+                                  description: 'Container name: required for volumes,
+                                    optional for env vars'
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: Specifies the output format of the
+                                    exposed resources, defaults to "1"
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  description: 'Required: resource to select'
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's
+                                namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Add other useful fields. apiVersion, kind,
+                                    uid?'
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  image:
+                    description: Image is a container image with DotNet SDK and auto-instrumentation.
+                    type: string
+                type: object
               env:
                 description: 'Env defines common env vars. There are four layers for
                   env vars'' definitions and the precedence order is: `original container
@@ -106,6 +231,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                         fieldRef:
                           description: 'Selects a field of the pod: supports metadata.name,
                             metadata.namespace, `metadata.labels[''<KEY>'']`, `metadata.annotations[''<KEY>'']`,
@@ -123,6 +249,7 @@ spec:
                           required:
                           - fieldPath
                           type: object
+                          x-kubernetes-map-type: atomic
                         resourceFieldRef:
                           description: 'Selects a resource of the container: only
                             resources limits and requests (limits.cpu, limits.memory,
@@ -147,6 +274,7 @@ spec:
                           required:
                           - resource
                           type: object
+                          x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the pod's namespace
                           properties:
@@ -165,6 +293,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                       type: object
                   required:
                   - name
@@ -227,6 +356,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                             fieldRef:
                               description: 'Selects a field of the pod: supports metadata.name,
                                 metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -245,6 +375,7 @@ spec:
                               required:
                               - fieldPath
                               type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               description: 'Selects a resource of the container: only
                                 resources limits and requests (limits.cpu, limits.memory,
@@ -269,6 +400,7 @@ spec:
                               required:
                               - resource
                               type: object
+                              x-kubernetes-map-type: atomic
                             secretKeyRef:
                               description: Selects a key of a secret in the pod's
                                 namespace
@@ -289,6 +421,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                           type: object
                       required:
                       - name
@@ -349,6 +482,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                             fieldRef:
                               description: 'Selects a field of the pod: supports metadata.name,
                                 metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -367,6 +501,7 @@ spec:
                               required:
                               - fieldPath
                               type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               description: 'Selects a resource of the container: only
                                 resources limits and requests (limits.cpu, limits.memory,
@@ -391,6 +526,7 @@ spec:
                               required:
                               - resource
                               type: object
+                              x-kubernetes-map-type: atomic
                             secretKeyRef:
                               description: Selects a key of a secret in the pod's
                                 namespace
@@ -411,6 +547,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                           type: object
                       required:
                       - name
@@ -486,6 +623,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                             fieldRef:
                               description: 'Selects a field of the pod: supports metadata.name,
                                 metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -504,6 +642,7 @@ spec:
                               required:
                               - fieldPath
                               type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               description: 'Selects a resource of the container: only
                                 resources limits and requests (limits.cpu, limits.memory,
@@ -528,6 +667,7 @@ spec:
                               required:
                               - resource
                               type: object
+                              x-kubernetes-map-type: atomic
                             secretKeyRef:
                               description: Selects a key of a secret in the pod's
                                 namespace
@@ -548,6 +688,7 @@ spec:
                               required:
                               - key
                               type: object
+                              x-kubernetes-map-type: atomic
                           type: object
                       required:
                       - name
@@ -603,19 +744,13 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: opentelemetry-operator-system/opentelemetry-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.9.2
   labels:
     app.kubernetes.io/name: opentelemetry-operator
   name: opentelemetrycollectors.opentelemetry.io
@@ -670,6 +805,130 @@ spec:
                 description: Args is the set of arguments to pass to the OpenTelemetry
                   Collector binary
                 type: object
+              autoscaler:
+                description: Autoscaler specifies the pod autoscaling configuration
+                  to use for the OpenTelemetryCollector workload.
+                properties:
+                  behavior:
+                    description: HorizontalPodAutoscalerBehavior configures the scaling
+                      behavior of the target in both Up and Down directions (scaleUp
+                      and scaleDown fields respectively).
+                    properties:
+                      scaleDown:
+                        description: scaleDown is scaling policy for scaling Down.
+                          If not set, the default value is to allow to scale down
+                          to minReplicas pods, with a 300 second stabilization window
+                          (i.e., the highest recommendation for the last 300sec is
+                          used).
+                        properties:
+                          policies:
+                            description: policies is a list of potential scaling polices
+                              which can be used during scaling. At least one policy
+                              must be specified, otherwise the HPAScalingRules will
+                              be discarded as invalid
+                            items:
+                              description: HPAScalingPolicy is a single policy which
+                                must hold true for a specified past interval.
+                              properties:
+                                periodSeconds:
+                                  description: PeriodSeconds specifies the window
+                                    of time for which the policy should hold true.
+                                    PeriodSeconds must be greater than zero and less
+                                    than or equal to 1800 (30 min).
+                                  format: int32
+                                  type: integer
+                                type:
+                                  description: Type is used to specify the scaling
+                                    policy.
+                                  type: string
+                                value:
+                                  description: Value contains the amount of change
+                                    which is permitted by the policy. It must be greater
+                                    than zero
+                                  format: int32
+                                  type: integer
+                              required:
+                              - periodSeconds
+                              - type
+                              - value
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          selectPolicy:
+                            description: selectPolicy is used to specify which policy
+                              should be used. If not set, the default value Max is
+                              used.
+                            type: string
+                          stabilizationWindowSeconds:
+                            description: 'StabilizationWindowSeconds is the number
+                              of seconds for which past recommendations should be
+                              considered while scaling up or scaling down. StabilizationWindowSeconds
+                              must be greater than or equal to zero and less than
+                              or equal to 3600 (one hour). If not set, use the default
+                              values: - For scale up: 0 (i.e. no stabilization is
+                              done). - For scale down: 300 (i.e. the stabilization
+                              window is 300 seconds long).'
+                            format: int32
+                            type: integer
+                        type: object
+                      scaleUp:
+                        description: 'scaleUp is scaling policy for scaling Up. If
+                          not set, the default value is the higher of: * increase
+                          no more than 4 pods per 60 seconds * double the number of
+                          pods per 60 seconds No stabilization is used.'
+                        properties:
+                          policies:
+                            description: policies is a list of potential scaling polices
+                              which can be used during scaling. At least one policy
+                              must be specified, otherwise the HPAScalingRules will
+                              be discarded as invalid
+                            items:
+                              description: HPAScalingPolicy is a single policy which
+                                must hold true for a specified past interval.
+                              properties:
+                                periodSeconds:
+                                  description: PeriodSeconds specifies the window
+                                    of time for which the policy should hold true.
+                                    PeriodSeconds must be greater than zero and less
+                                    than or equal to 1800 (30 min).
+                                  format: int32
+                                  type: integer
+                                type:
+                                  description: Type is used to specify the scaling
+                                    policy.
+                                  type: string
+                                value:
+                                  description: Value contains the amount of change
+                                    which is permitted by the policy. It must be greater
+                                    than zero
+                                  format: int32
+                                  type: integer
+                              required:
+                              - periodSeconds
+                              - type
+                              - value
+                              type: object
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          selectPolicy:
+                            description: selectPolicy is used to specify which policy
+                              should be used. If not set, the default value Max is
+                              used.
+                            type: string
+                          stabilizationWindowSeconds:
+                            description: 'StabilizationWindowSeconds is the number
+                              of seconds for which past recommendations should be
+                              considered while scaling up or scaling down. StabilizationWindowSeconds
+                              must be greater than or equal to zero and less than
+                              or equal to 3600 (one hour). If not set, use the default
+                              values: - For scale up: 0 (i.e. no stabilization is
+                              done). - For scale down: 300 (i.e. the stabilization
+                              window is 300 seconds long).'
+                            format: int32
+                            type: integer
+                        type: object
+                    type: object
+                type: object
               config:
                 description: Config is the raw JSON to be used as the collector's
                   configuration. Refer to the OpenTelemetry Collector documentation
@@ -718,6 +977,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                         fieldRef:
                           description: 'Selects a field of the pod: supports metadata.name,
                             metadata.namespace, `metadata.labels[''<KEY>'']`, `metadata.annotations[''<KEY>'']`,
@@ -735,6 +995,7 @@ spec:
                           required:
                           - fieldPath
                           type: object
+                          x-kubernetes-map-type: atomic
                         resourceFieldRef:
                           description: 'Selects a resource of the container: only
                             resources limits and requests (limits.cpu, limits.memory,
@@ -759,6 +1020,7 @@ spec:
                           required:
                           - resource
                           type: object
+                          x-kubernetes-map-type: atomic
                         secretKeyRef:
                           description: Selects a key of a secret in the pod's namespace
                           properties:
@@ -777,6 +1039,7 @@ spec:
                           required:
                           - key
                           type: object
+                          x-kubernetes-map-type: atomic
                       type: object
                   required:
                   - name
@@ -800,6 +1063,7 @@ spec:
                           description: Specify whether the ConfigMap must be defined
                           type: boolean
                       type: object
+                      x-kubernetes-map-type: atomic
                     prefix:
                       description: An optional identifier to prepend to each key in
                         the ConfigMap. Must be a C_IDENTIFIER.
@@ -815,6 +1079,7 @@ spec:
                           description: Specify whether the Secret must be defined
                           type: boolean
                       type: object
+                      x-kubernetes-map-type: atomic
                   type: object
                 type: array
               hostNetwork:
@@ -1288,6 +1553,12 @@ spec:
                 description: TargetAllocator indicates a value which determines whether
                   to spawn a target allocation resource or not.
                 properties:
+                  allocationStrategy:
+                    description: AllocationStrategy determines which strategy the
+                      target allocator should use for allocation. The current options
+                      are least-weighted and consistent-hashing. The default option
+                      is least-weighted
+                    type: string
                   enabled:
                     description: Enabled indicates whether to use a target allocation
                       mechanism for Prometheus targets or not.
@@ -1308,6 +1579,14 @@ spec:
                           custom resources as targets or not.
                         type: boolean
                     type: object
+                  replicas:
+                    description: Replicas is the number of pod instances for the underlying
+                      TargetAllocator. This should only be set to a value other than
+                      1 if a strategy that allows for high availability is chosen.
+                      Currently, the only allocation strategy that can be run in a
+                      high availability mode is consistent-hashing.
+                    format: int32
+                    type: integer
                   serviceAccount:
                     description: ServiceAccount indicates the name of an existing
                       service account to use with this instance.
@@ -1437,6 +1716,7 @@ spec:
                           - kind
                           - name
                           type: object
+                          x-kubernetes-map-type: atomic
                         dataSourceRef:
                           description: 'dataSourceRef specifies the object from which
                             to populate the volume with data, if a non-empty volume
@@ -1476,6 +1756,7 @@ spec:
                           - kind
                           - name
                           type: object
+                          x-kubernetes-map-type: atomic
                         resources:
                           description: 'resources represents the minimum resources
                             the volume should have. If RecoverVolumeExpansionFailure
@@ -1554,6 +1835,7 @@ spec:
                                 contains only "value". The requirements are ANDed.
                               type: object
                           type: object
+                          x-kubernetes-map-type: atomic
                         storageClassName:
                           description: 'storageClassName is the name of the StorageClass
                             required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1'
@@ -1832,6 +2114,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         user:
                           description: 'user is optional: User is the rados user name,
                             default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it'
@@ -1863,6 +2146,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         volumeID:
                           description: 'volumeID used to identify the volume in cinder.
                             More info: https://examples.k8s.io/mysql-cinder-pd/README.md'
@@ -1934,6 +2218,7 @@ spec:
                             keys must be defined
                           type: boolean
                       type: object
+                      x-kubernetes-map-type: atomic
                     csi:
                       description: csi (Container Storage Interface) represents ephemeral
                         storage that is handled by certain external CSI drivers (Beta
@@ -1964,6 +2249,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         readOnly:
                           description: readOnly specifies a read-only configuration
                             for the volume. Defaults to false (read/write).
@@ -2017,6 +2303,7 @@ spec:
                                 required:
                                 - fieldPath
                                 type: object
+                                x-kubernetes-map-type: atomic
                               mode:
                                 description: 'Optional: mode bits used to set permissions
                                   on this file, must be an octal value between 0000
@@ -2060,6 +2347,7 @@ spec:
                                 required:
                                 - resource
                                 type: object
+                                x-kubernetes-map-type: atomic
                             required:
                             - path
                             type: object
@@ -2193,6 +2481,7 @@ spec:
                                   - kind
                                   - name
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 dataSourceRef:
                                   description: 'dataSourceRef specifies the object
                                     from which to populate the volume with data, if
@@ -2238,6 +2527,7 @@ spec:
                                   - kind
                                   - name
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 resources:
                                   description: 'resources represents the minimum resources
                                     the volume should have. If RecoverVolumeExpansionFailure
@@ -2322,6 +2612,7 @@ spec:
                                         The requirements are ANDed.
                                       type: object
                                   type: object
+                                  x-kubernetes-map-type: atomic
                                 storageClassName:
                                   description: 'storageClassName is the name of the
                                     StorageClass required by the claim. More info:
@@ -2412,6 +2703,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                       required:
                       - driver
                       type: object
@@ -2589,6 +2881,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         targetPortal:
                           description: targetPortal is iSCSI Target Portal. The Portal
                             is either an IP or ip_addr:port if the port is other than
@@ -2759,6 +3052,7 @@ spec:
                                       or its keys must be defined
                                     type: boolean
                                 type: object
+                                x-kubernetes-map-type: atomic
                               downwardAPI:
                                 description: downwardAPI information about the downwardAPI
                                   data to project
@@ -2788,6 +3082,7 @@ spec:
                                           required:
                                           - fieldPath
                                           type: object
+                                          x-kubernetes-map-type: atomic
                                         mode:
                                           description: 'Optional: mode bits used to
                                             set permissions on this file, must be
@@ -2836,6 +3131,7 @@ spec:
                                           required:
                                           - resource
                                           type: object
+                                          x-kubernetes-map-type: atomic
                                       required:
                                       - path
                                       type: object
@@ -2901,6 +3197,7 @@ spec:
                                       Secret or its key must be defined
                                     type: boolean
                                 type: object
+                                x-kubernetes-map-type: atomic
                               serviceAccountToken:
                                 description: serviceAccountToken is information about
                                   the serviceAccountToken data to project
@@ -3017,6 +3314,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         user:
                           description: 'user is the rados user name. Default is admin.
                             More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it'
@@ -3056,6 +3354,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         sslEnabled:
                           description: sslEnabled Flag enable/disable SSL communication
                             with Gateway, default false
@@ -3171,6 +3470,7 @@ spec:
                                 TODO: Add other useful fields. apiVersion, kind, uid?'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         volumeName:
                           description: volumeName is the human-readable name of the
                             StorageOS volume.  Volume names are only unique within
@@ -3262,12 +3562,6 @@ spec:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.scale.replicas
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -3611,7 +3905,7 @@ spec:
       - args:
         - --metrics-addr=127.0.0.1:8080
         - --enable-leader-election
-        image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.56.0
+        image: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator:0.60.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -3645,7 +3939,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.11.0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -3852,4 +4146,3 @@ webhooks:
     resources:
     - opentelemetrycollectors
   sideEffects: None
-
