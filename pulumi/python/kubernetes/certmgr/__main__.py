@@ -40,7 +40,7 @@ if not chart_name:
     chart_name = 'cert-manager'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = 'v1.9.1'
+    chart_version = 'v1.10.0'
 helm_repo_name = config.get('certmgr_helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'jetstack'
