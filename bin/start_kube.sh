@@ -266,13 +266,13 @@ fi
 # Admin password for grafana (see note in __main__.py in prometheus project as to why not encrypted)
 # This is for the deployment that is setup as part of the the prometheus operator driven prometheus-kube-stack.
 #
-if pulumi config get prometheus:adminpass -C ${script_dir}/../pulumi/python/config >/dev/null 2>&1; then
+if pulumi config get prometheus:adminpass -C "${script_dir}"/../pulumi/python/kubernetes/secrets >/dev/null 2>&1; then
   echo "Existing password found for grafana admin user"
 else
   echo "Create a password for the grafana admin user; this password will be used to access the Grafana dashboard"
-  echo "This should be an alphanumeric string without any shell special characters; it is presented in plain text"
-  echo "due to current limitations with Pulumi secrets. You will need this password to access the Grafana dashboard."
-  pulumi config set prometheus:adminpass -C ${script_dir}/../pulumi/python/config
+  echo "This should be an alphanumeric string without any shell special characters. You will need this password to"
+  echo "access the Grafana dashboard."
+	pulumi config set prometheus:adminpass --secret -C "${script_dir}"/../pulumi/python/kubernetes/secrets
 fi
 
 #
