@@ -41,6 +41,12 @@ class DoctlCli:
         :return: command to be executed
         """
         return f'{self.base_cmd()} account get'
+    def auth_credentials_cmd(self) -> str:
+        """
+        Runs the doctl auth command for helm usage later in MARA
+        :return: command to be executed
+        """
+        return f'{self.base_cmd()} auth init'
 
     def save_kubernetes_cluster_cmd(self, cluster_name: str) -> str:
         """
@@ -176,7 +182,7 @@ class DigitalOceanProvider(Provider):
         super().validate_stack_config(stack_config=stack_config, env_config=env_config)
         token = DigitalOceanProvider.token(stack_config=stack_config, env_config=env_config)
         do_cli = DoctlCli(access_token=token)
-        _, err = external_process.run(cmd=do_cli.validate_credentials_cmd())
+        _, err = external_process.run(cmd=do_cli.auth_credentials_cmd())
         if err:
             print(f'Digital Ocean authentication error: {err}', file=sys.stderr)
             sys.exit(3)
