@@ -137,7 +137,7 @@ pipeline {
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set docean:node_count "3" -C pulumi/python/config -s marajenkdo${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set docean:region "sfo3" -C pulumi/python/config -s marajenkdo${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set kic-helm:fqdn "mara${BUILD_NUMBER}.docean.mantawang.com" -C pulumi/python/config -s marajenkdo${BUILD_NUMBER}
-          $WORKSPACE/pulumi/python/venv/bin/pulumi config set docean:token "${DO_TOKEN}" --plaintext -C pulumi/python/config -s marajenkdo${BUILD_NUMBER}
+          $WORKSPACE/pulumi/python/venv/bin/pulumi config set digitalocean:token "${DO_TOKEN}" --plaintext -C pulumi/python/config -s marajenkdo${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set prometheus:adminpass "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkdo${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:accounts_pwd "${MARA_PASSWORD}" --secret -C pulumi/python/kubernetes/secrets -s marajenkdo${BUILD_NUMBER}
           $WORKSPACE/pulumi/python/venv/bin/pulumi config set sirius:demo_login_pwd "password" --secret -C pulumi/python/kubernetes/secrets -s marajenkdo${BUILD_NUMBER}
