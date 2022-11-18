@@ -120,7 +120,7 @@ class DigitalOceanProvider(Provider):
 
         if 'DIGITALOCEAN_TOKEN' not in env_config:
             config['digitalocean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
-                                                 "alternatively this can be specified as the environment variable "
+                                                 "you may also need to specify it in the environment variable "
                                                  "DIGITALOCEAN_TOKEN): ")
 
 
