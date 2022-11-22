@@ -120,9 +120,8 @@ class DigitalOceanProvider(Provider):
 
         if 'DIGITALOCEAN_TOKEN' not in env_config:
             config['digitalocean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
-                                                 "you may also need to specify it in the environment variable "
+                                                 "YOU WILL ALSO NEED TO SPECIFY IT IN THE ENVIRONMENT VARIABLE "
                                                  "DIGITALOCEAN_TOKEN): ")
-
 
         token = DigitalOceanProvider.token(stack_config={'config': config}, env_config=env_config)
         do_cli = DoctlCli(access_token=token)

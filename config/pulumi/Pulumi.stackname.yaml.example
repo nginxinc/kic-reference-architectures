@@ -20,6 +20,16 @@
 # namespace "digitalocean". If you do so you will get undefined and bizarre errors
 # back from Pulumi at runtime.
 #
+# Known verboten namespaces:
+# - aws
+# - digitalocean
+# - gcp
+# - linode
+# - azure
+#
+# This list is subject to change and may not be complete; it is recommended that if
+# you experience errors with a provider you check this.
+#
 # One important exception; if you are providing auth credentials for a given
 # provider you will likely be defining them into that providers namespace. So, the
 # Digital Ocean token does go in "digitalocean:token".
