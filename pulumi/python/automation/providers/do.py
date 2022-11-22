@@ -41,6 +41,12 @@ class DoctlCli:
         :return: command to be executed
         """
         return f'{self.base_cmd()} account get'
+    def auth_credentials_cmd(self) -> str:
+        """
+        Runs the doctl auth command for helm usage later in MARA
+        :return: command to be executed
+        """
+        return f'{self.base_cmd()} auth init'
 
     def save_kubernetes_cluster_cmd(self, cluster_name: str) -> str:
         """
@@ -113,8 +119,8 @@ class DigitalOceanProvider(Provider):
         config = super().new_stack_config(env_config, defaults)
 
         if 'DIGITALOCEAN_TOKEN' not in env_config:
-            config['docean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
-                                                 "alternatively this can be specified as the environment variable "
+            config['digitalocean:token'] = input("Digital Ocean API token (this is stored in plain-text - "
+                                                 "YOU WILL ALSO NEED TO SPECIFY IT IN THE ENVIRONMENT VARIABLE "
                                                  "DIGITALOCEAN_TOKEN): ")
 
         token = DigitalOceanProvider.token(stack_config={'config': config}, env_config=env_config)
@@ -176,7 +182,7 @@ class DigitalOceanProvider(Provider):
         super().validate_stack_config(stack_config=stack_config, env_config=env_config)
         token = DigitalOceanProvider.token(stack_config=stack_config, env_config=env_config)
         do_cli = DoctlCli(access_token=token)
-        _, err = external_process.run(cmd=do_cli.validate_credentials_cmd())
+        _, err = external_process.run(cmd=do_cli.auth_credentials_cmd())
         if err:
             print(f'Digital Ocean authentication error: {err}', file=sys.stderr)
             sys.exit(3)
@@ -217,16 +223,16 @@ class DigitalOceanProvider(Provider):
             return env_config['DIGITALOCEAN_TOKEN']
 
         # We were given a reference to a StackConfigParser object
-        if 'config' in stack_config and 'docean:token' in stack_config['config']:
-            return stack_config['config']['docean:token']
+        if 'config' in stack_config and 'digitalocean:token' in stack_config['config']:
+            return stack_config['config']['digitalocean:token']
 
         # We were given a reference to a Pulumi Stack configuration
-        if 'docean:token' in stack_config:
-            return stack_config['docean:token'].value
+        if 'digitalocean:token' in stack_config:
+            return stack_config['digitalocean:token'].value
 
         # Otherwise
         msg = 'When using the Digital Ocean provider, an API token must be specified - ' \
-              'this token can be specified with the Pulumi config parameter docean:token ' \
+              'this token can be specified with the Pulumi config parameter digitalocean:token ' \
               'or the environment variable DIGITALOCEAN_TOKEN'
         raise InvalidConfigurationException(msg)
 

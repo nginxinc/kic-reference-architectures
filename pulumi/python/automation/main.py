@@ -82,7 +82,7 @@ FLAGS:
     -d, --debug        Enable debug output on all of the commands executed
     -b, --banner-type= Banner type to indicate which project is being executed (e.g. {', '.join(BANNER_TYPES)})
     -h, --help         Prints help information
-    -s, --stack        Specifies the Pulumi stack to use
+    -s, --stack=       Specifies the Pulumi stack to use
     -p, --provider=    Specifies the provider used (e.g. {', '.join(PROVIDERS)})
 
 OPERATIONS:
