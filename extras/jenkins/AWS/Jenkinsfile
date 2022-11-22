@@ -188,15 +188,11 @@ pipeline {
          * Clean up the environment; this includes running the destroy script to remove our pulumi resources and
          * destroy the deployed infrastructure in AWS
          *
-         * AWS will not remove a registry that contains images, so we do a force removal here; this should ultimately
-         * be fixed in the code.
-         *
          * After that completes, we remove the pulumi stack from the project with the find command; this is because
          * we need to delete the stack in each project it's been instantiated in.
          */
 
           sh '''
-            $WORKSPACE/pulumi/python/venv/bin/aws ecr delete-repository --repository-name ingress-controller-marajenkaws${BUILD_NUMBER} --force
             $WORKSPACE/pulumi/python/runner -p aws -s marajenkaws${BUILD_NUMBER} destroy
             find . -mindepth 2 -maxdepth 6 -type f -name Pulumi.yaml -execdir $WORKSPACE/pulumi/python/venv/bin/pulumi stack rm marajenkaws${BUILD_NUMBER} --force --yes \\;
              '''
