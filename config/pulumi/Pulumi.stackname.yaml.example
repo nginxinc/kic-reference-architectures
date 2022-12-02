@@ -371,3 +371,21 @@ config:
   linode:region: us-central
   # Flag to enable or disable HA mode for the Kubernetes cluster
   linode:k8s_ha: true
+
+  ############################################################################
+  # Sumologic / OTEL
+  ############################################################################
+  # Endpoint for traces
+  otel:traceendpoint: http://sumo-sumologic-otelagent.sumo:4317
+  # Namespace for deployment
+  otel:promnamespace: sumo
+  # Chart name for the helm chart for certmanager
+  sumo:chart_name: sumologic
+  # Chart version for the helm chart for certmanager
+  sumo:chart_version: 2.19.0
+  # Name of the repo to pull the certmanager chart from
+  sumo:helm_repo_name: sumologic
+  # URL of the chart repo to pull certmanager from
+  sumo:helm_repo_url: https://sumologic.github.io/sumologic-kubernetes-collection
+  # Timeout value for helm operations in seconds
+  sumo:helm_timeout: 300
