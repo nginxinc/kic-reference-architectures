@@ -59,7 +59,7 @@ if not chart_name:
     chart_name = 'sumologic'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '2.19.0'
+    chart_version = '3.0.0-beta.0'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'sumologic'
@@ -106,36 +106,7 @@ sumo_release_args = ReleaseArgs(
         "sumologic": {
             "accessId": access_id,
             "accessKey": access_key,
-            "clusterName": cluster_name,
-            "events": {
-                "provider": "otelcol"
-            },
-            "logs": {
-                "enabled": True,
-                "metadata": {
-                    "provider": "otelcol"
-                },
-                "collector": {
-                    "otelcol": {
-                        "enabled": True
-                    }
-                }
-            },
-            "metrics": {
-                "enabled": True,
-                "metadata": {
-                    "provider": "otelcol"
-                }
-            },
-            "traces": {
-                "enabled": True
-            }
-        },
-        "fluent-bit": {
-            "enabled": False
-        },
-        "kube-prometheus-stack": {
-            "enabled": True
+            "clusterName": cluster_name
         }
     },
     # User configurable timeout

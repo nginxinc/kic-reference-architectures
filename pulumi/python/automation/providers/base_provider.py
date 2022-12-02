@@ -24,10 +24,12 @@ class InvalidConfigurationException(Exception):
 
 class Provider:
     """Super class for all infrastructure providers"""
+
     @staticmethod
     def list_providers() -> Iterable[str]:
         """returns an iterable of the providers available derived from the files in the providers directory
         :return all the usable providers"""
+
         def is_provider(file: pathlib.Path) -> bool:
             # Filter out the non-provider files
             return file.is_file() and \
@@ -78,33 +80,70 @@ class Provider:
 
     def k8s_execution_order(self) -> List[PulumiProject]:
         """Pulumi Kubernetes projects to be executed in sequential order"""
-        return [
-            PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
-            PulumiProject(path='kubernetes/secrets', description='Secrets'),
-            PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
-            PulumiProject(path='utility/kic-image-push', description='KIC Image Push'),
-            PulumiProject(path='kubernetes/nginx/ingress-controller-namespace',
-                          description='K8S Ingress NS'),
-            PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
-            PulumiProject(path='kubernetes/logstore', description='Logstore'),
-            PulumiProject(path='kubernetes/logagent', description='Log Agent'),
-            PulumiProject(path='kubernetes/certmgr', description='Cert Manager'),
-            PulumiProject(path='kubernetes/prometheus', description='Prometheus',
-                          config_keys_with_secrets=[SecretConfigKey(key_name='prometheus:adminpass',
-                                                                    prompt='Prometheus administrator password')]),
-            PulumiProject(path='kubernetes/observability', description='Observability'),
-            PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius',
-                          config_keys_with_secrets=[SecretConfigKey(key_name='sirius:accounts_pwd',
-                                                                    prompt='Bank of Sirius Accounts Database password'),
-                                                    SecretConfigKey(key_name='sirius:ledger_pwd',
-                                                                    prompt='Bank of Sirius Ledger Database password'),
-                                                    SecretConfigKey(key_name='sirius:demo_login_user',
-                                                                    prompt='Bank of Sirius demo site login username',
-                                                                    default='testuser'),
-                                                    SecretConfigKey(key_name='sirius:demo_login_pwd',
-                                                                    prompt='Bank of Sirius demo site login password',
-                                                                    default='password')])
-        ]
+
+        #
+        # This should be determined from the config file, but for now it's going to
+        # be hardcoded in order to get through the demo.
+        #
+        UseSumo = True
+
+        if UseSumo:
+            return [
+                PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
+                PulumiProject(path='kubernetes/secrets', description='Secrets'),
+                PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
+                PulumiProject(path='utility/kic-image-push', description='KIC Image Push'),
+                PulumiProject(path='kubernetes/nginx/ingress-controller-namespace',
+                              description='K8S Ingress NS'),
+                PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
+                PulumiProject(path='kubernetes/certmgr', description='Cert Manager'),
+                PulumiProject(path='kubernetes/sumo', description='Sumologic',
+                              config_keys_with_secrets=[SecretConfigKey(key_name='sumo:cluster_name',
+                                                                        prompt='Sumologic cluster name'),
+                                                        SecretConfigKey(key_name='sumo:access_id',
+                                                                        prompt='Sumologic access id'),
+                                                        SecretConfigKey(key_name='sumo:access_key',
+                                                                        prompt='Sumologic access key')]),
+                PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius',
+                              config_keys_with_secrets=[SecretConfigKey(key_name='sirius:accounts_pwd',
+                                                                        prompt='Bank of Sirius Accounts Database password'),
+                                                        SecretConfigKey(key_name='sirius:ledger_pwd',
+                                                                        prompt='Bank of Sirius Ledger Database password'),
+                                                        SecretConfigKey(key_name='sirius:demo_login_user',
+                                                                        prompt='Bank of Sirius demo site login username',
+                                                                        default='testuser'),
+                                                        SecretConfigKey(key_name='sirius:demo_login_pwd',
+                                                                        prompt='Bank of Sirius demo site login password',
+                                                                        default='password')])
+            ]
+        else:
+            return [
+                PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
+                PulumiProject(path='kubernetes/secrets', description='Secrets'),
+                PulumiProject(path='utility/kic-image-build', description='KIC Image Build'),
+                PulumiProject(path='utility/kic-image-push', description='KIC Image Push'),
+                PulumiProject(path='kubernetes/nginx/ingress-controller-namespace',
+                              description='K8S Ingress NS'),
+                PulumiProject(path='kubernetes/nginx/ingress-controller', description='Ingress Controller'),
+                PulumiProject(path='kubernetes/logstore', description='Logstore'),
+                PulumiProject(path='kubernetes/logagent', description='Log Agent'),
+                PulumiProject(path='kubernetes/certmgr', description='Cert Manager'),
+                PulumiProject(path='kubernetes/prometheus', description='Prometheus',
+                              config_keys_with_secrets=[SecretConfigKey(key_name='prometheus:adminpass',
+                                                                        prompt='Prometheus administrator password')]),
+                PulumiProject(path='kubernetes/observability', description='Observability'),
+                PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius',
+                              config_keys_with_secrets=[SecretConfigKey(key_name='sirius:accounts_pwd',
+                                                                        prompt='Bank of Sirius Accounts Database password'),
+                                                        SecretConfigKey(key_name='sirius:ledger_pwd',
+                                                                        prompt='Bank of Sirius Ledger Database password'),
+                                                        SecretConfigKey(key_name='sirius:demo_login_user',
+                                                                        prompt='Bank of Sirius demo site login username',
+                                                                        default='testuser'),
+                                                        SecretConfigKey(key_name='sirius:demo_login_pwd',
+                                                                        prompt='Bank of Sirius demo site login password',
+                                                                        default='password')])
+            ]
 
     def execution_order(self) -> List[PulumiProject]:
         """Full list of Pulumi projects to be executed in sequential order (including both infrastructure and

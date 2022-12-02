@@ -153,6 +153,28 @@ ns = k8s.core.v1.Namespace(resource_name='bos',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 #
+# Our default trace endpoint uses the OTEL simplest collector, but this can
+# be overridden. For the Sumo demo, these will need to be set:
+#
+#   otel:traceendpoint: http://sumo-sumologic-otelagent.sumo:4317
+#   otel:promnamespace: sumo
+#
+config = pulumi.Config('otel')
+
+traceendpoint = config.get('traceendpoint')
+if not traceendpoint:
+    traceendpoint = "http://simplest-collector.observability.svc.cluster.local:9978"
+
+#
+# We deploy postgres monitors that use prometheus, so we need to define the namespace
+# that prometheus runs in. By default, this is "prometheus" but other observability
+# providers may use their own...
+#
+promnamespace = config.get('promnamespace')
+if not promnamespace:
+    promnamespace = "prometheus"
+
+#
 # Add Config Maps for Bank of Sirius; these are built in Pulumi in order to
 # manage secrets and provide the option for users to override defaults in the
 # configuration file. Configuration values that are required use the `require`
@@ -231,7 +253,7 @@ tracing_config_config_map = k8s.core.v1.ConfigMap("tracing_configConfigMap",
                                                       namespace=ns
                                                   ),
                                                   data={
-                                                      "OTEL_EXPORTER_OTLP_ENDPOINT": "http://simplest-collector.observability.svc.cluster.local:9978",
+                                                      "OTEL_EXPORTER_OTLP_ENDPOINT": traceendpoint,
                                                       "ENABLE_TRACING": "true",
                                                       "ENABLE_METRICS": "true"
                                                   })
@@ -466,7 +488,7 @@ accountsdb_release_args = ReleaseArgs(
     values={
         "serviceMonitor": {
             "enabled": True,
-            "namespace": "prometheus"
+            "namespace": promnamespace
         },
         "config": {
             "datasource": {
@@ -513,7 +535,7 @@ ledgerdb_release_args = ReleaseArgs(
     values={
         "serviceMonitor": {
             "enabled": True,
-            "namespace": "prometheus"
+            "namespace": promnamespace
         },
         "config": {
             "datasource": {
