@@ -114,7 +114,7 @@ sumo_release_args = ReleaseArgs(
     # By default, Release resource will wait till all created resources
     # are available. Set this to true to skip waiting on resources being
     # available.
-    skip_await=True,
+    skip_await=False,
     # If we fail, clean up 
     cleanup_on_fail=True,
     # Provide a name for our release

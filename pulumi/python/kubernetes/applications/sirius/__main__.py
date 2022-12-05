@@ -153,28 +153,6 @@ ns = k8s.core.v1.Namespace(resource_name='bos',
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
 #
-# Our default trace endpoint uses the OTEL simplest collector, but this can
-# be overridden. For the Sumo demo, these will need to be set:
-#
-#   otel:traceendpoint: http://sumo-sumologic-otelagent.sumo:4317
-#   otel:promnamespace: sumo
-#
-config = pulumi.Config('otel')
-
-traceendpoint = config.get('traceendpoint')
-if not traceendpoint:
-    traceendpoint = "http://simplest-collector.observability.svc.cluster.local:9978"
-
-#
-# We deploy postgres monitors that use prometheus, so we need to define the namespace
-# that prometheus runs in. By default, this is "prometheus" but other observability
-# providers may use their own...
-#
-promnamespace = config.get('promnamespace')
-if not promnamespace:
-    promnamespace = "prometheus"
-
-#
 # Add Config Maps for Bank of Sirius; these are built in Pulumi in order to
 # manage secrets and provide the option for users to override defaults in the
 # configuration file. Configuration values that are required use the `require`
@@ -199,6 +177,19 @@ demo_login_user = pulumi.Output.unsecret(sirius_secrets).apply(
     lambda secrets: extract_password_from_k8s_secrets(secrets, 'demo_login_user'))
 demo_login_pwd = pulumi.Output.unsecret(sirius_secrets).apply(
     lambda secrets: extract_password_from_k8s_secrets(secrets, 'demo_login_pwd'))
+
+#
+# OTEL Secrets; these are variables that are stored in the OTEL namespace and are
+# used to pass changes required in order to plumb the application to the OTEL provider
+# of choice.
+#
+otel_secrets = Secret.get(resource_name='pulumi-secret-otel',
+                            id=pulumi_secrets['otel'],
+                            opts=pulumi.ResourceOptions(provider=k8s_provider)).data
+prom_namespace = pulumi.Output.unsecret(otel_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'prom_namespace'))
+trace_endpoint = pulumi.Output.unsecret(otel_secrets).apply(
+    lambda secrets: extract_password_from_k8s_secrets(secrets, 'trace_endpoint'))
 
 accounts_admin = config.get('accounts_admin')
 if not accounts_admin:
@@ -253,7 +244,7 @@ tracing_config_config_map = k8s.core.v1.ConfigMap("tracing_configConfigMap",
                                                       namespace=ns
                                                   ),
                                                   data={
-                                                      "OTEL_EXPORTER_OTLP_ENDPOINT": traceendpoint,
+                                                      "OTEL_EXPORTER_OTLP_ENDPOINT": trace_endpoint,
                                                       "ENABLE_TRACING": "true",
                                                       "ENABLE_METRICS": "true"
                                                   })
@@ -488,7 +479,7 @@ accountsdb_release_args = ReleaseArgs(
     values={
         "serviceMonitor": {
             "enabled": True,
-            "namespace": promnamespace
+            "namespace": prom_namespace
         },
         "config": {
             "datasource": {
@@ -535,7 +526,7 @@ ledgerdb_release_args = ReleaseArgs(
     values={
         "serviceMonitor": {
             "enabled": True,
-            "namespace": promnamespace
+            "namespace": prom_namespace
         },
         "config": {
             "datasource": {

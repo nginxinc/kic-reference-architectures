@@ -33,9 +33,9 @@ class Provider:
         def is_provider(file: pathlib.Path) -> bool:
             # Filter out the non-provider files
             return file.is_file() and \
-                   not file.stem.endswith('base_provider') and \
-                   not file.stem.endswith('pulumi_project') and \
-                   not file.stem.endswith('update_kubeconfig')
+                not file.stem.endswith('base_provider') and \
+                not file.stem.endswith('pulumi_project') and \
+                not file.stem.endswith('update_kubeconfig')
 
         path = pathlib.Path(SCRIPT_DIR)
         return [os.path.splitext(file.stem)[0] for file in path.iterdir() if is_provider(file)]
@@ -43,6 +43,17 @@ class Provider:
     @staticmethod
     def validate_env_config_required_keys(required_keys: List[str], config: Mapping[str, str]):
         """Validates that the required environment variables as defined by file or runtime environment are present"""
+
+        #
+        # This is a stopgap to get the Sumo logic playing nicely with the rest of the process; this will
+        # need to be revisted as part of
+        # #140 https://github.com/nginxinc/kic-reference-architectures/issues/140
+        #
+        global SUMO
+        if "SUMO" in config.keys():
+            SUMO = True
+        else:
+            SUMO = False
 
         for key in required_keys:
             if key not in config.keys():
@@ -80,14 +91,12 @@ class Provider:
 
     def k8s_execution_order(self) -> List[PulumiProject]:
         """Pulumi Kubernetes projects to be executed in sequential order"""
-
         #
         # This should be determined from the config file, but for now it's going to
         # be hardcoded in order to get through the demo.
         #
-        UseSumo = True
 
-        if UseSumo:
+        if SUMO:
             return [
                 PulumiProject(path='infrastructure/kubeconfig', description='Kubeconfig'),
                 PulumiProject(path='kubernetes/secrets', description='Secrets'),
@@ -103,7 +112,14 @@ class Provider:
                                                         SecretConfigKey(key_name='sumo:access_id',
                                                                         prompt='Sumologic access id'),
                                                         SecretConfigKey(key_name='sumo:access_key',
-                                                                        prompt='Sumologic access key')]),
+                                                                        prompt='Sumologic access key'),
+                                                        SecretConfigKey(key_name='otel:prom_namespace',
+                                                                        prompt='Prometheus Namespace',
+                                                                        default='sumo'),
+                                                        SecretConfigKey(key_name='otel:trace_endpoint',
+                                                                        prompt='OTEL Trace Endpoint',
+                                                                        default='http://sumo-sumologic-otelagent.sumo:4317')
+                                                        ]),
                 PulumiProject(path='kubernetes/applications/sirius', description='Bank of Sirius',
                               config_keys_with_secrets=[SecretConfigKey(key_name='sirius:accounts_pwd',
                                                                         prompt='Bank of Sirius Accounts Database password'),
@@ -152,6 +168,13 @@ class Provider:
 
     def display_execution_order(self, output: TextIO = sys.stdout):
         """Writes the execution order of Pulumi projects in a visual tree to an output stream"""
+
+        #
+        # Hack for now; the way SUMO is handled above requires that we define it here; this should obviously
+        # be fixed, but for now this gets us through the test.
+        #
+        global SUMO
+        SUMO = False
         execution_order = self.execution_order()
         last_prefix = ''
 
