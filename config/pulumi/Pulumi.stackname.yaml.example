@@ -375,10 +375,6 @@ config:
   ############################################################################
   # Sumologic / OTEL
   ############################################################################
-  # Endpoint for traces
-  otel:traceendpoint: http://sumo-sumologic-otelagent.sumo:4317
-  # Namespace for deployment
-  otel:promnamespace: sumo
   # Chart name for the helm chart for certmanager
   sumo:chart_name: sumologic
   # Chart version for the helm chart for certmanager
