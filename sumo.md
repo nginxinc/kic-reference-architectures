@@ -1,7 +1,7 @@
 # MARA Sumologic Integration Preview
 This branch contains the beta code for the MARA/Sumo Logic integration using the Sumo 3.0 Helm Chart. This version uses the [Sumo Logic collector](https://help.sumologic.com/docs/send-data/sumo-distribution-opentelemetry/) built on top of Open Telemetry (OTEL). This provides one collector for metrics, traces, and logs. 
 
-Going forward, MARA will be moving away from proprietary solutions towards those that support OTEL. This will demonstrate how instrumetating applications and environments to the OTEL spec provides the flexibility to change monitoring/alerting platforms if required.
+Going forward, MARA will be moving away from proprietary solutions towards those that support OTEL. This will demonstrate how instrumenting applications and environments to the OTEL spec provides the flexibility to change monitoring/alerting platforms if required.
 
 ## Requirements
 In order to deploy this version of MARA you need to have a Sumlogic account and have generated an API token. This token - the key and id - will need to be added to MARA at configuration time.
@@ -35,7 +35,7 @@ This branch should deploy on any environment that currently works with MARA.
 There are several known issues that you may run into while running this version of MARA. 
 
 ### Failures Standing up Sumo Project
-If this project keeps failing out with helm errors, there is a farily good chance that you have an invalid access_id and/or access_key. You can check these values by:
+If this project keeps failing out with helm errors, there is a fairly good chance that you have an invalid access_id and/or access_key. You can check these values by:
 - Ensuring you have Pulumi on your path; if not you can always source the venv created by the MARA project: `source ./pulumi/python/venv/bin/activate`
 - Changing to `pulumi/python/kubernetes/secrets`.
 - Listing secrets by running `pulumi config --show-secrets`
