@@ -12,7 +12,7 @@ from pulumi_kubernetes.yaml import ConfigGroup
 from kic_util import pulumi_config
 
 
-# Removes the status field from the Nginx Ingress Helm Chart, so that i#t is
+# Removes the status field from the Nginx Ingress Helm Chart, so that it is
 # compatible with the Pulumi Chart implementation.
 def remove_status_field(obj):
     if obj['kind'] == 'CustomResourceDefinition' and 'status' in obj:
@@ -66,15 +66,25 @@ def extract_password_from_k8s_secrets(secrets: Mapping[str, str], secret_name: s
     return password
 
 #
-# We will only want to be deploying one type of certificate issuer
-# as part of this application; this can (and should) be changed as
-# needed. For example, if the user is taking advantage of ACME let's encrypt
-# in order to generate certs.
+# We currently have two choices for certificate; you can chose to use the
+# self-signed cert, or you can use the http01 challenge. Note that there is
+# a limit to the length of the hostname for Let's Encrypt; for example, the
+# standard AWS LB hostname is WAY too long.
 #
-def k8_manifest_location():
+def selfsign_manifest_location():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    k8_manifest_path = os.path.join(script_dir, 'cert', 'self-sign.yaml')
-    return k8_manifest_path
+    selfsign_manifest_path = os.path.join(script_dir, 'cert', 'self-sign.yaml')
+    return selfsign_manifest_path
+
+def http01_manifest_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    http01_manifest_path = os.path.join(script_dir, 'cert', 'http01-sign.yaml')
+    return http01_manifest_path
+
+def virtualserver_manifest_location():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    virtualserver_manifest_path = os.path.join(script_dir, 'ingress', 'virtualserver.yaml')
+    return virtualserver_manifest_path
 
 #
 # The database password is a secret, and in order to use it in a string concat
@@ -89,10 +99,15 @@ def create_pg_uri(password_object):
     uri = f'postgresql://{user}:{password}@accounts-db:5432/{database}'
     return pulumi.Output.secret(uri)
 
-
 def add_namespace(obj):
     obj['metadata']['namespace'] = 'bos'
 
+def add_email(obj):
+    cert_email = config.get('cert_email')
+    obj['spec']['acme']['email'] = cert_email
+
+def add_fqdn(obj):
+    obj['spec']['host'] = lb_ingress_hostname
 
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
@@ -190,6 +205,12 @@ prom_namespace = pulumi.Output.unsecret(otel_secrets).apply(
     lambda secrets: extract_password_from_k8s_secrets(secrets, 'prom_namespace'))
 trace_endpoint = pulumi.Output.unsecret(otel_secrets).apply(
     lambda secrets: extract_password_from_k8s_secrets(secrets, 'trace_endpoint'))
+
+#
+# We use the cert email for the http01 deployment case. Currently, this is
+# only the DO deployment since we know that there is a FQDN we can use.
+#
+cert_type = config.get('cert_type')
 
 accounts_admin = config.get('accounts_admin')
 if not accounts_admin:
@@ -359,15 +380,34 @@ bos = ConfigGroup(
 
 #
 # We need to create an issuer for the cert-manager (which is installed in a
-# separate project directory). This can (and should) be adjusted as required,
-# as the default issuer is self-signed.
+# separate project directory).
 #
-k8_manifest = k8_manifest_location()
+# There are two defined cert-manager:
+# - self-signed
+# - Let's Encrypt http01 challenge
+#
+# If you are going to use the Let's Encrypt issuer, you need to have a hostname
+# that conforms to the Let's Encrypt requirements.
+#
 
-selfissuer = ConfigFile(
-    "selfissuer",
-    transformations=[add_namespace],
-    file=k8_manifest)
+if cert_type != "http01":
+    selfsign_manifest = selfsign_manifest_location()
+    issuer = "selfsigned-issuer"
+
+    selfissuer = ConfigFile(
+        "selfissuer",
+        transformations=[add_namespace],
+        file=selfsign_manifest)
+else:
+    http01_manifest = http01_manifest_location()
+    issuer = "http01-issuer"
+
+    cert_email = config.get('cert_email')
+
+    http01issuer = ConfigFile(
+        "http01issuer",
+        transformations=[add_namespace, add_email],
+        file=http01_manifest)
 
 #
 # Add the Ingress controller for the Bank of Sirius  application. This uses the
@@ -380,57 +420,73 @@ selfissuer = ConfigFile(
 # application and requires that an IngressClass # and Ingress controller be
 # installed (which is done in an earlier step, deploying the KIC).
 #
-bosingress = k8s.networking.v1.Ingress("bosingress",
-                                       api_version="networking.k8s.io/v1",
-                                       kind="Ingress",
-                                       metadata=k8s.meta.v1.ObjectMetaArgs(
-                                           name="bosingress",
-                                           namespace=ns,
-                                           # This annotation is used to request a certificate from the cert
-                                           # manager. The manager watches for ingress objects with this
-                                           # annotation and handles certificate generation.
-                                           #
-                                           # It is possible to use different cert issuers with cert-manager,
-                                           # but in the current deployment we only have a self-signed issuer
-                                           # configured.
-                                           annotations={
-                                               "cert-manager.io/cluster-issuer": "selfsigned-issuer",
-                                           },
-                                       ),
-                                       spec=k8s.networking.v1.IngressSpecArgs(
-                                           ingress_class_name="nginx",
-                                           # The block below sets up the TLS configuration for the Ingress
-                                           # controller. The secret defined here will be used by the issuer
-                                           # to store the generated certificate.
-                                           tls=[k8s.networking.v1.IngressTLSArgs(
-                                               hosts=[sirius_host],
-                                               secret_name="sirius-secret",   # pragma: allowlist secret
-                                           )],
-                                           # The block below defines the rules for traffic coming into the KIC.
-                                           # In the example below, we take any traffic on the host for path /
-                                           # and direct it to the frontend server on port 80. Additional routes
-                                           # could be added if desired. Also, different hostnames could be defined
-                                           # if desired. For example, an additional CNAME could be added to point
-                                           # to this same KIC along with a separate tls and host rule to direct
-                                           # traffic to a different backend.
-                                           rules=[k8s.networking.v1.IngressRuleArgs(
-                                               host=sirius_host,
-                                               http=k8s.networking.v1.HTTPIngressRuleValueArgs(
-                                                   paths=[k8s.networking.v1.HTTPIngressPathArgs(
-                                                       path="/",
-                                                       path_type="Prefix",
-                                                       backend=k8s.networking.v1.IngressBackendArgs(
-                                                           service=k8s.networking.v1.IngressServiceBackendArgs(
-                                                               name="frontend",
-                                                               port=k8s.networking.v1.ServiceBackendPortArgs(
-                                                                   number=80,
+
+if cert_type != 'http01':
+    bosingress = k8s.networking.v1.Ingress("bosingress",
+                                           api_version="networking.k8s.io/v1",
+                                           kind="Ingress",
+                                           metadata=k8s.meta.v1.ObjectMetaArgs(
+                                               name="bosingress",
+                                               namespace=ns,
+                                               # This annotation is used to request a certificate from the cert
+                                               # manager. The manager watches for ingress objects with this
+                                               # annotation and handles certificate generation.
+                                               #
+                                               # It is possible to use different cert issuers with cert-manager,
+                                               # but in the current deployment we only have a self-signed issuer
+                                               # configured.
+                                               #
+                                               # The "edit-in-place" is required for http01 and should not cause
+                                               # issues for the self-signed certs.
+                                               #
+                                               annotations={
+                                                   "cert-manager.io/cluster-issuer": issuer,
+                                                   "acme.cert-manager.io/http01-edit-in-place": True
+                                               },
+                                           ),
+                                           spec=k8s.networking.v1.IngressSpecArgs(
+                                               ingress_class_name="nginx",
+                                               # The block below sets up the TLS configuration for the Ingress
+                                               # controller. The secret defined here will be used by the issuer
+                                               # to store the generated certificate.
+                                               tls=[k8s.networking.v1.IngressTLSArgs(
+                                                   hosts=[sirius_host],
+                                                   secret_name="sirussecret",   # pragma: allowlist secret
+                                               )],
+                                               # The block below defines the rules for traffic coming into the KIC.
+                                               # In the example below, we take any traffic on the host for path /
+                                               # and direct it to the frontend server on port 80. Additional routes
+                                               # could be added if desired. Also, different hostnames could be defined
+                                               # if desired. For example, an additional CNAME could be added to point
+                                               # to this same KIC along with a separate tls and host rule to direct
+                                               # traffic to a different backend.
+                                               rules=[k8s.networking.v1.IngressRuleArgs(
+                                                   host=sirius_host,
+                                                   http=k8s.networking.v1.HTTPIngressRuleValueArgs(
+                                                       paths=[k8s.networking.v1.HTTPIngressPathArgs(
+                                                           path="/",
+                                                           path_type="Prefix",
+                                                           backend=k8s.networking.v1.IngressBackendArgs(
+                                                               service=k8s.networking.v1.IngressServiceBackendArgs(
+                                                                   name="frontend",
+                                                                   port=k8s.networking.v1.ServiceBackendPortArgs(
+                                                                       number=80,
+                                                                   ),
                                                                ),
                                                            ),
-                                                       ),
-                                                   )],
-                                               ),
-                                           )],
-                                       ))
+                                                       )],
+                                                   ),
+                                               )],
+                                           ))
+else:  # http01
+    virtualserver_manifest = virtualserver_manifest_location()
+    bosingress = ConfigFile(
+        "bosingress",
+        transformations=[add_namespace, add_fqdn],
+        file=virtualserver_manifest
+    )
+
+
 
 #
 # Get the hostname for our connect URL; this logic will be collapsed once the
