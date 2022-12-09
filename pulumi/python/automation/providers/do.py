@@ -128,6 +128,10 @@ class DigitalOceanProvider(Provider):
 
         # FQDN
         config['kic-helm:fqdn'] = input(f'Fully qualified domain name (FQDN) for application: ')
+        # Email for cert generation
+        config['sirius:cert_email'] = input(f'Email address for Lets Encrypt cert: ')
+        # Type of certificate
+        config['sirius:cert_type'] = input(f'Type of certificate - http01 or selfsigned(default): ')
 
         # Kubernetes versions
         k8s_versions_json_str, _ = external_process.run(do_cli.get_kubernetes_versions_json())
