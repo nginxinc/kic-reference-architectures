@@ -1,0 +1,19 @@
+  apiVersion: k8s.nginx.org/v1 
+  kind: VirtualServer 
+  metadata: 
+    name: bosingress
+    namespace: bos
+  spec: 
+    host: yourhost
+    tls: 
+      secret: sirius-secret
+      cert-manager: 
+        cluster-issuer: http01-issuer
+    upstreams: 
+      - name: frontend 
+        service: frontend
+        port: 80 
+    routes: 
+      - path: /
+        action: 
+          pass: frontend
