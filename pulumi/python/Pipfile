@@ -23,6 +23,8 @@ linode-cli = "~=5.17.2"
 pulumi = "~=3.36.0"
 PyYAML = "~=5.4.1"
 nodeenv = "~=1.6.0"
+protobuf = "~=4.21.6"
+certifi = "==2022.12.7"
 
 [dev-packages]
 wheel = "~=0.37.1"
