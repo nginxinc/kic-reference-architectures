@@ -17,7 +17,7 @@ if not chart_name:
     chart_name = 'nginx-ingress'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '0.15.0'
+    chart_version = '0.15.2'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'nginx-stable'
@@ -71,6 +71,10 @@ def find_image_tag(repository: dict) -> Optional[str]:
 def build_chart_values(repo_push: dict) -> Mapping[str, Any]:
     values: Dict[str, Dict[str, Any]] = {
         'controller': {
+            'enableCustomResources': True,
+            'enableCertManager': True,
+            'ingressClass': 'nginx',
+            'setAsDefaultIngress': True,
             'healthStatus': True,
             'appprotect': {
                 'enable': False
