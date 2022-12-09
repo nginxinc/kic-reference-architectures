@@ -151,7 +151,7 @@ config:
   # Chart name for the helm chart for kic
   kic-helm:chart_name: nginx-ingress
   # Chart version for the helm chart for kic
-  kic-helm:chart_version: 0.15.0
+  kic-helm:chart_version: 0.15.2
   # Name of the repo to pull the kic chart from
   kic-helm:helm_repo_name: nginx-stable
   # URL of the chart repo to pull kic from
@@ -175,12 +175,12 @@ config:
   # https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image/
   #
   # The following are all valid image names:
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.0
-  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.0-ot
-  # kic:image_name: docker.io/nginx/nginx-ingress:2.3.0
-  # kic:image_name: nginx/nginx-ingress:2.3.0
-  # kic:image_name: nginx/nginx-ingress:2.3.0-alpine
-  kic:image_name: nginx/nginx-ingress:2.3.0
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.4.2
+  # kic:image_name: private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.4.2-ot
+  # kic:image_name: docker.io/nginx/nginx-ingress:2.4.2
+  # kic:image_name: nginx/nginx-ingress:2.4.2
+  # kic:image_name: nginx/nginx-ingress:2.4.2-alpine
+  kic:image_name: nginx/nginx-ingress:2.4.2
 
 
   ############################################################################
