@@ -79,15 +79,6 @@ def build_chart_values(repo_push: dict) -> Mapping[str, Any]:
             'appprotect': {
                 'enable': False
             },
-            'config': {
-                'name': 'nginx-config',
-                'entries': {
-                    'log-format': '$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent '
-                                  '\"$http_referer\" \"$http_user_agent\" $upstream_response_time $upstream_status '
-                                  '\"$uri\" $request_length $request_time [$proxy_host] [] $upstream_addr '
-                                  '$upstream_bytes_sent $upstream_response_time $upstream_status $request_id '
-                }
-            },
             'serviceAccount': {
                 # This references the name of the secret used to pull the ingress container image
                 # from a remote repository. When using EKS on AWS, authentication to ECR happens
