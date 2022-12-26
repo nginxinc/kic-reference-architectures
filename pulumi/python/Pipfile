@@ -25,7 +25,7 @@ PyYAML = "~=5.4.1"
 nodeenv = "~=1.6.0"
 
 [dev-packages]
-wheel = "~=0.37.1"
+wheel = "~=0.38.1"
 nodeenv = "~=1.6.0"
 
 [requires]
