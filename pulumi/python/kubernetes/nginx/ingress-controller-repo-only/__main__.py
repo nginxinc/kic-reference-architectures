@@ -19,7 +19,7 @@ if not chart_name:
     chart_name = 'nginx-ingress'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '0.15.0'
+    chart_version = '0.15.2'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'nginx-stable'
@@ -31,7 +31,7 @@ if not nginx_repository:
     nginx_repository = "nginx/nginx-ingress"
 nginx_tag = config.get('nginx_tag')
 if not nginx_tag:
-    nginx_tag = "2.4.0"
+    nginx_tag = "2.4.2"
 nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
     nginx_plus_flag = False
