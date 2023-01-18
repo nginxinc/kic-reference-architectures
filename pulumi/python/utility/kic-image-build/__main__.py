@@ -5,6 +5,8 @@ from ingress_controller_image_builder_args import IngressControllerImageBuilderA
 from ingress_controller_image_puller_args import IngressControllerImagePullerArgs
 from nginx_plus_args import NginxPlusArgs
 
+DEFAULT_KIC = "nginx/nginx-ingress:2.4.2"
+
 stack_name = pulumi.get_stack()
 project_name = pulumi.get_project()
 
@@ -42,7 +44,11 @@ if image_origin == 'source':
     ingress_image = IngressControllerImage(name='nginx-ingress-controller',
                                            kic_image_args=image_args)
 elif image_origin == 'registry':
-    image_args = IngressControllerImagePullerArgs(image_name=config.get('image_name'))
+    if not config.get('image_name'):
+        image_args = IngressControllerImagePullerArgs(image_name=DEFAULT_KIC)
+    else:
+        image_args = IngressControllerImagePullerArgs(image_name=config.get('image_name'))
+
     ingress_image = IngressControllerImage(name='nginx-ingress-controller',
                                            kic_image_args=image_args)
 else:
