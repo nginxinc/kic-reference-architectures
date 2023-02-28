@@ -15,4 +15,4 @@ jobs:
       - name: Run FOSSA scan and upload build data
         uses: fossa-contrib/fossa-action@v1
         with:
-          fossa-api-key: b7271378f70427d0944ce84fc7d32b6a
+          fossa-api-key: ${{ secrets.FOSSA_API_KEY }}
