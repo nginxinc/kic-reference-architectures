@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 awscli = "~=1.25.35"
-grpcio = "==1.43.0"
+grpcio = "==1.53.0"
 fart = "~=0.1.5"
 lolcat = "~=1.4"
 passlib = "~=1.7.4"
