@@ -7,5 +7,5 @@ setup(name='kic-pulumi-utils',
       version_config=True,
       packages=['kic_util'],
       install_requires=[
-          'pyyaml>=5.3.1,<6.0', 'passlib>=1.7.4,<2.0.0', 'GitPython>=3.1.18,<3.2.0'
+          'pyyaml', 'passlib', 'GitPython'
       ])

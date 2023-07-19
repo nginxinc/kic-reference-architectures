@@ -201,7 +201,7 @@ pip3 install pipenv
 pip3 install wheel
 
 # `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --dev
+PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
@@ -211,10 +211,7 @@ else
 	echo "Node.js version $("${VIRTUAL_ENV}/bin/node" --version) is already installed"
 fi
 
-# Install general package requirements
-# `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync
-
+echo "Installing local utilities Python module for MARA"
 # Install local common utilities module
 pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils"
 
