@@ -44,12 +44,12 @@ class ContainerRegistry:
         # We strip out the path from the URL because it isn't used when logging into a repository
         return f'{registry_host_url.scheme}://{registry_host_url.hostname}'
 
-    def login_to_registry(self) -> Optional[docker.LoginResult]:
+    async def login_to_registry(self) -> Optional[docker.LoginResult]:
         registry = docker.Registry(registry=self.format_registry_url_for_docker_login(),
                                    username=self.credentials.username,
                                    password=self.credentials.password)
 
-        docker.login_to_registry(registry=registry, log_resource=None)
+        await docker.login_to_registry(registry=registry, log_resource=None)
         pulumi.log.info(f'Logged into container registry: {registry.registry}')
 
         if not docker.login_results:

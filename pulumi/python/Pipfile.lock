@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ea46ae84276feed5d8f5e0705d9c867004a6aed340574fe362066098beb0290f"
+            "sha256": "5d1de8507c8ac49d3b0d01f9d194beef93014087d3cee4b679ab5e6c2412be2e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -341,10 +341,10 @@
         },
         "pulumi-docker": {
             "hashes": [
-                "sha256:58dc0cb354240a209846f63dd95a2d2638c7dde57d63687c5ed1888ddd5cfa8c"
+                "sha256:c57e40e3f53525b89d8761b6ef3db498f2255c1f949b7860f95edb38a46d40d2"
             ],
             "index": "pypi",
-            "version": "==4.3.0"
+            "version": "==3.6.1"
         },
         "pulumi-eks": {
             "hashes": [
@@ -362,10 +362,10 @@
         },
         "pulumi-linode": {
             "hashes": [
-                "sha256:2958125afa77b6834ce9c3066ee594c2bed538ae91ff5246bb4ea2f1f80cf740"
+                "sha256:7041c442690ed2ce7592d6aa77d0bdc89d752bf071471c8ec6ab769b8ab303ed"
             ],
             "index": "pypi",
-            "version": "==4.4.1"
+            "version": "==4.4.2"
         },
         "pyasn1": {
             "hashes": [
@@ -394,7 +394,7 @@
                 "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86",
                 "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.8.2"
         },
         "pyyaml": {
@@ -504,7 +504,7 @@
                 "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926",
                 "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==1.16.0"
         },
         "urllib3": {
