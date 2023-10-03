@@ -148,7 +148,7 @@ else:
 #
 # Create the namespace for Bank of Sirius
 #
-ns = k8s.core.v1.Namespace(resource_name='bos',
+ns = k8s.core.v1.Namespace('bos',
                            metadata={'name': 'bos'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 

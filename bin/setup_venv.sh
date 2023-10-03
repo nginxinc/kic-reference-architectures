@@ -267,7 +267,7 @@ fi
 #
 if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
 	echo "Downloading kubectl into virtual environment"
-	KUBECTL_VERSION="v1.24.3"
+	KUBECTL_VERSION="v1.27.4"
 	${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
 	KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
 	echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
@@ -275,7 +275,7 @@ if [ ! -x "${VIRTUAL_ENV}/bin/kubectl" ]; then
 else
 	echo "kubectl is already installed, but will overwrite to ensure correct version"
 	echo "Downloading kubectl into virtual environment"
-	KUBECTL_VERSION="v1.24.3"
+	KUBECTL_VERSION="v1.27.4"
 	${download_cmd} "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl" >"${VIRTUAL_ENV}/bin/kubectl"
 	KUBECTL_CHECKSUM="$(${download_cmd} "https://dl.k8s.io/${KUBECTL_VERSION}/bin/${OS}/${ARCH}/kubectl.sha256")"
 	echo "${KUBECTL_CHECKSUM}  ${VIRTUAL_ENV}/bin/kubectl" | ${sha256sum_cmd}
