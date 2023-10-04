@@ -43,7 +43,7 @@ kube_stack_ref = pulumi.StackReference(kube_stack_ref_id)
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
 # Create the namespace for metallb
-ns = k8s.core.v1.Namespace(resource_name='metallb-system',
+ns = k8s.core.v1.Namespace('metallb-system',
                            metadata={'name': 'metallb-system'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
