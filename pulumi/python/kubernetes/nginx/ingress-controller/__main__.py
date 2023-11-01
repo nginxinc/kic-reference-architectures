@@ -17,7 +17,7 @@ if not chart_name:
     chart_name = 'nginx-ingress'
 chart_version = config.get('chart_version')
 if not chart_version:
-    chart_version = '0.15.2'
+    chart_version = '1.0.1'
 helm_repo_name = config.get('helm_repo_name')
 if not helm_repo_name:
     helm_repo_name = 'nginx-stable'
@@ -193,6 +193,7 @@ kic_release_args = ReleaseArgs(
     repository_opts=RepositoryOptsArgs(
         repo=helm_repo_url
     ),
+
     version=chart_version,
     namespace=ns.metadata.name,
 
