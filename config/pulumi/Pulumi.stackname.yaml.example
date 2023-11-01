@@ -180,7 +180,7 @@ config:
   # kic:image_name: docker.io/nginx/nginx-ingress:2.4.2
   # kic:image_name: nginx/nginx-ingress:2.4.2
   # kic:image_name: nginx/nginx-ingress:2.4.2-alpine
-  kic:image_name: nginx/nginx-ingress:2.4.2
+  kic:image_name: nginx/nginx-ingress:3.3.1
 
 
   ############################################################################
