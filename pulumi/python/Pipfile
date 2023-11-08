@@ -20,9 +20,6 @@ yamlreader = "==3.0.4"
 pulumi-digitalocean = "==4.12.0"
 pulumi = "~=3.36.0"
 PyYAML = "5.3.1"
-nodeenv = "~=1.6.0"
-wheel = "0.37.1"
-[dev-packages]
 wheel = "0.37.1"
 nodeenv = "~=1.6.0"
 
