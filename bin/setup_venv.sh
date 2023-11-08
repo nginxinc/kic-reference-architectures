@@ -191,6 +191,9 @@ source "${VIRTUAL_ENV}/bin/activate"
 
 set -o nounset # abort on unbound variable
 
+echo "USING PYTHON VERSION $(python --version)"
+echo "PIP VERSION $(pip3 --version)"
+
 # Use the latest version of pip and pipenv
 pip3 install --upgrade pip
 pip3 install pipenv
