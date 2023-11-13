@@ -47,7 +47,17 @@ class IngressControllerBaseProvider(ResourceProvider):
         :param image_name: full container image name in the format of repository:tag
         :return full image name with server name (e.g. docker.io/library/debian:buster-slim)
         """
-        cmd = f'docker pull --quiet "{image_name}"'
+
+        # The below is a hack for arm systems in which ECR wants
+        # all architectures in the manifest to exist locally on push
+        # only the linux/amd64 image will actually be used. I'm aware this is very wasteful but the workaround eludes me at the moment
+        # manifest_architectures = ["linux/arm/v7", "linux/arm64", "linux/ppc64le", "linux/s390x"]
+        # (this is still not working but a workaround is disabling containerd)
+        # for arch in manifest_architectures:
+        #     cmd = f'docker pull --platform "{arch}" --quiet "{image_name}"'
+        #     res, _ = self._run_docker(cmd=cmd)
+
+        cmd = f'docker pull --platform linux/amd64 --quiet "{image_name}"'
         res, _ = self._run_docker(cmd=cmd)
         image_name = res.strip()
         return image_name

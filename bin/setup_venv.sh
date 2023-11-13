@@ -52,6 +52,8 @@ function distro_like() {
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+echo "[DEBUG] script_dir set to $script_dir"
+
 # Unset if defined
 unset VIRTUAL_ENV
 
@@ -91,7 +93,7 @@ if ! command -v python3 >/dev/null; then
 
 	mkdir -p "${PYENV_ROOT}"
 	git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
-	if git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2>"${git_clone_log}"; then
+	if git clone --depth 1 --branch v2.3.31 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2>"${git_clone_log}"; then
 		rm "${git_clone_log}"
 	else
 		echo >&2 "Error cloning pyenv repository:"
