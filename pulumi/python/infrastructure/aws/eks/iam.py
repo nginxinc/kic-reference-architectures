@@ -68,3 +68,4 @@ iam.RolePolicyAttachment(
     role=ec2_role.id,
     policy_arn='arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly',
 )
+
