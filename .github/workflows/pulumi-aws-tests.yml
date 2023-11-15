@@ -8,15 +8,13 @@ jobs:
   ubuntu-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: syphar/restore-virtualenv@v1
-      id: pulumi-aws-tests-cache-virtualenv
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
-        requirement_files: pulumi/python/Pipfile.lock
-
-    - uses: syphar/restore-pip-download-cache@v1
-      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+        cache: 'pipenv'
+        python-version-file: '.python-version'
+        cache-dependency-path: |
+          pulumi/python/Pipfile.lock
 
     - run: ./setup_venv.sh
       working-directory: bin
@@ -28,15 +26,13 @@ jobs:
   macos-tests:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: syphar/restore-virtualenv@v1
-      id: pulumi-aws-tests-cache-virtualenv
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
-        requirement_files: pulumi/python/Pipfile.lock
-
-    - uses: syphar/restore-pip-download-cache@v1
-      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+        cache: 'pipenv'
+        python-version-file: '.python-version'
+        cache-dependency-path: |
+          pulumi/python/Pipfile.lock
 
     - run: ./setup_venv.sh
       working-directory: bin
