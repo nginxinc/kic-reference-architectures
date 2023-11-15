@@ -23,6 +23,7 @@ jobs:
       working-directory: bin
       run: ./test_runner.sh "/home/runner/work/kic-reference-architectures/kic-reference-architectures"
 
+    # Hack to make the postjob work by the python gh action not fail since we have the venv elsewhere
     - run: mkdir -p /home/runner/.local/share/virtualenvs
 
   macos-tests:
@@ -42,3 +43,6 @@ jobs:
     - name: Test
       working-directory: bin
       run: ./test_runner.sh "/Users/runner/work/kic-reference-architectures/kic-reference-architectures"
+
+      # Hack to make the postjob work by the python gh action not fail since we have the venv elsewhere
+    - run: mkdir -p /Users/runner/.local/share/virtualenvs
