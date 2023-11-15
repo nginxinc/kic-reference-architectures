@@ -8,7 +8,9 @@ spec:
       otlp:
         protocols:
           grpc:
+            endpoint: 0.0.0.0:9978
           http:
+            endpoint: 0.0.0.0:9979
     processors:
       memory_limiter:
         check_interval: 1s
@@ -19,11 +21,11 @@ spec:
         timeout: 10s
 
     exporters:
-      debug:
+      logging:
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: []
-          exporters: [debug]
+          processors: [batch]
+          exporters: [logging]
