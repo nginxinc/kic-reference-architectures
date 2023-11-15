@@ -2,7 +2,6 @@ apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
 metadata:
   name: simplest
-  namespace: observability
 spec:
   config: |
     receivers:
@@ -12,13 +11,17 @@ spec:
             endpoint: 0.0.0.0:9978
           http:
             endpoint: 0.0.0.0:9979
-
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
       batch:
+        send_batch_size: 10000
+        timeout: 10s
 
     exporters:
       logging:
-        logLevel:
 
     service:
       pipelines:

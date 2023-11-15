@@ -52,6 +52,8 @@ function distro_like() {
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+echo "[DEBUG] script_dir set to $script_dir"
+
 # Unset if defined
 unset VIRTUAL_ENV
 
@@ -91,7 +93,7 @@ if ! command -v python3 >/dev/null; then
 
 	mkdir -p "${PYENV_ROOT}"
 	git_clone_log="$(mktemp -t pyenv_git_clone-XXXXXXX.log)"
-	if git clone --depth 1 --branch v2.0.3 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2>"${git_clone_log}"; then
+	if git clone --depth 1 --branch v2.3.31 https://github.com/pyenv/pyenv.git "${PYENV_ROOT}" 2>"${git_clone_log}"; then
 		rm "${git_clone_log}"
 	else
 		echo >&2 "Error cloning pyenv repository:"
@@ -191,6 +193,9 @@ source "${VIRTUAL_ENV}/bin/activate"
 
 set -o nounset # abort on unbound variable
 
+echo "USING PYTHON VERSION $(python --version) FROM $(which python)"
+echo "PIP VERSION $(pip3 --version) FROM $(which pip3)"
+
 # Use the latest version of pip and pipenv
 pip3 install --upgrade pip
 pip3 install pipenv
@@ -199,9 +204,7 @@ pip3 install pipenv
 # in the installation of other build tools and dependencies
 # required by the other python packages.
 pip3 install wheel
-
-# `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --dev
+pip3 install nodeenv
 
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.

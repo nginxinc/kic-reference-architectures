@@ -47,7 +47,8 @@ class IngressControllerBaseProvider(ResourceProvider):
         :param image_name: full container image name in the format of repository:tag
         :return full image name with server name (e.g. docker.io/library/debian:buster-slim)
         """
-        cmd = f'docker pull --quiet "{image_name}"'
+
+        cmd = f'docker pull --platform linux/amd64 --quiet "{image_name}"'
         res, _ = self._run_docker(cmd=cmd)
         image_name = res.strip()
         return image_name

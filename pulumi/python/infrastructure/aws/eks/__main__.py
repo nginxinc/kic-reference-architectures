@@ -1,5 +1,6 @@
 import collections
 import os
+import json
 
 import pulumi
 import pulumi_aws as aws
@@ -81,7 +82,7 @@ cluster_args = eks.ClusterArgs(
     public_subnet_ids=vpc_definition.public_subnet_ids,
     private_subnet_ids=vpc_definition.private_subnet_ids,
     service_role=iam.eks_role,
-    create_oidc_provider=False,
+    create_oidc_provider=True,
     version=k8s_version,
     provider_credential_opts=provider_credential_opts,
     tags={"Project": project_name, "Stack": stack_name}
@@ -91,6 +92,50 @@ cluster_args = eks.ClusterArgs(
 cluster = eks.Cluster(resource_name=f"{project_name}-{stack_name}",
                       args=cluster_args)
 
+account = aws.get_caller_identity()
+csi_role = aws.iam.Role(
+    "AmazonEKS_EBS_CSI_DriverRole",
+    assume_role_policy=pulumi.Output.all(
+            oidc_url=cluster.eks_cluster.identities[0].oidcs[0].issuer,
+            account_id=account.account_id
+        ).apply(
+            lambda args: json.dumps(
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Federated": f'arn:aws:iam::{args["account_id"]}:oidc-provider/{args["oidc_url"].replace("https://", "")}'
+                      },
+                      "Action": "sts:AssumeRoleWithWebIdentity",
+                      "Condition": {
+                        "StringEquals": {
+                          f'{args["oidc_url"].replace("https://", "")}:aud': "sts.amazonaws.com",
+                          f'{args["oidc_url"].replace("https://", "")}:sub': "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+                        }
+                      } 
+                    }
+                  ]
+                }
+            )
+        )
+    )
+
+# This gives the EBS CSI Driver role permissions to manage volumes on the ec2 instance
+aws.iam.RolePolicyAttachment(
+    'eks-ebs-csi-driver-policy-attachment',
+    role=csi_role.id,
+    policy_arn='arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy'
+)
+
+# Creating an EKS Addon for the CSI Driver
+csi_addon = aws.eks.Addon("aws-ebs-csi-driver",
+                           cluster_name=cluster.eks_cluster.name,
+                           addon_name="aws-ebs-csi-driver",
+                           service_account_role_arn=csi_role.arn)
+
 # Export the clusters' kubeconfig
 pulumi.export("cluster_name", cluster.eks_cluster.name)
 pulumi.export("kubeconfig", cluster.kubeconfig)
+

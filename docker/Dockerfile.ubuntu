@@ -1,8 +1,8 @@
 ARG ARCH=amd64
 
-FROM $ARCH/docker:latest AS docker
+FROM --platform=linux/amd64 docker:latest AS docker
 
-FROM $ARCH/ubuntu:focal
+FROM --platform=linux/amd64 ubuntu:23.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG UID
 ARG GID
