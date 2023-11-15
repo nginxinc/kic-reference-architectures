@@ -42,5 +42,3 @@ jobs:
     - name: Test
       working-directory: bin
       run: ./test_runner.sh "/Users/runner/work/kic-reference-architectures/kic-reference-architectures"
-
-    - run: mkdir -p /home/runner/.local/share/virtualenvs
