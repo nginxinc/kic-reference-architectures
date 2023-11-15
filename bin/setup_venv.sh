@@ -206,9 +206,6 @@ pip3 install pipenv
 pip3 install wheel
 pip3 install nodeenv
 
-# `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
-# PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --dev
-
 # Install node.js into virtual environment so that it can be used by Python
 # modules that make call outs to it.
 if [ ! -x "${VIRTUAL_ENV}/bin/node" ]; then
@@ -217,14 +214,10 @@ else
 	echo "Node.js version $("${VIRTUAL_ENV}/bin/node" --version) is already installed"
 fi
 
-echo "About to install deps"
 # Install general package requirements
 # `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
 PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync
 
-
-echo "about to install local pulumi utils"
-pip3 install setuptools
 # Install local common utilities module
 pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils"
 

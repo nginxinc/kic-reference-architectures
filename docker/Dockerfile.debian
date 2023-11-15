@@ -35,11 +35,9 @@ RUN set -eux; \
         nano \
         vim \
         wget \
-        zlib1g-dev;
-
-    RUN su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/bin/setup_venv.sh';
-
-    RUN echo 'source /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
+        zlib1g-dev \
+    su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/bin/setup_venv.sh' \
+    echo 'source /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
     apt-get purge --yes \
         gcc \
         libbz2-dev \

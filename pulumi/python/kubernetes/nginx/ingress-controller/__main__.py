@@ -219,7 +219,6 @@ kic_chart = Release("kic", args=kic_release_args, opts=pulumi.ResourceOptions(de
                                                                               provider=k8s_provider))
 
 pstatus = kic_chart.status
-pstatus.apply(lambda status: pulumi.log.info(f"[DEBUG]: Helm chart status: {status}"))
 srv = Service.get(resource_name="nginx-ingress",
                   id=Output.concat("nginx-ingress", "/", pstatus.name, "-nginx-ingress-controller"),
                   opts=pulumi.ResourceOptions(provider=k8s_provider))

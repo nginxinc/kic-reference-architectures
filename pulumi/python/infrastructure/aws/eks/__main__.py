@@ -122,13 +122,12 @@ csi_role = aws.iam.Role(
         )
     )
 
+# This gives the EBS CSI Driver role permissions to manage volumes on the ec2 instance
 aws.iam.RolePolicyAttachment(
     'eks-ebs-csi-driver-policy-attachment',
     role=csi_role.id,
     policy_arn='arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy'
 )
-
-# TODO: Do I need to assign the role to the CSI Driver?  Most likely?
 
 # Creating an EKS Addon for the CSI Driver
 csi_addon = aws.eks.Addon("aws-ebs-csi-driver",
@@ -139,5 +138,4 @@ csi_addon = aws.eks.Addon("aws-ebs-csi-driver",
 # Export the clusters' kubeconfig
 pulumi.export("cluster_name", cluster.eks_cluster.name)
 pulumi.export("kubeconfig", cluster.kubeconfig)
-pulumi.export("csi_iam_role", csi_role)
-pulumi.export("csi_addon", csi_addon)
+

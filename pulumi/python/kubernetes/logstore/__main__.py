@@ -83,16 +83,8 @@ elastic_release_args = ReleaseArgs(
 
     # Values from Chart's parameters specified hierarchically,
     values={
-        # "image": {
-        #     "debug": True
-        # },
-        # "diagnosticMode": {
-        #     "enabled": True
-        # },
         "master": {
             "replicas": master_replicas,
-            # "livenessProbe": 300,
-            # "readinessProbe": 180,
             "resources": {
                 "requests": {},
                 "limits": {}
@@ -103,8 +95,6 @@ elastic_release_args = ReleaseArgs(
         },
         "data": {
             "replicas": data_replicas,
-            # "livenessProbe": 300,
-            # "readinessProbe": 180,
             "resources": {
                 "requests": {},
                 "limits": {}
@@ -116,8 +106,6 @@ elastic_release_args = ReleaseArgs(
         "ingest": {
             "enabled": True,
             "replicas": ingest_replicas,
-            # "livenessProbe": 300,
-            # "readinessProbe": 180,
             "resources": {
                 "requests": {},
                 "limits": {}
