@@ -1,15 +1,12 @@
+ [![Project Status: Unsupported – The project has reached a stable, usable state, but the author(s) have ceased all work on it. A new maintainer is desired.](https://www.repostatus.org/badges/latest/unsupported.svg)](https://www.repostatus.org/#unsupported)
+
+## Note: This repository has been archived. There will likely be no further development at this repo, and security vulnerabilities may be unaddressed.
+## The repo may be cloned and used under its current license.
+
+If you have questions on this project as archived, please ask them on the [NGINX Community Forum](https://community.nginx.org).
+
+
 # NGINX Modern Reference Architectures
-
-## Current Test Status
-
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgit%40github.com%3Anginxinc%2Fkic-reference-architectures.git?ref=badge_shield)
-![AWS Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_aws_prod&subject=AWS)
-![DO Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_do_prod&subject=DigitalOcean)
-![LKE Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_lke_prod&subject=Linode)
-![K3s Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_k3s_prod&subject=K3s)
-![MicroK8s Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_mk8s_prod&subject=MicroK8s)
-![Minikube Status](https://jenkins.mantawang.com/buildStatus/icon?job=mara_minikube_prod&subject=Minikube)
-
 ![MARA Project](./docs/NGINX-MARA-icon.png)  
 
 This repository has the basics for a common way to deploy and manage modern
