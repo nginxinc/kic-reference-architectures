@@ -2,7 +2,7 @@ ARG ARCH=amd64
 
 FROM $ARCH/docker:latest AS docker
 
-FROM $ARCH/debian:bullseye-slim
+FROM $ARCH/debian:bookworm-slim
 ARG DEBIAN_FRONTEND=noninteractive
 ARG UID
 ARG GID
@@ -35,8 +35,8 @@ RUN set -eux; \
         nano \
         vim \
         wget \
-        zlib1g-dev; \
-    su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/bin/setup_venv.sh'; \
+        zlib1g-dev \
+    su --group runner runner --login --command '/pulumi/projects/kic-reference-architectures/bin/setup_venv.sh' \
     echo 'source /pulumi/projects/kic-reference-architectures/pulumi/python/venv/bin/activate' >> /pulumi/projects/kic-reference-architectures/.bashrc; \
     apt-get purge --yes \
         gcc \

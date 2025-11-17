@@ -8,15 +8,13 @@ jobs:
   ubuntu-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: syphar/restore-virtualenv@v1
-      id: pulumi-aws-tests-cache-virtualenv
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
-        requirement_files: pulumi/python/Pipfile.lock
-
-    - uses: syphar/restore-pip-download-cache@v1
-      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+        cache: 'pipenv'
+        python-version-file: '.python-version'
+        cache-dependency-path: |
+          pulumi/python/Pipfile.lock
 
     - run: ./setup_venv.sh
       working-directory: bin
@@ -25,18 +23,19 @@ jobs:
       working-directory: bin
       run: ./test_runner.sh "/home/runner/work/kic-reference-architectures/kic-reference-architectures"
 
+    # Hack to make the postjob work by the python gh action not fail since we have the venv elsewhere
+    - run: mkdir -p /home/runner/.local/share/virtualenvs
+
   macos-tests:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: syphar/restore-virtualenv@v1
-      id: pulumi-aws-tests-cache-virtualenv
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
-        requirement_files: pulumi/python/Pipfile.lock
-
-    - uses: syphar/restore-pip-download-cache@v1
-      if: steps.pulumi-aws-tests-cache-virtualenv.outputs.cache-hit != 'true'
+        cache: 'pipenv'
+        python-version-file: '.python-version'
+        cache-dependency-path: |
+          pulumi/python/Pipfile.lock
 
     - run: ./setup_venv.sh
       working-directory: bin
@@ -44,3 +43,6 @@ jobs:
     - name: Test
       working-directory: bin
       run: ./test_runner.sh "/Users/runner/work/kic-reference-architectures/kic-reference-architectures"
+
+      # Hack to make the postjob work by the python gh action not fail since we have the venv elsewhere
+    - run: mkdir -p /Users/runner/.local/share/virtualenvs

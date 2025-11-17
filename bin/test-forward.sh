@@ -62,7 +62,7 @@ kubectl port-forward service/prometheus-kube-prometheus-prometheus --namespace p
 echo $! >"$PID04"
 
 ## Elasticsearch Tunnel
-kubectl port-forward service/elastic-coordinating-only --namespace logstore 9200:9200 &
+kubectl port-forward service/elastic-elasticsearch --namespace logstore 9200:9200 &
 echo $! >"$PID05"
 
 ## Legend

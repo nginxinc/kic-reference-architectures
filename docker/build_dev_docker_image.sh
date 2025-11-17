@@ -70,6 +70,7 @@ i386) ARCH="386" ;;
 i686) ARCH="386" ;;
 x86_64) ARCH="amd64" ;;
 aarch64) ARCH="arm64v8" ;;
+arm64) ARCH="arm64v8" ;;
 arm) dpkg --print-architecture | grep -q "arm64" && ARCH="arm64v8" || ARCH="arm" ;;
 *)
   echo >&2 "Unable to determine system architecture."
