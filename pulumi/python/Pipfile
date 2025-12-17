@@ -5,27 +5,25 @@ name = "pypi"
 
 [packages]
 awscli = "~=1.25.35"
-grpcio = "==1.43.0"
 fart = "~=0.1.5"
 lolcat = "~=1.4"
 passlib = "~=1.7.4"
-pulumi-aws = ">=4.39.0"
+pulumi-aws = "5.31.0"
 pulumi-docker = "==3.1.0"
 pulumi-eks = ">=0.41.2"
-pulumi-kubernetes = "==3.20.1"
+pulumi-kubernetes = "==3.23.0"
 pycryptodome = "~=3.14.0"
 requests = "~=2.27.1"
+setuptools = "==49.6.0"
 setuptools-git-versioning = "==1.9.2"
 yamlreader = "==3.0.4"
 pulumi-digitalocean = "==4.12.0"
-pulumi-linode = "==3.7.1"
-linode-cli = "~=5.17.2"
 pulumi = "~=3.36.0"
-PyYAML = "~=5.4.1"
+PyYAML = "5.3.1"
 nodeenv = "~=1.6.0"
-
+wheel = "0.37.1"
 [dev-packages]
-wheel = "~=0.37.1"
+wheel = "0.37.1"
 nodeenv = "~=1.6.0"
 
 [requires]
