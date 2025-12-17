@@ -213,8 +213,8 @@ fi
 
 # Install general package requirements
 # `pipenv sync` uses only the information in the `Pipfile.lock` ensuring repeatable builds
-PIPENV_VERBOSITY=-1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync
-
+PIPENV_VERBOSITY=1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv clean
+PIPENV_VERBOSITY=1 PIPENV_PIPFILE="${script_dir}/../pulumi/python/Pipfile" pipenv sync --verbose
 # Install local common utilities module
 pip3 install "${script_dir}/../pulumi/python/utility/kic-pulumi-utils"
 
