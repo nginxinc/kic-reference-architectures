@@ -31,7 +31,7 @@ if not nginx_repository:
     nginx_repository = "nginx/nginx-ingress"
 nginx_tag = config.get('nginx_tag')
 if not nginx_tag:
-    nginx_tag = "2.4.2"
+    nginx_tag = "3.2.0"
 nginx_plus_flag = config.get_bool('nginx_plus_flag')
 if not nginx_plus_flag:
     nginx_plus_flag = False
@@ -59,13 +59,6 @@ def k8_manifest_location():
     k8_manifest_path = os.path.join(script_dir, 'manifests', 'regcred.yaml')
     return k8_manifest_path
 
-
-k8_manifest = k8_manifest_location()
-
-registrycred = ConfigFile(
-    "regcred",
-    file=k8_manifest)
-
 chart_values = {
     'controller': {
         'nginxplus': nginx_plus_flag,
@@ -91,6 +84,7 @@ chart_values = {
             }
         },
         'service': {
+            'name': "kic-nginx-ingress",
             'annotations': {
                 'co.elastic.logs/module': 'nginx'
             },
@@ -137,12 +131,18 @@ k8s_provider = k8s.Provider(resource_name=f'ingress-controller-repo-only',
                             kubeconfig=kubeconfig)
 
 # This is required for the service monitor from the Prometheus namespace
-ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
+ns = k8s.core.v1.Namespace('nginx-ingress',
                            metadata={'name': 'nginx-ingress',
                                      'labels': {
                                          'prometheus': 'scrape'}
                                      },
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
+
+k8_manifest = k8_manifest_location()
+
+registrycred = ConfigFile(
+    "regcred",
+    file=k8_manifest)
 
 kic_release_args = ReleaseArgs(
     chart=chart_name,
@@ -182,8 +182,11 @@ ingress_service = srv.status
 # Some LB's give us a hostname (which is cool) and some just an IP. We need to capture
 # both, and then make a determination on what the user needs to do based on what they have
 # been given.
-#
+print("befoe export lb_ingress_hostname")
 pulumi.export('lb_ingress_hostname', fqdn)
+print("befoe export lb_ingress_ip")
 pulumi.export('lb_ingress_ip', pulumi.Output.unsecret(ingress_service.load_balancer.ingress[0].ip))
 # Print out our status
+print("befoe export kic status")
 pulumi.export("kic_status", pstatus)
+print("All done")

@@ -56,7 +56,7 @@ pulumi_secrets = secrets_stack_ref.require_output('pulumi_secrets')
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
 
-ns = k8s.core.v1.Namespace(resource_name='prometheus',
+ns = k8s.core.v1.Namespace('prometheus',
                            metadata={'name': 'prometheus'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 

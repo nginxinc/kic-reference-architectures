@@ -69,7 +69,7 @@ kubeconfig = k8_stack_ref.require_output('kubeconfig').apply(lambda c: str(c))
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
                             kubeconfig=kubeconfig)
 
-ns = k8s.core.v1.Namespace(resource_name='logstore',
+ns = k8s.core.v1.Namespace('logstore',
                            metadata={'name': 'logstore'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 

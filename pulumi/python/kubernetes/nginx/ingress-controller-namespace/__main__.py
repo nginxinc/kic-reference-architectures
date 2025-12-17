@@ -27,7 +27,7 @@ k8s_provider = k8s.Provider(resource_name=f'ingress-controller',
 
 namespace_name = 'nginx-ingress'
 
-ns = k8s.core.v1.Namespace(resource_name='nginx-ingress',
+ns = k8s.core.v1.Namespace('nginx-ingress',
                            metadata={'name': namespace_name,
                                      'labels': {
                                          'prometheus': 'scrape'}

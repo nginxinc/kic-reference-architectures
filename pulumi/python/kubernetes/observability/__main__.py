@@ -50,7 +50,7 @@ k8_stack_ref.get_output('cluster_name').apply(
 k8s_provider = k8s.Provider(resource_name=f'ingress-controller', kubeconfig=kubeconfig)
 
 # Create the namespace
-ns = k8s.core.v1.Namespace(resource_name='observability',
+ns = k8s.core.v1.Namespace('observability',
                            metadata={'name': 'observability'},
                            opts=pulumi.ResourceOptions(provider=k8s_provider))
 
